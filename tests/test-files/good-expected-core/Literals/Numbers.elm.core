@@ -1,42 +1,42 @@
-'_elm_lang@core@Main@hex5'/0 =
+'elm_lang@core@Main@hex5'/0 =
     fun () ->
     1193865
-'_elm_lang@core@Main@hex4'/0 =
+'elm_lang@core@Main@hex4'/0 =
     fun () ->
     48879
-'_elm_lang@core@Main@hex3'/0 =
+'elm_lang@core@Main@hex3'/0 =
     fun () ->
     48879
-'_elm_lang@core@Main@hex2'/0 =
+'elm_lang@core@Main@hex2'/0 =
     fun () ->
     64
-'_elm_lang@core@Main@hex1'/0 =
+'elm_lang@core@Main@hex1'/0 =
     fun () ->
     4294967295
-'_elm_lang@core@Main@float4'/0 =
+'elm_lang@core@Main@float4'/0 =
     fun () ->
     2.30000000000000000000e3
-'_elm_lang@core@Main@float3'/0 =
+'elm_lang@core@Main@float3'/0 =
     fun () ->
     6.02200000000000000000e26
-'_elm_lang@core@Main@float2'/0 =
+'elm_lang@core@Main@float2'/0 =
     fun () ->
     6.70000000000000000000e-1
-'_elm_lang@core@Main@float1'/0 =
+'elm_lang@core@Main@float1'/0 =
     fun () ->
     3.14000000000000000000e0
-'_elm_lang@core@Main@exp4'/0 =
+'elm_lang@core@Main@exp4'/0 =
     fun () ->
     1.00000000000000000000e3
-'_elm_lang@core@Main@exp3'/0 =
+'elm_lang@core@Main@exp3'/0 =
     fun () ->
     2.00000000000000000000e-9
-'_elm_lang@core@Main@exp2'/0 =
+'elm_lang@core@Main@exp2'/0 =
     fun () ->
     3.00000000000000000000e7
-'_elm_lang@core@Main@exp1'/0 =
+'elm_lang@core@Main@exp1'/0 =
     fun () ->
     4.00000000000000000000e9
-'_elm_lang@core@Main@int'/0 =
+'elm_lang@core@Main@int'/0 =
     fun () ->
     12345

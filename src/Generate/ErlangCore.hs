@@ -64,13 +64,7 @@ defineFunction maybeHome functionName args body =
 
 
 qualified :: ModuleName.Canonical -> Text -> Text
-qualified moduleName name =
-  moduleToText moduleName <> "@" <> name
-
-
-
-moduleToText :: ModuleName.Canonical -> Text
-moduleToText (ModuleName.Canonical (Pkg.Name user project) moduleName) =
+qualified (ModuleName.Canonical (Pkg.Name user project) moduleName) name =
   let
     safeUser =
       Text.replace "-" "_" user
@@ -81,4 +75,4 @@ moduleToText (ModuleName.Canonical (Pkg.Name user project) moduleName) =
     safeModuleName =
       Text.replace "." "_" moduleName
   in
-    "_" <> safeUser <> "@" <> safeProject <> "@" <> safeModuleName
+    safeUser <> "@" <> safeProject <> "@" <> safeModuleName <> "@" <> name

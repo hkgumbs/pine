@@ -43,6 +43,9 @@ generateExpr opt =
     Opt.Literal literal ->
       generateLiteral literal
 
+    Opt.List exprs ->
+      Core.List (map generateExpr exprs)
+
 
 generateLiteral :: Literal.Literal -> Core.Expr
 generateLiteral literal =

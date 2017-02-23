@@ -29,6 +29,7 @@ import qualified Data.Text.Lazy as LazyText
 data Expr
   = Float Double
   | Int Int
+  | List [Expr]
 
 
 newtype Id = Id Text
@@ -111,6 +112,19 @@ fromExpr expression =
 
     Int n ->
       decimal n
+
+    List exprs ->
+      let
+        bracket [] =
+          "[]"
+
+        bracket [onlyOne] =
+          "[" <> fromExpr onlyOne <> "]"
+
+        bracket (first : rest) =
+          "[" <> fromExpr first <> "|" <> bracket rest <> "]"
+      in
+        bracket exprs
 
 
 

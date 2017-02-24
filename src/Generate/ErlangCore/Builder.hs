@@ -28,8 +28,10 @@ import qualified Data.Text.Lazy as LazyText
 data Expr
   = Float Double
   | Int Int
+  | Var Id
   | Apply Id
   | List [Expr]
+  | Function Id Expr
 
 
 newtype Id = Id Text
@@ -58,7 +60,7 @@ stmtsToText stmts =
 
 deeper :: Builder -> Builder
 deeper indent =
-  "    " <> indent
+  "  " <> indent
 
 
 
@@ -77,7 +79,7 @@ fromStmt indent statement =
       mconcat
         [ indent <> quoted name <> "/0 =\n"
         , deeper indent <> "fun () ->\n"
-        , deeper indent <> fromExpr expr <> "\n"
+        , fromExpr (deeper $ deeper indent) expr <> "\n"
         ]
 
 
@@ -94,17 +96,20 @@ fromId (Id name) =
 -- EXPRESSIONS
 
 
-fromExpr :: Expr -> Builder
-fromExpr expression =
+fromExpr :: Builder -> Expr -> Builder
+fromExpr indent expression =
   case expression of
     Float n ->
-      formatRealFloat Exponent (Just 20) n
+      indent <> formatRealFloat Exponent (Just 20) n
+
+    Var varName ->
+      indent <> fromId varName
 
     Apply functionName ->
-      "apply '" <> fromId functionName <> "'/0 ()"
+      indent <> "apply '" <> fromId functionName <> "'/0 ()"
 
     Int n ->
-      decimal n
+      indent <> decimal n
 
     List exprs ->
       let
@@ -112,12 +117,18 @@ fromExpr expression =
           "[]"
 
         bracket [onlyOne] =
-          "[" <> fromExpr onlyOne <> "]"
+          "[" <> fromExpr "" onlyOne <> "]"
 
         bracket (first : rest) =
-          "[" <> fromExpr first <> "|" <> bracket rest <> "]"
+          "[" <> fromExpr "" first <> "|" <> bracket rest <> "]"
       in
-        bracket exprs
+        indent <> bracket exprs
+
+    Function arg body ->
+      mconcat
+        [ indent <> "fun (" <> fromId arg <> ") ->\n"
+        , fromExpr (deeper indent) body
+        ]
 
 
 

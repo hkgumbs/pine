@@ -42,8 +42,17 @@ generateExpr opt =
       Core.List (map generateExpr exprs)
 
     Opt.Var var ->
-      Core.Apply (Core.Id (qualifiedVarName var))
+      generateVar var
 
+    Opt.Function args body ->
+      let
+        generateFunction [] =
+          generateExpr body
+
+        generateFunction (first : rest) =
+          Core.Function (Core.Id first) (generateFunction rest)
+      in
+        generateFunction args
 
 generateLiteral :: Literal.Literal -> Core.Expr
 generateLiteral literal =
@@ -63,14 +72,17 @@ defineFunction maybeHome functionName body =
   in
     Core.FunctionStmt (Core.Id name) body
 
-qualifiedVarName :: Var.Canonical -> Text
-qualifiedVarName (Var.Canonical home name) =
+generateVar :: Var.Canonical -> Core.Expr
+generateVar (Var.Canonical home name) =
   case home of
     Var.Module moduleName ->
-      qualified moduleName name
+      Core.Apply (Core.Id (qualified moduleName name))
 
     Var.TopLevel moduleName ->
-      qualified moduleName name
+      Core.Apply (Core.Id (qualified moduleName name))
+
+    _ ->
+      Core.Var (Core.Id name)
 
 
 qualified :: ModuleName.Canonical -> Text -> Text

@@ -29,7 +29,7 @@ generateDef :: Opt.Def -> Core.Stmt
 generateDef def =
   case def of
     Opt.Def (Opt.Facts home) name body ->
-        defineFunction home name [] (generateExpr body)
+        defineFunction home name (generateExpr body)
 
 
 generateExpr :: Opt.Expr -> Core.Expr
@@ -55,13 +55,13 @@ generateLiteral literal =
       Core.Int n
 
 
-defineFunction :: Maybe ModuleName.Canonical -> Text -> [Text] -> Core.Expr -> Core.Stmt
-defineFunction maybeHome functionName args body =
+defineFunction :: Maybe ModuleName.Canonical -> Text -> Core.Expr -> Core.Stmt
+defineFunction maybeHome functionName body =
   let
     name =
       maybe id qualified maybeHome functionName
   in
-    Core.FunctionStmt (Core.Id name) (map Core.Id args) body
+    Core.FunctionStmt (Core.Id name) body
 
 qualifiedVarName :: Var.Canonical -> Text
 qualifiedVarName (Var.Canonical home name) =

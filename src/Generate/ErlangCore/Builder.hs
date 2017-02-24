@@ -13,7 +13,6 @@ module Generate.ErlangCore.Builder
 -- how all the types should fit together.
 
 import Prelude hiding (lines)
-import qualified Data.List as List
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Text.Lazy.Builder
@@ -41,7 +40,7 @@ newtype Id = Id Text
 
 
 data Stmt
-  = FunctionStmt Id [Id] Expr -- 'f'/3 = fun (x, y, z) -> ...
+  = FunctionStmt Id Expr -- 'f'/0 = fun () -> ...
 
 
 
@@ -62,16 +61,6 @@ deeper indent =
   "    " <> indent
 
 
-commaSep :: [Builder] -> Builder
-commaSep builders =
-  mconcat (List.intersperse ", " builders)
-
-
-airity :: [a] -> Builder
-airity args =
-  "/" <> decimal (length args)
-
-
 
 -- STATEMENTS
 
@@ -84,10 +73,10 @@ fromStmtBlock indent stmts =
 fromStmt :: Builder -> Stmt -> Builder
 fromStmt indent statement =
   case statement of
-    FunctionStmt (Id name) args expr ->
+    FunctionStmt (Id name) expr ->
       mconcat
-        [ indent <> quoted name <> airity args <> " =\n"
-        , deeper indent <> "fun (" <> commaSep (map fromId args) <> ") ->\n"
+        [ indent <> quoted name <> "/0 =\n"
+        , deeper indent <> "fun () ->\n"
         , deeper indent <> fromExpr expr <> "\n"
         ]
 

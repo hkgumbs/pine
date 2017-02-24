@@ -190,6 +190,7 @@ testMatchesExpected elmDir expectedOutputDir =
           [ "Literals" </> "Numbers.elm"
           , "Lists" </> "EmptyList.elm"
           , "Lists" </> "NonEmptyList.elm"
+          , "Functions" </> "Simple.elm"
           ]
 
 

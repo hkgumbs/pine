@@ -5,9 +5,9 @@ import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Monoid ((<>))
-import Control.Monad.State (State, foldM, evalState)
 
 import qualified AST.Module as Module
+import qualified AST.Variable as Var
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Expression.Optimized as Opt
 import qualified Generate.ErlangCore.Builder as Core
@@ -15,26 +15,21 @@ import qualified Elm.Package as Pkg
 import qualified AST.Literal as Literal
 
 
-
 generate :: Module.Optimized -> LazyText.Text
 generate (Module.Module moduleName _ info) =
   let
-    genBody =
-      do  defsList <- mapM generateDef (Module.program info)
-          return (concat defsList)
-
     body =
-      evalState genBody 0
+      map generateDef (Module.program info)
   in
     Core.stmtsToText body
 
 
 
-generateDef :: Opt.Def -> State Int [Core.Stmt]
+generateDef :: Opt.Def -> Core.Stmt
 generateDef def =
   case def of
     Opt.Def (Opt.Facts home) name body ->
-        return [ defineFunction home name [] (generateExpr body) ]
+        defineFunction home name [] (generateExpr body)
 
 
 generateExpr :: Opt.Expr -> Core.Expr
@@ -45,6 +40,9 @@ generateExpr opt =
 
     Opt.List exprs ->
       Core.List (map generateExpr exprs)
+
+    Opt.Var var ->
+      Core.Apply (Core.Id (qualifiedVarName var))
 
 
 generateLiteral :: Literal.Literal -> Core.Expr
@@ -64,6 +62,15 @@ defineFunction maybeHome functionName args body =
       maybe id qualified maybeHome functionName
   in
     Core.FunctionStmt (Core.Id name) (map Core.Id args) body
+
+qualifiedVarName :: Var.Canonical -> Text
+qualifiedVarName (Var.Canonical home name) =
+  case home of
+    Var.Module moduleName ->
+      qualified moduleName name
+
+    Var.TopLevel moduleName ->
+      qualified moduleName name
 
 
 qualified :: ModuleName.Canonical -> Text -> Text

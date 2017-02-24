@@ -29,6 +29,7 @@ import qualified Data.Text.Lazy as LazyText
 data Expr
   = Float Double
   | Int Int
+  | Apply Id
   | List [Expr]
 
 
@@ -109,6 +110,9 @@ fromExpr expression =
   case expression of
     Float n ->
       formatRealFloat Exponent (Just 20) n
+
+    Apply functionName ->
+      "apply '" <> fromId functionName <> "'/0 ()"
 
     Int n ->
       decimal n

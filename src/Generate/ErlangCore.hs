@@ -75,14 +75,14 @@ defineFunction maybeHome functionName body =
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
+    Var.Local ->
+      Core.Var (Core.Id name)
+
     Var.Module moduleName ->
       Core.Apply (Core.Id (qualified moduleName name))
 
     Var.TopLevel moduleName ->
       Core.Apply (Core.Id (qualified moduleName name))
-
-    _ ->
-      Core.Var (Core.Id name)
 
 
 qualified :: ModuleName.Canonical -> Text -> Text

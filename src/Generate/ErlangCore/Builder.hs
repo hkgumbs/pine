@@ -7,11 +7,6 @@ module Generate.ErlangCore.Builder
   )
   where
 
--- Based on the language-ecmascript package.
--- https://hackage.haskell.org/package/language-ecmascript
--- They did the hard work of reading the spec to figure out
--- how all the types should fit together.
-
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Text.Lazy.Builder

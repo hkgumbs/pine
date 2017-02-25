@@ -47,7 +47,7 @@ generateExpr opt =
     Opt.Function args body ->
       let
         fun argName coreExpr =
-          Core.Fun ("_" <> argName) coreExpr
+          Core.Fun argName coreExpr
       in
         foldr fun (generateExpr body) args
 
@@ -85,7 +85,7 @@ generateVar (Var.Canonical home name) =
   in
     case home of
       Var.Local ->
-        Core.Var ("_" <> name)
+        Core.Var name
 
       Var.Module moduleName ->
         applyGlobal moduleName

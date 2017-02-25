@@ -67,8 +67,8 @@ fromExpr expression =
     Float n ->
       formatRealFloat Exponent (Just 20) n
 
-    Var varName ->
-      fromText varName
+    Var name ->
+      safeVar name
 
     Apply function args ->
       mconcat
@@ -85,7 +85,7 @@ fromExpr expression =
 
     Fun arg body ->
       mconcat
-        [ "fun (" <> fromText arg <> ") -> "
+        [ "fun (" <> safeVar arg <> ") -> "
         , fromExpr body
         ]
 
@@ -96,6 +96,11 @@ fromExpr expression =
 commaSep :: [Builder] -> Builder
 commaSep builders =
   mconcat (List.intersperse ", " builders)
+
+
+safeVar :: Text -> Builder
+safeVar name =
+  "_" <> fromText name
 
 
 quoted :: Text -> Builder

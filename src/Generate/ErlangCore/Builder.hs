@@ -2,8 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
   ( Expr(..), Id(..)
-  , Stmt(..)
-  , stmtsToText
+  , Function(..)
+  , functionsToText
   )
   where
 
@@ -31,31 +31,23 @@ data Expr
   | Var Id
   | Apply Id
   | List [Expr]
-  | Function Id Expr
+  | Fun Id Expr
 
 
 newtype Id = Id Text
 
 
 
--- STATEMENTS
+-- TOP LEVEL
 
 
-data Stmt
-  = FunctionStmt Id Expr -- 'f'/0 = fun () -> ...
+data Function
+  = Function Id Expr -- 'f'/0 = fun () -> ...
 
 
-
--- CONVERT TO LAZY TEXT
-
-
-stmtsToText :: [Stmt] -> LazyText.Text
-stmtsToText stmts =
-  toLazyText (fromStmtBlock "" stmts)
-
-
-
--- HELPERS
+functionsToText :: [Function] -> LazyText.Text
+functionsToText functions =
+  toLazyText (mconcat (map (fromFunction "") functions))
 
 
 deeper :: Builder -> Builder
@@ -63,33 +55,15 @@ deeper indent =
   "  " <> indent
 
 
-
--- STATEMENTS
-
-
-fromStmtBlock :: Builder -> [Stmt] -> Builder
-fromStmtBlock indent stmts =
-  mconcat (map (fromStmt indent) stmts)
-
-
-fromStmt :: Builder -> Stmt -> Builder
-fromStmt indent statement =
-  case statement of
-    FunctionStmt (Id name) expr ->
+fromFunction :: Builder -> Function -> Builder
+fromFunction indent function =
+  case function of
+    Function (Id name) expr ->
       mconcat
         [ indent <> quoted name <> "/0 =\n"
         , deeper indent <> "fun () ->\n"
         , fromExpr (deeper $ deeper indent) expr <> "\n"
         ]
-
-
-
--- ID
-
-
-fromId :: Id -> Builder
-fromId (Id name) =
-  fromText name
 
 
 
@@ -124,15 +98,16 @@ fromExpr indent expression =
       in
         indent <> bracket exprs
 
-    Function arg body ->
+    Fun arg body ->
       mconcat
         [ indent <> "fun (" <> fromId arg <> ") ->\n"
         , fromExpr (deeper indent) body
         ]
 
 
-
--- STRINGS
+fromId :: Id -> Builder
+fromId (Id name) =
+  fromText name
 
 
 quoted :: Text -> Builder

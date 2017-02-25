@@ -21,11 +21,11 @@ generate (Module.Module moduleName _ info) =
     body =
       map generateDef (Module.program info)
   in
-    Core.stmtsToText body
+    Core.functionsToText body
 
 
 
-generateDef :: Opt.Def -> Core.Stmt
+generateDef :: Opt.Def -> Core.Function
 generateDef def =
   case def of
     Opt.Def (Opt.Facts home) name body ->
@@ -50,7 +50,7 @@ generateExpr opt =
           generateExpr body
 
         generateFunction (first : rest) =
-          Core.Function (Core.Id first) (generateFunction rest)
+          Core.Fun (Core.Id ("_" <> first)) (generateFunction rest)
       in
         generateFunction args
 
@@ -64,19 +64,19 @@ generateLiteral literal =
       Core.Int n
 
 
-defineFunction :: Maybe ModuleName.Canonical -> Text -> Core.Expr -> Core.Stmt
+defineFunction :: Maybe ModuleName.Canonical -> Text -> Core.Expr -> Core.Function
 defineFunction maybeHome functionName body =
   let
     name =
       maybe id qualified maybeHome functionName
   in
-    Core.FunctionStmt (Core.Id name) body
+    Core.Function (Core.Id name) body
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
-      Core.Var (Core.Id name)
+      Core.Var (Core.Id ("_" <> name))
 
     Var.Module moduleName ->
       Core.Apply (Core.Id (qualified moduleName name))

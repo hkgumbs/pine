@@ -1,12 +1,12 @@
 'elm_lang@core@Main@always'/0 =
   fun () ->
-    fun (a) ->
-      fun (b) ->
-        a
+    fun (_a) ->
+      fun (_b) ->
+        _a
 'elm_lang@core@Main@id'/0 =
   fun () ->
-    fun (a) ->
-      a
+    fun (_a) ->
+      _a
 'elm_lang@core@Main@first'/0 =
   fun () ->
     11

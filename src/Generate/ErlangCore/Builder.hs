@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Id(..)
+  ( Expr(..)
   , Function(..)
   , functionsToText
   )
@@ -12,13 +12,13 @@ module Generate.ErlangCore.Builder
 -- They did the hard work of reading the spec to figure out
 -- how all the types should fit together.
 
-import Prelude hiding (lines)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Text.Lazy.Builder
 import Data.Text.Lazy.Builder.Int (decimal)
 import Data.Text.Lazy.Builder.RealFloat (formatRealFloat, FPFormat(..))
 import qualified Data.Text.Lazy as LazyText
+import qualified Data.List as List
 
 
 
@@ -28,13 +28,11 @@ import qualified Data.Text.Lazy as LazyText
 data Expr
   = Float Double
   | Int Int
-  | Var Id
-  | Apply Id
+  | Var Text
+  | Apply Expr [Expr]
   | List [Expr]
-  | Fun Id Expr
-
-
-newtype Id = Id Text
+  | Fun Text Expr
+  | FunctionRef Text Int
 
 
 
@@ -42,72 +40,62 @@ newtype Id = Id Text
 
 
 data Function
-  = Function Id Expr -- 'f'/0 = fun () -> ...
+  -- We wrap all top-level values in an empty function.
+  -- The Erlang compiler _might_ optimize this away...
+  = Function Text Expr -- 'f'/0 = fun () -> ...
 
 
 functionsToText :: [Function] -> LazyText.Text
 functionsToText functions =
-  toLazyText (mconcat (map (fromFunction "") functions))
+  toLazyText (mconcat (map fromFunction functions))
 
 
-deeper :: Builder -> Builder
-deeper indent =
-  "  " <> indent
-
-
-fromFunction :: Builder -> Function -> Builder
-fromFunction indent function =
+fromFunction :: Function -> Builder
+fromFunction function =
   case function of
-    Function (Id name) expr ->
-      mconcat
-        [ indent <> quoted name <> "/0 =\n"
-        , deeper indent <> "fun () ->\n"
-        , fromExpr (deeper $ deeper indent) expr <> "\n"
-        ]
+    Function name expr ->
+      quoted name <> "/0 =\n  fun () ->\n    " <> fromExpr expr <> "\n"
 
 
 
 -- EXPRESSIONS
 
 
-fromExpr :: Builder -> Expr -> Builder
-fromExpr indent expression =
+fromExpr :: Expr -> Builder
+fromExpr expression =
   case expression of
     Float n ->
-      indent <> formatRealFloat Exponent (Just 20) n
+      formatRealFloat Exponent (Just 20) n
 
     Var varName ->
-      indent <> fromId varName
+      fromText varName
 
-    Apply functionName ->
-      indent <> "apply '" <> fromId functionName <> "'/0 ()"
+    Apply function args ->
+      mconcat
+        [ "apply " <> fromExpr function <> " ("
+        , commaSep (map fromExpr args)
+        , ")"
+        ]
 
     Int n ->
-      indent <> decimal n
+      decimal n
 
     List exprs ->
-      let
-        bracket [] =
-          "[]"
-
-        bracket [onlyOne] =
-          "[" <> fromExpr "" onlyOne <> "]"
-
-        bracket (first : rest) =
-          "[" <> fromExpr "" first <> "|" <> bracket rest <> "]"
-      in
-        indent <> bracket exprs
+      "[" <> commaSep (map fromExpr exprs) <> "]"
 
     Fun arg body ->
       mconcat
-        [ indent <> "fun (" <> fromId arg <> ") ->\n"
-        , fromExpr (deeper indent) body
+        [ "fun (" <> fromText arg <> ") -> "
+        , fromExpr body
         ]
 
+    FunctionRef name airity ->
+      quoted name <> "/" <> decimal airity
 
-fromId :: Id -> Builder
-fromId (Id name) =
-  fromText name
+
+commaSep :: [Builder] -> Builder
+commaSep builders =
+  mconcat (List.intersperse ", " builders)
 
 
 quoted :: Text -> Builder

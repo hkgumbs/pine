@@ -46,13 +46,18 @@ generateExpr opt =
 
     Opt.Function args body ->
       let
-        generateFunction [] =
-          generateExpr body
-
-        generateFunction (first : rest) =
-          Core.Fun (Core.Id ("_" <> first)) (generateFunction rest)
+        fun argName coreExpr =
+          Core.Fun ("_" <> argName) coreExpr
       in
-        generateFunction args
+        foldr fun (generateExpr body) args
+
+    Opt.Call function args ->
+      let
+        apply coreExpr elmExpr =
+          Core.Apply coreExpr [ generateExpr elmExpr ]
+      in
+        foldl apply (generateExpr function) args
+
 
 generateLiteral :: Literal.Literal -> Core.Expr
 generateLiteral literal =
@@ -70,19 +75,23 @@ defineFunction maybeHome functionName body =
     name =
       maybe id qualified maybeHome functionName
   in
-    Core.Function (Core.Id name) body
+    Core.Function name body
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
-  case home of
-    Var.Local ->
-      Core.Var (Core.Id ("_" <> name))
+  let
+    applyGlobal moduleName =
+      Core.Apply (Core.FunctionRef (qualified moduleName name) 0) []
+  in
+    case home of
+      Var.Local ->
+        Core.Var ("_" <> name)
 
-    Var.Module moduleName ->
-      Core.Apply (Core.Id (qualified moduleName name))
+      Var.Module moduleName ->
+        applyGlobal moduleName
 
-    Var.TopLevel moduleName ->
-      Core.Apply (Core.Id (qualified moduleName name))
+      Var.TopLevel moduleName ->
+        applyGlobal moduleName
 
 
 qualified :: ModuleName.Canonical -> Text -> Text

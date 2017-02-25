@@ -1,3 +1,2 @@
-'elm_lang@core@Main@emptyList'/0 =
-  fun () ->
-    []
+'elm_lang@core@Main@emptyList'/0 = fun () ->
+	[]

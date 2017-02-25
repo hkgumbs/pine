@@ -1,12 +1,8 @@
-'elm_lang@core@Main@always'/0 =
-  fun () ->
-    fun (_a) -> fun (_b) -> _a
-'elm_lang@core@Main@id'/0 =
-  fun () ->
-    fun (_a) -> _a
-'elm_lang@core@Main@first'/0 =
-  fun () ->
-    11
-'elm_lang@core@Main@second'/0 =
-  fun () ->
-    apply 'elm_lang@core@Main@first'/0 ()
+'elm_lang@core@Main@always'/0 = fun () ->
+	fun (_a) -> fun (_b) -> _a
+'elm_lang@core@Main@id'/0 = fun () ->
+	fun (_a) -> _a
+'elm_lang@core@Main@first'/0 = fun () ->
+	11
+'elm_lang@core@Main@second'/0 = fun () ->
+	apply 'elm_lang@core@Main@first'/0 ()

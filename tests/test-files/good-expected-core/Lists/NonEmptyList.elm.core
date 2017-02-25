@@ -1,3 +1,2 @@
-'elm_lang@core@Main@nonEmptyList'/0 =
-  fun () ->
-    [1, 4, 5]
+'elm_lang@core@Main@nonEmptyList'/0 = fun () ->
+	[1, 4, 5]

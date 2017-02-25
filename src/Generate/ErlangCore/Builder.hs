@@ -54,7 +54,7 @@ fromFunction :: Function -> Builder
 fromFunction function =
   case function of
     Function name expr ->
-      quoted name <> "/0 =\n  fun () ->\n    " <> fromExpr expr <> "\n"
+      quoted name <> "/0 = fun () ->\n\t" <> fromExpr expr <> "\n"
 
 
 

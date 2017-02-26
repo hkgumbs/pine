@@ -8,13 +8,14 @@ module Generate.ErlangCore.Builder
   where
 
 import Data.Monoid ((<>))
-import Data.Text (Text, head)
-import Data.Char (ord)
+import Data.Text (Text)
 import Data.Text.Lazy.Builder
 import Data.Text.Lazy.Builder.Int (decimal)
 import Data.Text.Lazy.Builder.RealFloat (formatRealFloat, FPFormat(..))
 import qualified Data.Text.Lazy as LazyText
+import qualified Data.Text as Text
 import qualified Data.List as List
+import qualified Data.Char as Char
 
 
 
@@ -87,7 +88,7 @@ fromExpr expression =
       decimal n
 
     Char c ->
-      decimal $ ord (Data.Text.head c)
+      decimal $ Char.ord (Text.head c)
 
     Tuple exprs ->
       "{" <> commaSep fromExpr exprs <> "}"

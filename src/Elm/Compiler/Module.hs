@@ -7,8 +7,9 @@ module Elm.Compiler.Module
     , nameToString, nameFromString
     , hyphenate, dehyphenate
     , RawForJson(RawForJson), fromJson
+    , moduleToText, qualifiedVar
     , interfaceAliasedTypes, programTypes
-    , ModuleName.Canonical(..), qualifiedVar
+    , ModuleName.Canonical(..)
     )
   where
 
@@ -18,13 +19,14 @@ import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.Text (Text)
+import Data.Monoid ((<>))
 import System.FilePath ((</>))
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified Elm.Compiler.Type as PublicType
 import qualified Elm.Compiler.Type.Extract as Extract
-import qualified Generate.JavaScript.Variable as Gen
+import qualified Elm.Package as Pkg
 
 
 
@@ -59,10 +61,24 @@ fromJson (RawForJson raw) =
   raw
 
 
-qualifiedVar :: ModuleName.Canonical -> Text -> Text
-qualifiedVar =
-  Gen.qualified
+moduleToText :: ModuleName.Canonical -> Text
+moduleToText (ModuleName.Canonical (Pkg.Name user project) moduleName) =
+  let
+    safeUser =
+      Text.replace "-" "_" user
 
+    safeProject =
+      Text.replace "-" "_" project
+
+    safeModuleName =
+      Text.replace "." "_" moduleName
+  in
+    safeUser <> "@" <> safeProject <> "@" <> safeModuleName
+
+
+qualifiedVar :: ModuleName.Canonical -> Text -> Text
+qualifiedVar moduleName name =
+  moduleToText moduleName <> "@" <> name
 
 
 -- STRING CONVERSIONS for RAW NAMES

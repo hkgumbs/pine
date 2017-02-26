@@ -188,6 +188,7 @@ testMatchesExpected elmDir expectedOutputDir =
   where
       elmFiles = map ((</>) $ testsDir </> elmDir)
           [ "Literals" </> "Numbers.elm"
+          , "Literals" </> "Characters.elm"
           , "Lists" </> "EmptyList.elm"
           , "Lists" </> "NonEmptyList.elm"
           , "Functions" </> "Simple.elm"

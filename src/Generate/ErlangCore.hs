@@ -68,6 +68,9 @@ generateLiteral literal =
     Literal.IntNum n ->
       Core.Int n
 
+    Literal.Chr c ->
+      Core.Char c
+
 
 defineFunction :: Maybe ModuleName.Canonical -> Text -> Core.Expr -> Core.Function
 defineFunction maybeHome functionName body =

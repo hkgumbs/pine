@@ -1,0 +1,2 @@
+lowercase = 'a'
+uppercase = 'B'

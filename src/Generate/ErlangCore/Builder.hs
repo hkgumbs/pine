@@ -8,7 +8,8 @@ module Generate.ErlangCore.Builder
   where
 
 import Data.Monoid ((<>))
-import Data.Text (Text)
+import Data.Text (Text, head)
+import Data.Char (ord)
 import Data.Text.Lazy.Builder
 import Data.Text.Lazy.Builder.Int (decimal)
 import Data.Text.Lazy.Builder.RealFloat (formatRealFloat, FPFormat(..))
@@ -23,6 +24,7 @@ import qualified Data.List as List
 data Expr
   = Float Double
   | Int Int
+  | Char Text
   | Var Text
   | Apply Expr [Expr]
   | List [Expr]
@@ -74,6 +76,10 @@ fromExpr expression =
 
     Int n ->
       decimal n
+
+    Char c ->
+     decimal $ ord (Data.Text.head c)
+
 
     List exprs ->
       "[" <> commaSep (map fromExpr exprs) <> "]"

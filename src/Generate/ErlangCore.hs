@@ -58,6 +58,9 @@ generateExpr opt =
       in
         foldl apply (generateExpr function) args
 
+    Opt.Ctor name exprs ->
+      Core.Tuple (Core.Atom name : map generateExpr exprs)
+
 
 generateLiteral :: Literal.Literal -> Core.Expr
 generateLiteral literal =

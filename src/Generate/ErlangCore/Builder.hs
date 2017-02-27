@@ -25,8 +25,10 @@ data Expr
   = Float Double
   | Int Int
   | Char Text
+  | Atom Text
   | Var Text
   | Apply Expr [Expr]
+  | Tuple [Expr]
   | List [Expr]
   | Fun Text Expr
   | FunctionRef Text Int
@@ -64,13 +66,16 @@ fromExpr expression =
     Float n ->
       formatRealFloat Exponent (Just 20) n
 
+    Atom name ->
+      quoted name
+
     Var name ->
       safeVar name
 
     Apply function args ->
       mconcat
         [ "apply " <> fromExpr function <> " ("
-        , commaSep (map fromExpr args)
+        , commaSep fromExpr args
         , ")"
         ]
 
@@ -78,11 +83,13 @@ fromExpr expression =
       decimal n
 
     Char c ->
-     decimal $ ord (Data.Text.head c)
+      decimal $ ord (Data.Text.head c)
 
+    Tuple exprs ->
+      "{" <> commaSep fromExpr exprs <> "}"
 
     List exprs ->
-      "[" <> commaSep (map fromExpr exprs) <> "]"
+      "[" <> commaSep fromExpr exprs <> "]"
 
     Fun arg body ->
       mconcat
@@ -94,9 +101,9 @@ fromExpr expression =
       quoted name <> "/" <> decimal airity
 
 
-commaSep :: [Builder] -> Builder
-commaSep builders =
-  mconcat (List.intersperse ", " builders)
+commaSep :: (a -> Builder) -> [a] -> Builder
+commaSep toBuilder as =
+  mconcat (List.intersperse ", " (map toBuilder as))
 
 
 safeVar :: Text -> Builder

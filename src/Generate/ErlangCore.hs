@@ -52,11 +52,7 @@ generateExpr opt =
         foldr fun (generateExpr body) args
 
     Opt.Call function args ->
-      let
-        apply coreExpr elmExpr =
-          Core.Apply coreExpr [ generateExpr elmExpr ]
-      in
-        foldl apply (generateExpr function) args
+      generateCall function args
 
     Opt.Ctor name exprs ->
       Core.Tuple (Core.Atom name : map generateExpr exprs)
@@ -100,8 +96,22 @@ generateVar (Var.Canonical home name) =
         applyGlobal moduleName
 
 
-qualified :: ModuleName.Canonical -> Text -> Text
-qualified (ModuleName.Canonical (Pkg.Name user project) moduleName) name =
+generateCall :: Opt.Expr -> [Opt.Expr] -> Core.Expr
+generateCall function args =
+  let
+    apply coreExpr elmExpr =
+      Core.Apply coreExpr [generateExpr elmExpr]
+  in
+    case function of
+      Opt.Var var@(Var.Canonical (Var.Module modul) name) | Var.isNative var ->
+        Core.Call (moduleToText modul) name (map generateExpr args)
+
+      _ ->
+        foldl apply (generateExpr function) args
+
+
+moduleToText :: ModuleName.Canonical -> Text
+moduleToText (ModuleName.Canonical (Pkg.Name user project) moduleName) =
   let
     safeUser =
       Text.replace "-" "_" user
@@ -112,4 +122,9 @@ qualified (ModuleName.Canonical (Pkg.Name user project) moduleName) name =
     safeModuleName =
       Text.replace "." "_" moduleName
   in
-    safeUser <> "@" <> safeProject <> "@" <> safeModuleName <> "@" <> name
+    safeUser <> "@" <> safeProject <> "@" <> safeModuleName
+
+
+qualified :: ModuleName.Canonical -> Text -> Text
+qualified moduleName name =
+  moduleToText moduleName <> "@" <> name

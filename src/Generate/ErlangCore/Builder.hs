@@ -28,6 +28,7 @@ data Expr
   | Atom Text
   | Var Text
   | Apply Expr [Expr]
+  | Call Text Text [Expr]
   | Tuple [Expr]
   | List [Expr]
   | Fun Text Expr
@@ -73,11 +74,14 @@ fromExpr expression =
       safeVar name
 
     Apply function args ->
-      mconcat
-        [ "apply " <> fromExpr function <> " ("
-        , commaSep fromExpr args
-        , ")"
-        ]
+      "apply " <> fromExpr function <> " ("
+      <> commaSep fromExpr args
+      <> ")"
+
+    Call moduleName functionName args ->
+      "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
+      <> commaSep fromExpr args
+      <> ")"
 
     Int n ->
       decimal n
@@ -92,10 +96,7 @@ fromExpr expression =
       "[" <> commaSep fromExpr exprs <> "]"
 
     Fun arg body ->
-      mconcat
-        [ "fun (" <> safeVar arg <> ") -> "
-        , fromExpr body
-        ]
+      "fun (" <> safeVar arg <> ") -> " <> fromExpr body
 
     FunctionRef name airity ->
       quoted name <> "/" <> decimal airity

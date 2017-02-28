@@ -103,8 +103,9 @@ generateCall function args =
       Core.Apply coreExpr [generateExpr elmExpr]
   in
     case function of
-      Opt.Var var@(Var.Canonical (Var.Module modul) name) | Var.isNative var ->
-        Core.Call (moduleToText modul) name (map generateExpr args)
+      Opt.Var var@(Var.Canonical (Var.Module modul) name)
+        | Var.isNative var ->
+          Core.Call (moduleToText modul) name (map generateExpr args)
 
       _ ->
         foldl apply (generateExpr function) args

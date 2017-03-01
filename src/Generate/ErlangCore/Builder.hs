@@ -41,9 +41,7 @@ data Expr
 
 
 data Function
-  -- We wrap all top-level values in an empty function.
-  -- The Erlang compiler _might_ optimize this away...
-  = Function Text Expr -- 'f'/0 = fun () -> ...
+  = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
 
 
 functionsToText :: [Function] -> LazyText.Text
@@ -54,8 +52,10 @@ functionsToText functions =
 fromFunction :: Function -> Builder
 fromFunction function =
   case function of
-    Function name expr ->
-      quoted name <> "/0 = fun () ->\n\t" <> fromExpr expr <> "\n"
+    Function name args body ->
+      quoted name <> "/" <> decimal (length args)
+      <> " = fun (" <> commaSep fromText args
+      <> ") ->\n\t" <> fromExpr body <> "\n"
 
 
 

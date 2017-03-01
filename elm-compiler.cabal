@@ -205,6 +205,7 @@ Test-Suite compiler-tests
         Elm.Utils
         Generate.ErlangCore
         Generate.ErlangCore.Builder
+        Generate.ErlangCore.Function
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes

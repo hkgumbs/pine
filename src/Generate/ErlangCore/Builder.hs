@@ -23,15 +23,16 @@ import qualified Data.Char as Char
 
 
 data Expr
-  = Float Double
-  | Int Int
+  = Int Int
   | Char Text
+  | Float Double
   | Atom Text
   | Var Text
   | Apply Expr [Expr]
   | Call Text Text [Expr]
   | Tuple [Expr]
   | List [Expr]
+  | BitString Text
   | Fun [Text] Expr
   | FunctionRef Text Int
 
@@ -64,6 +65,12 @@ fromFunction function =
 fromExpr :: Expr -> Builder
 fromExpr expression =
   case expression of
+    Int n ->
+      decimal n
+
+    Char c ->
+      fromChar (Text.head c)
+
     Float n ->
       formatRealFloat Exponent (Just 20) n
 
@@ -83,17 +90,20 @@ fromExpr expression =
       <> commaSep fromExpr args
       <> ")"
 
-    Int n ->
-      decimal n
-
-    Char c ->
-      decimal $ Char.ord (Text.head c)
-
     Tuple exprs ->
       "{" <> commaSep fromExpr exprs <> "}"
 
     List exprs ->
       "[" <> commaSep fromExpr exprs <> "]"
+
+    BitString text ->
+      let
+        bitChar c =
+          "#<" <> fromChar c <> ">(8,1,'integer',['unsigned'|['big']])"
+      in
+        "#{"
+        <> commaSep bitChar (toStringLiteral text)
+        <> "}#"
 
     Fun args body ->
       fromFun args " " (fromExpr body)
@@ -112,6 +122,15 @@ fromFun args separator body =
   "fun (" <> commaSep safeVar args <> ") ->" <> separator <> body
 
 
+fromChar :: Char -> Builder
+fromChar c =
+  decimal (Char.ord c)
+
+
+
+-- HELPERS
+
+
 commaSep :: (a -> Builder) -> [a] -> Builder
 commaSep toBuilder as =
   mconcat (List.intersperse ", " (map toBuilder as))
@@ -125,3 +144,16 @@ safeVar name =
 quoted :: Text -> Builder
 quoted str =
   "'" <> fromText str <> "'"
+
+
+toStringLiteral :: Text -> String
+toStringLiteral =
+  let
+    surround with t =
+      with <> t <> with
+  in
+    read
+    . Text.unpack
+    . surround "\""
+    . Text.replace "\"" "\\\""
+    . Text.replace "\\'" "'"

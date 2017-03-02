@@ -71,6 +71,9 @@ generateLiteral literal =
     Literal.Chr c ->
       Core.Char c
 
+    Literal.Str s ->
+      Core.BitString s
+
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =

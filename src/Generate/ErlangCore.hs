@@ -45,7 +45,7 @@ generateExpr opt =
     Opt.Function args body ->
       let
         fun argName coreExpr =
-          Core.Fun argName coreExpr
+          Core.Fun [argName] coreExpr
       in
         foldr fun (generateExpr body) args
 
@@ -74,8 +74,6 @@ generateLiteral literal =
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
-  let
-  in
   case home of
     Var.Local ->
       Core.Var name

@@ -1,5 +1,5 @@
 module Generate.ErlangCore.Function
-  (makeTopLevel, reference, externalCall
+  ( makeTopLevel, reference, externalCall
   ) where
 
 

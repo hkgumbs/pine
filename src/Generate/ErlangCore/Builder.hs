@@ -32,7 +32,7 @@ data Expr
   | Call Text Text [Expr]
   | Tuple [Expr]
   | List [Expr]
-  | Fun Text Expr
+  | Fun [Text] Expr
   | FunctionRef Text Int
 
 
@@ -53,9 +53,8 @@ fromFunction :: Function -> Builder
 fromFunction function =
   case function of
     Function name args body ->
-      quoted name <> "/" <> decimal (length args)
-      <> " = fun (" <> commaSep fromText args
-      <> ") ->\n\t" <> fromExpr body <> "\n"
+      fromFunctionName name (length args) <> " = "
+      <> fromFun args "\n\t" (fromExpr body) <> "\n"
 
 
 
@@ -96,11 +95,21 @@ fromExpr expression =
     List exprs ->
       "[" <> commaSep fromExpr exprs <> "]"
 
-    Fun arg body ->
-      "fun (" <> safeVar arg <> ") -> " <> fromExpr body
+    Fun args body ->
+      fromFun args " " (fromExpr body)
 
     FunctionRef name airity ->
-      quoted name <> "/" <> decimal airity
+      fromFunctionName name airity
+
+
+fromFunctionName :: Text -> Int -> Builder
+fromFunctionName name airity =
+  quoted name <> "/" <> decimal airity
+
+
+fromFun :: [Text] -> Builder -> Builder -> Builder
+fromFun args separator body =
+  "fun (" <> commaSep safeVar args <> ") ->" <> separator <> body
 
 
 commaSep :: (a -> Builder) -> [a] -> Builder

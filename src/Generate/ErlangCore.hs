@@ -11,6 +11,7 @@ import qualified AST.Literal as Literal
 
 import qualified Generate.ErlangCore.Builder as Core
 import qualified Generate.ErlangCore.Function as Function
+import qualified Generate.ErlangCore.String as String
 
 
 generate :: Module.Optimized -> LazyText.Text
@@ -69,10 +70,10 @@ generateLiteral literal =
       Core.Int n
 
     Literal.Chr c ->
-      Core.Char c
+      String.character c
 
-    Literal.Str s ->
-      Core.BitString s
+    Literal.Str text ->
+      String.bitString text
 
 
 generateVar :: Var.Canonical -> Core.Expr

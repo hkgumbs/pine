@@ -24,7 +24,7 @@ import qualified Data.Char as Char
 
 data Expr
   = Int Int
-  | Char Text
+  | Chr Char
   | Float Double
   | Atom Text
   | Var Text
@@ -68,8 +68,8 @@ fromExpr expression =
     Int n ->
       decimal n
 
-    Char c ->
-      fromChar (Text.head c)
+    Chr c ->
+      decimal (Char.ord c)
 
     Float n ->
       formatRealFloat Exponent (Just 20) n
@@ -98,12 +98,17 @@ fromExpr expression =
 
     BitString text ->
       let
+        sep =
+          ", "
+
         bitChar c =
-          "#<" <> fromChar c <> ">(8,1,'integer',['unsigned'|['big']])"
+          "#<" <> (Text.pack . show . Char.ord) c
+          <> ">(8,1,'integer',['unsigned'|['big']])" <> sep
+
+        removeTrail =
+          Text.dropEnd (Text.length sep)
       in
-        "#{"
-        <> commaSep bitChar (toStringLiteral text)
-        <> "}#"
+        "#{" <> fromText (removeTrail (Text.concatMap bitChar text)) <> "}#"
 
     Fun args body ->
       fromFun args " " (fromExpr body)
@@ -120,11 +125,6 @@ fromFunctionName name airity =
 fromFun :: [Text] -> Builder -> Builder -> Builder
 fromFun args separator body =
   "fun (" <> commaSep safeVar args <> ") ->" <> separator <> body
-
-
-fromChar :: Char -> Builder
-fromChar c =
-  decimal (Char.ord c)
 
 
 
@@ -144,16 +144,3 @@ safeVar name =
 quoted :: Text -> Builder
 quoted str =
   "'" <> fromText str <> "'"
-
-
-toStringLiteral :: Text -> String
-toStringLiteral =
-  let
-    surround with t =
-      with <> t <> with
-  in
-    read
-    . Text.unpack
-    . surround "\""
-    . Text.replace "\"" "\\\""
-    . Text.replace "\\'" "'"

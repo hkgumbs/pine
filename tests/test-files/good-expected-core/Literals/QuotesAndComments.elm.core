@@ -1,3 +1,5 @@
+'elm_lang@core@Main@newline'/0 = fun () ->
+	10
 'elm_lang@core@Main@commentStart'/0 = fun () ->
 	#{#<123>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']])}#
 'elm_lang@core@Main@singleQuote'/0 = fun () ->

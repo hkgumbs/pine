@@ -1,0 +1,2 @@
+'elm_lang@core@Main@u'/0 = fun () ->
+	#{#<85>(8,1,'integer',['unsigned'|['big']]), #<83>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<186>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<184>(8,1,'integer',['unsigned'|['big']])}#

@@ -191,6 +191,7 @@ testMatchesExpected elmDir expectedOutputDir =
           , "Literals" </> "Characters.elm"
           , "Literals" </> "Multiline.elm"
           , "Literals" </> "QuotesAndComments.elm"
+          , "Literals" </> "Unicode.elm"
           , "Lists" </> "EmptyList.elm"
           , "Lists" </> "NonEmptyList.elm"
           , "Functions" </> "Simple.elm"

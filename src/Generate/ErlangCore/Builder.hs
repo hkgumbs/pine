@@ -9,11 +9,12 @@ module Generate.ErlangCore.Builder
 
 import Data.Monoid ((<>))
 import Data.Text (Text)
+import Data.ByteString (ByteString)
 import Data.Text.Lazy.Builder
 import Data.Text.Lazy.Builder.Int (decimal)
 import Data.Text.Lazy.Builder.RealFloat (formatRealFloat, FPFormat(..))
 import qualified Data.Text.Lazy as LazyText
-import qualified Data.Text as Text
+import qualified Data.ByteString as ByteString
 import qualified Data.List as List
 import qualified Data.Char as Char
 
@@ -32,7 +33,7 @@ data Expr
   | Call Text Text [Expr]
   | Tuple [Expr]
   | List [Expr]
-  | BitString Text
+  | BitString ByteString
   | Fun [Text] Expr
   | FunctionRef Text Int
 
@@ -96,19 +97,13 @@ fromExpr expression =
     List exprs ->
       "[" <> commaSep fromExpr exprs <> "]"
 
-    BitString text ->
+    BitString str ->
       let
-        sep =
-          ", "
-
-        bitChar c =
-          "#<" <> (Text.pack . show . Char.ord) c
-          <> ">(8,1,'integer',['unsigned'|['big']])" <> sep
-
-        removeTrail =
-          Text.dropEnd (Text.length sep)
+        bitChar c rest =
+          "#<" <> fromString (show c)
+          <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
-        "#{" <> fromText (removeTrail (Text.concatMap bitChar text)) <> "}#"
+        "#{" <> commaSep id (ByteString.foldr bitChar [] str) <> "}#"
 
     Fun args body ->
       fromFun args " " (fromExpr body)

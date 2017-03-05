@@ -8,6 +8,8 @@ module Generate.ErlangCore.String
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text as Text
+import qualified Data.Char as Char
+import qualified Numeric
 
 import Generate.ErlangCore.Builder as Core
 
@@ -24,8 +26,41 @@ bitString =
 
 unescape :: Text -> Text
 unescape =
-  Text.replace "\\'" "'"
-  . Text.replace "\\\"" "\""
-  . Text.replace "\\n" "\n"
-  . Text.replace "\\t" "\t"
-  . Text.replace "\\\\" "\\"
+  snd . Text.foldl unescapeHelp (No, Text.empty)
+
+
+unescapeHelp :: (Escaping, Text) -> Char -> (Escaping, Text)
+unescapeHelp (escaping, textSoFar) next =
+  let
+    appendFinal =
+      (,) No . Text.append textSoFar . Text.singleton
+  in
+    case (escaping, next) of
+
+      -- unicode sequence (i.e. \u1F1F)
+      (Yes, 'u') -> (Unicode "", textSoFar)
+      (Unicode hex, _) | length hex < 3 ->
+        (Unicode (hex ++ [next]), textSoFar)
+      (Unicode hex, _) ->
+        appendFinal . Char.chr
+        . fst . head . Numeric.readHex $ hex ++ [next]
+
+      -- regular escape codes
+      (Yes, 'b') -> appendFinal '\b'
+      (Yes, 'f') -> appendFinal '\f'
+      (Yes, 'n') -> appendFinal '\n'
+      (Yes, 'r') -> appendFinal '\r'
+      (Yes, 't') -> appendFinal '\t'
+      (Yes, 'v') -> appendFinal '\v'
+
+      -- start escaping
+      (No, '\\') -> (Yes, textSoFar)
+
+      -- normal string character
+      _ -> appendFinal next
+
+
+data Escaping
+  = No
+  | Yes
+  | Unicode String

@@ -10,6 +10,7 @@ import qualified Generate.ErlangCore.Builder as Core
 import qualified AST.Expression.Canonical as Can
 import qualified AST.Literal as Literal
 import qualified AST.Expression.Canonical as Can
+import qualified AST.Pattern as Pattern
 import qualified Reporting.Annotation as Annotation
 
 import qualified Generate.ErlangCore.Builder as Core
@@ -49,6 +50,12 @@ generateExpr expr =
 
     Can.Program _main body ->
       generateExpr body
+
+    Can.Case expr clauses ->
+      Core.Case (generateExpr expr) (map generateClause clauses)
+
+    Can.Program _main expr ->
+      generateExpr expr
 
 
 generateLiteral :: Literal.Literal -> Core.Expr
@@ -96,3 +103,17 @@ generateApp f arg =
 
       _ ->
         Function.internalCall (generateExpr function) generatedArgs
+
+
+generateClause :: (Pattern.Canonical, Can.Expr) -> Core.Clause
+generateClause ((Annotation.A _ pattern), expr) =
+  let
+    clause p =
+      Core.Clause p (Core.Atom "true") (generateExpr expr)
+  in
+    case pattern of
+      Pattern.Anything ->
+        clause Core.Anything
+
+      Pattern.Literal literal ->
+        clause (generateLiteral literal)

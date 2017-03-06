@@ -1,12 +1,13 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..)
+  ( Expr(..), Clause(..)
   , Function(..)
   , functionsToText
   )
   where
 
+import Prelude hiding (break)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.ByteString (ByteString)
@@ -29,13 +30,23 @@ data Expr
   | Float Double
   | Atom Text
   | Var Text
+  | Anything
   | Apply Expr [Expr]
   | Call Text Text [Expr]
   | Tuple [Expr]
   | List [Expr]
   | BitString ByteString
+  | Case Expr [Clause]
   | Fun [Text] Expr
   | FunctionRef Text Int
+
+
+data Clause =
+  Clause
+    { _pattern :: Expr
+    , _guard :: Expr
+    , _body :: Expr
+    }
 
 
 
@@ -56,7 +67,7 @@ fromFunction function =
   case function of
     Function name args body ->
       fromFunctionName name (length args) <> " = "
-      <> fromFun args "\n\t" (fromExpr body) <> "\n"
+      <> fromFun args break (fromExpr body) <> "\n"
 
 
 
@@ -81,6 +92,9 @@ fromExpr expression =
     Var name ->
       safeVar name
 
+    Anything ->
+      "_"
+
     Apply function args ->
       "apply " <> fromExpr function <> " ("
       <> commaSep fromExpr args
@@ -104,6 +118,14 @@ fromExpr expression =
           <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
+
+    Case expr clauses ->
+      let
+        clause (Clause pattern guard body) =
+          break <> "<" <> fromExpr pattern <> "> when " <> fromExpr guard
+          <> " -> " <> fromExpr body
+      in
+        "case " <> fromExpr expr <> " of" <> mconcat (map clause clauses)
 
     Fun args body ->
       fromFun args " " (fromExpr body)
@@ -139,3 +161,8 @@ safeVar name =
 quoted :: Text -> Builder
 quoted str =
   "'" <> fromText str <> "'"
+
+
+break :: Builder
+break =
+  "\n\t"

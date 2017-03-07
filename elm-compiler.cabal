@@ -91,7 +91,6 @@ Library
         Nitpick.Pattern,
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
-        Optimize,
         Optimize.Case,
         Optimize.DecisionTree,
         Optimize.Environment,
@@ -212,7 +211,6 @@ Test-Suite compiler-tests
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes
-        Optimize
         Optimize.Case
         Optimize.DecisionTree
         Optimize.Environment

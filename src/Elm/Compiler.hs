@@ -124,7 +124,7 @@ data Result = Result
     }
 
 
-docsGen :: Bool -> Module.Optimized -> Result.Result () w Error.Error (Maybe Docs.Documentation)
+docsGen :: Bool -> Module.Module (Module.Info a) -> Result.Result () w Error.Error (Maybe Docs.Documentation)
 docsGen isExposed (Module.Module name _ info) =
   if not isExposed then
     Result.ok Nothing

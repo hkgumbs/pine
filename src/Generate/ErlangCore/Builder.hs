@@ -99,11 +99,11 @@ fromExpr expression =
 
     BitString str ->
       let
-        bitChar c rest =
+        collectWord c rest =
           "#<" <> fromString (show c)
           <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
-        "#{" <> commaSep id (ByteString.foldr bitChar [] str) <> "}#"
+        "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
 
     Fun args body ->
       fromFun args " " (fromExpr body)

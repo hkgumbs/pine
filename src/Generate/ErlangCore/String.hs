@@ -24,6 +24,12 @@ bitString =
   Core.BitString . encodeUtf8 . unescape
 
 
+data Escaping
+  = No
+  | Yes
+  | Unicode String
+
+
 unescape :: Text -> Text
 unescape =
   snd . Text.foldl unescapeHelp (No, Text.empty)
@@ -58,9 +64,3 @@ unescapeHelp (escaping, textSoFar) next =
 
       -- normal string character
       _ -> appendFinal next
-
-
-data Escaping
-  = No
-  | Yes
-  | Unicode String

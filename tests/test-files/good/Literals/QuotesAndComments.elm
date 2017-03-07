@@ -6,5 +6,5 @@ doubleQuote = '\"'
 singleQuote = '\''
 
 
-{- this is an {- embeded comment -} -}
+{- this is an {- embedded comment -} -}
 commentStart = "{-"

@@ -195,6 +195,7 @@ testMatchesExpected elmDir expectedOutputDir =
           , "Lists" </> "EmptyList.elm"
           , "Lists" </> "NonEmptyList.elm"
           , "Cases" </> "CharCase.elm"
+          , "Cases" </> "ListZip.elm"
           , "Functions" </> "Simple.elm"
           , "Functions" </> "AsArgument.elm"
           , "Functions" </> "Native.elm"

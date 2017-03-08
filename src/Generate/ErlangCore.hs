@@ -46,10 +46,7 @@ generateExpr expr =
       generateApp f arg
 
     Can.Ctor var exprs ->
-      Core.Tuple (Core.Atom (Var._name var) : map generateExpr exprs) 
-
-    Can.Program _main body ->
-      generateExpr body
+      generateCtor var (map generateExpr exprs)
 
     Can.Case expr clauses ->
       Core.Case (generateExpr expr) (map generateClause clauses)
@@ -106,14 +103,29 @@ generateApp f arg =
 
 
 generateClause :: (Pattern.Canonical, Can.Expr) -> Core.Clause
-generateClause ((Annotation.A _ pattern), expr) =
-  let
-    clause p =
-      Core.Clause p (Core.Atom "true") (generateExpr expr)
-  in
-    case pattern of
-      Pattern.Anything ->
-        clause Core.Anything
+generateClause (pattern, expr) =
+  Core.Clause (generatePattern pattern) (Core.Atom "true") (generateExpr expr)
 
-      Pattern.Literal literal ->
-        clause (generateLiteral literal)
+
+generatePattern :: Pattern.Canonical -> Core.Expr
+generatePattern pattern =
+  case Annotation.drop pattern of
+    Pattern.Anything ->
+      Core.Anything
+
+    Pattern.Var name ->
+      Core.Var name
+
+    Pattern.Literal literal ->
+      generateLiteral literal
+
+    Pattern.Ctor var args ->
+      generateCtor var (map generatePattern args)
+
+
+generateCtor :: Var.Canonical -> [Core.Expr] -> Core.Expr
+generateCtor var args | Var.isTuple var =
+  Core.Tuple args
+
+generateCtor (Var.Canonical _home name) args =
+  Core.Tuple (Core.Atom name : args)

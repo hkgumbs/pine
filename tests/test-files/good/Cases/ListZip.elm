@@ -1,6 +1,6 @@
 
 type List a
-    = Nil 
+    = Nil
     | Cons a (List a)
 
 

@@ -126,6 +126,7 @@ fromExpr expression =
           <> " -> " <> fromExpr body
       in
         "case " <> fromExpr expr <> " of" <> mconcat (map clause clauses)
+        <> break <> "end"
 
     Fun args body ->
       fromFun args " " (fromExpr body)

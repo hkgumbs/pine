@@ -4,10 +4,12 @@ module Generate.ErlangCore (generate) where
 import qualified Data.Text.Lazy as LazyText
 
 import qualified AST.Module as Module
+import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
 import qualified Generate.ErlangCore.Builder as Core
 import qualified AST.Expression.Canonical as Can
 import qualified AST.Literal as Literal
+import qualified AST.Expression.Canonical as Can
 import qualified Reporting.Annotation as Annotation
 
 import qualified Generate.ErlangCore.Builder as Core
@@ -16,7 +18,7 @@ import qualified Generate.ErlangCore.String as String
 
 
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
-generate (Module.Module name _ info) =
+generate (Module.Module name _path info) =
   let
     generateDef (Can.Def _region pattern body _maybeType) =
       Function.topLevel name pattern (generateExpr body)
@@ -25,8 +27,8 @@ generate (Module.Module name _ info) =
 
 
 generateExpr :: Can.Expr -> Core.Expr
-generateExpr (Annotation.A _region canonical) =
-  case canonical of
+generateExpr expr =
+  case Annotation.drop expr of
     Can.Literal literal ->
       generateLiteral literal
 
@@ -39,14 +41,14 @@ generateExpr (Annotation.A _region canonical) =
     Can.Lambda pattern body ->
       Function.lambda pattern (generateExpr body)
 
-    Can.App function arg ->
-      Function.app generateExpr function arg
+    Can.App f arg ->
+      generateApp f arg
 
-    Can.Ctor (Var.Canonical _home name) exprs ->
-      Core.Tuple (Core.Atom name : map generateExpr exprs)
+    Can.Ctor var exprs ->
+      Core.Tuple (Core.Atom (Var._name var) : map generateExpr exprs) 
 
-    Can.Program _main expr ->
-      generateExpr expr
+    Can.Program _main body ->
+      generateExpr body
 
 
 generateLiteral :: Literal.Literal -> Core.Expr
@@ -76,3 +78,21 @@ generateVar (Var.Canonical home name) =
 
     Var.TopLevel moduleName ->
       Function.reference moduleName name
+
+
+generateApp :: Can.Expr -> Can.Expr -> Core.Expr
+generateApp f arg =
+  let
+    splitFunction apps =
+      (head apps, map generateExpr (tail apps ++ [arg]))
+
+    (function, generatedArgs) =
+      splitFunction (Can.collectApps f)
+  in
+    case Annotation.drop function of
+      Can.Var (Var.Canonical (Var.Module moduleName) name)
+        | ModuleName.canonicalIsNative moduleName ->
+        Function.nativeCall moduleName name generatedArgs
+
+      _ ->
+        Function.internalCall (generateExpr function) generatedArgs

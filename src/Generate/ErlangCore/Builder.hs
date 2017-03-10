@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Clause(..)
+  ( Expr(..), Literal(..), Terminal(..), Clause(..)
   , Function(..)
   , functionsToText
   )
@@ -25,29 +25,37 @@ import qualified Data.Char as Char
 
 
 data Expr
-  = Int Int
-  | Chr Char
-  | Float Double
-  | Atom Text
-  | Var Text
-  | Anything
+  = Lit (Literal Expr)
   | Apply Expr [Expr]
   | Call Text Text [Expr]
-  | Tuple [Expr]
-  | List [Expr]
-  | BitString ByteString
   | Case Expr [Clause]
   | Fun [Text] Expr
   | FunctionRef Text Int
 
 
+data Literal a
+  = Term Terminal
+  | NonTerm a
+  | Tuple [Literal a]
+  | List [Literal a]
+
+
+data Terminal
+  = Int Int
+  | Char Char
+  | Float Double
+  | Atom Text
+  | Var Text
+  | Anything
+  | BitString ByteString
+
+
 data Clause =
   Clause
-    { _pattern :: Expr
+    { _pattern :: Literal Terminal
     , _guard :: Expr
     , _body :: Expr
     }
-
 
 
 -- TOP LEVEL
@@ -77,10 +85,59 @@ fromFunction function =
 fromExpr :: Expr -> Builder
 fromExpr expression =
   case expression of
+    Lit lit ->
+      fromLiteral fromExpr lit
+
+    Apply function args ->
+      "apply " <> fromExpr function <> " ("
+      <> commaSep fromExpr args
+      <> ")"
+
+    Call moduleName functionName args ->
+      "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
+      <> commaSep fromExpr args
+      <> ")"
+
+    Case expr clauses ->
+      let
+        clause (Clause pattern guard body) =
+          break <> "<" <> fromLiteral fromTerminal pattern
+          <> "> when " <> fromExpr guard
+          <> " -> " <> fromExpr body
+      in
+        "case " <> fromExpr expr <> " of" <> mconcat (map clause clauses)
+        <> break <> "end"
+
+    Fun args body ->
+      fromFun args " " (fromExpr body)
+
+    FunctionRef name airity ->
+      fromFunctionName name airity
+
+
+fromLiteral :: (a -> Builder) -> Literal a -> Builder
+fromLiteral buildInner literal =
+  case literal of
+    Term term ->
+      fromTerminal term
+
+    NonTerm nonterm ->
+      buildInner nonterm
+
+    Tuple inner ->
+      "{" <> commaSep (fromLiteral buildInner) inner <> "}"
+
+    List inner ->
+      "[" <> commaSep (fromLiteral buildInner) inner <> "]"
+
+
+fromTerminal :: Terminal -> Builder
+fromTerminal term =
+  case term of
     Int n ->
       decimal n
 
-    Chr c ->
+    Char c ->
       decimal (Char.ord c)
 
     Float n ->
@@ -95,22 +152,6 @@ fromExpr expression =
     Anything ->
       "_"
 
-    Apply function args ->
-      "apply " <> fromExpr function <> " ("
-      <> commaSep fromExpr args
-      <> ")"
-
-    Call moduleName functionName args ->
-      "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
-      <> commaSep fromExpr args
-      <> ")"
-
-    Tuple exprs ->
-      "{" <> commaSep fromExpr exprs <> "}"
-
-    List exprs ->
-      "[" <> commaSep fromExpr exprs <> "]"
-
     BitString str ->
       let
         collectWord c rest =
@@ -118,21 +159,6 @@ fromExpr expression =
           <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
-
-    Case expr clauses ->
-      let
-        clause (Clause pattern guard body) =
-          break <> "<" <> fromExpr pattern <> "> when " <> fromExpr guard
-          <> " -> " <> fromExpr body
-      in
-        "case " <> fromExpr expr <> " of" <> mconcat (map clause clauses)
-        <> break <> "end"
-
-    Fun args body ->
-      fromFun args " " (fromExpr body)
-
-    FunctionRef name airity ->
-      fromFunctionName name airity
 
 
 fromFunctionName :: Text -> Int -> Builder

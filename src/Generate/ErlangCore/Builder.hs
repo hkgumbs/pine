@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Literal(..), Terminal(..), Clause(..)
+  ( Expr(..), Literal(..), Clause(..), Pattern(..)
   , Function(..)
   , functionsToText
   )
@@ -26,21 +26,14 @@ import qualified Data.Char as Char
 
 data Expr
   = Lit (Literal Expr)
-  | Apply Expr [Expr]
-  | Call Text Text [Expr]
-  | Case Expr [Clause]
-  | Fun [Text] Expr
-  | FunctionRef Text Int
+  | Apply Expr [Expr] -- apply 'f'/0 ()
+  | Call Text Text [Expr] -- call 'module':'f' ()
+  | Case Expr [Clause] -- case <_cor0> of ...
+  | Fun [Text] Expr -- fun () -> ...
+  | FunctionRef Text Int -- 'f'/0
 
 
 data Literal a
-  = Term Terminal
-  | NonTerm a
-  | Tuple [Literal a]
-  | List [Literal a]
-
-
-data Terminal
   = Int Int
   | Char Char
   | Float Double
@@ -48,21 +41,27 @@ data Terminal
   | Var Text
   | Anything
   | BitString ByteString
+  | Tuple [a]
+  | List [a]
 
 
-data Clause =
-  Clause
-    { _pattern :: Literal Terminal
+data Clause
+  = Clause
+    { _pattern :: Pattern
     , _guard :: Expr
     , _body :: Expr
     }
+
+
+data Pattern
+  = Pattern (Literal Pattern)
 
 
 -- TOP LEVEL
 
 
 data Function
-  = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
+  = Function Text [Text] Expr -- 'f'/0 = fun () -> [1, 2]
 
 
 functionsToText :: [Function] -> LazyText.Text
@@ -101,7 +100,7 @@ fromExpr expression =
     Case expr clauses ->
       let
         clause (Clause pattern guard body) =
-          break <> "<" <> fromLiteral fromTerminal pattern
+          break <> "<" <> fromPattern pattern
           <> "> when " <> fromExpr guard
           <> " -> " <> fromExpr body
       in
@@ -118,22 +117,6 @@ fromExpr expression =
 fromLiteral :: (a -> Builder) -> Literal a -> Builder
 fromLiteral buildInner literal =
   case literal of
-    Term term ->
-      fromTerminal term
-
-    NonTerm nonterm ->
-      buildInner nonterm
-
-    Tuple inner ->
-      "{" <> commaSep (fromLiteral buildInner) inner <> "}"
-
-    List inner ->
-      "[" <> commaSep (fromLiteral buildInner) inner <> "]"
-
-
-fromTerminal :: Terminal -> Builder
-fromTerminal term =
-  case term of
     Int n ->
       decimal n
 
@@ -159,6 +142,17 @@ fromTerminal term =
           <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
+
+    Tuple inners ->
+      "{" <> commaSep buildInner inners <> "}"
+
+    List inners ->
+      "[" <> commaSep buildInner inners <> "]"
+
+
+fromPattern :: Pattern -> Builder
+fromPattern (Pattern lit) =
+  fromLiteral fromPattern lit
 
 
 fromFunctionName :: Text -> Int -> Builder

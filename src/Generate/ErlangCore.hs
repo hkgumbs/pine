@@ -31,13 +31,13 @@ generateExpr :: Can.Expr -> Core.Expr
 generateExpr expr =
   case Annotation.drop expr of
     Can.Literal literal ->
-      Core.Lit $ generateLiteral literal
+      Core.Lit (generateLiteral literal)
 
     Can.Var var ->
       generateVar var
 
     Can.List exprs ->
-      Core.Lit . Core.List $ map (Core.NonTerm . generateExpr) exprs
+      Core.Lit . Core.List $ map generateExpr exprs
 
     Can.Lambda pattern body ->
       Function.lambda pattern (generateExpr body)
@@ -46,7 +46,7 @@ generateExpr expr =
       generateApp f arg
 
     Can.Ctor var exprs ->
-      Core.Lit $ generateCtor var (map (Core.NonTerm . generateExpr) exprs)
+      generateCtor Core.Lit var (map generateExpr exprs)
 
     Can.Case expr clauses ->
       Core.Case (generateExpr expr) (map generateClause clauses)
@@ -59,10 +59,10 @@ generateLiteral :: Literal.Literal -> Core.Literal a
 generateLiteral literal =
   case literal of
     Literal.FloatNum n ->
-      Core.Term $ Core.Float n
+      Core.Float n
 
     Literal.IntNum n ->
-      Core.Term $ Core.Int n
+      Core.Int n
 
     Literal.Chr c ->
       String.character c
@@ -75,7 +75,7 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
-      Core.Lit . Core.Term $ Core.Var name
+      Core.Lit (Core.Var name)
 
     Var.Module moduleName ->
       Function.reference moduleName name
@@ -106,30 +106,30 @@ generateClause :: (Pattern.Canonical, Can.Expr) -> Core.Clause
 generateClause (pattern, expr) =
   let
     noOpGuard =
-      (Core.Lit . Core.Term . Core.Atom) "true"
+      Core.Lit (Core.Atom "true")
   in
     Core.Clause (generatePattern pattern) noOpGuard (generateExpr expr)
 
 
-generatePattern :: Pattern.Canonical -> Core.Literal Core.Terminal
+generatePattern :: Pattern.Canonical -> Core.Pattern
 generatePattern pattern =
   case Annotation.drop pattern of
     Pattern.Anything ->
-      Core.Term Core.Anything
+      Core.Pattern Core.Anything
 
     Pattern.Var name ->
-      Core.Term $ Core.Var name
+      Core.Pattern (Core.Var name)
 
     Pattern.Literal literal ->
-      generateLiteral literal
+      Core.Pattern (generateLiteral literal)
 
     Pattern.Ctor var args ->
-      generateCtor var (map generatePattern args)
+      generateCtor Core.Pattern var (map generatePattern args)
 
 
-generateCtor :: Var.Canonical -> [Core.Literal a] -> Core.Literal a
-generateCtor var args | Var.isTuple var =
-  Core.Tuple args
+generateCtor :: (Core.Literal a -> a) -> Var.Canonical -> [a] -> a
+generateCtor toInner var | Var.isTuple var =
+  toInner . Core.Tuple
 
-generateCtor (Var.Canonical _home name) args =
-  Core.Tuple $ (Core.Term . Core.Atom) name : args
+generateCtor toInner (Var.Canonical _home name) =
+  toInner . Core.Tuple . (:) (toInner (Core.Atom name))

@@ -16,12 +16,12 @@ import Generate.ErlangCore.Builder as Core
 
 character :: Text -> Core.Literal a
 character =
-  Core.Term . Core.Char . Text.head . unescape
+  Core.Char . Text.head . unescape
 
 
 bitString :: Text -> Core.Literal a
 bitString =
-  Core.Term . Core.BitString . encodeUtf8 . unescape
+  Core.BitString . encodeUtf8 . unescape
 
 
 data Escaping

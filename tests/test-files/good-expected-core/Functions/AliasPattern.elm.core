@@ -1,0 +1,8 @@
+'elm_lang@core@Main@toNumber'/0 = fun () ->
+	fun (_tmp) -> case _tmp of
+	<{'A', _bool1}> when 'true' -> fun (_tmp) -> case _tmp of
+	<{'A', _bool2}> when 'true' -> 1
+	end
+	end
+'elm_lang@core@Main@A'/0 = fun () ->
+	fun (_v1) -> {'A', _v1}

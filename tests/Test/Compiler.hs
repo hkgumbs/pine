@@ -199,6 +199,7 @@ testMatchesExpected elmDir expectedOutputDir =
           , "Functions" </> "Simple.elm"
           , "Functions" </> "AsArgument.elm"
           , "Functions" </> "Native.elm"
+          , "Functions" </> "AliasPattern.elm"
           , "Declarations" </> "Types.elm"
           , "CodeGenBugs" </> "CommentInterpretedAsInfix.elm"
           ]

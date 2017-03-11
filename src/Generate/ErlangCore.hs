@@ -2,6 +2,7 @@
 module Generate.ErlangCore (generate) where
 
 import qualified Data.Text.Lazy as LazyText
+import qualified Data.Text as Text
 import Data.Text (Text)
 
 import qualified AST.Module as Module
@@ -79,7 +80,8 @@ generateExpr expr =
       generateCtor Core.Lit var (map generateExpr exprs)
 
     Can.Case expr clauses ->
-      Core.Case (generateExpr expr) (map generateClause clauses)
+      Core.Case (generateExpr expr) $
+        map (\(pat, body) -> generateClause pat (generateExpr body)) clauses
 
     Can.Program _main expr ->
       generateExpr expr
@@ -140,19 +142,19 @@ generateApp f arg =
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr
-generateLambda pattern =
+generateLambda pattern body =
   case Annotation.drop pattern of
     Pattern.Var name ->
-      Core.Fun [name]
+      Core.Fun [name] body
+
+    Pattern.Ctor _var _args ->
+      Core.Fun ["tmp"] $
+        Core.Case (Core.Lit (Core.Var "tmp")) [generateClause pattern body]
 
 
-generateClause :: (Pattern.Canonical, Can.Expr) -> Core.Clause
-generateClause (pattern, expr) =
-  let
-    noOpGuard =
-      Core.Lit (Core.Atom "true")
-  in
-    Core.Clause (generatePattern pattern) noOpGuard (generateExpr expr)
+generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause
+generateClause pattern expr =
+  Core.Clause (generatePattern pattern) (Core.Lit (Core.Atom "true")) expr
 
 
 generatePattern :: Pattern.Canonical -> Core.Pattern

@@ -86,7 +86,6 @@ Library
         Elm.Compiler.Version,
         Generate.ErlangCore,
         Generate.ErlangCore.Builder,
-        Generate.ErlangCore.Function,
         Generate.ErlangCore.String,
         Nitpick.Pattern,
         Nitpick.PatternMatches,
@@ -206,7 +205,6 @@ Test-Suite compiler-tests
         Elm.Utils
         Generate.ErlangCore
         Generate.ErlangCore.Builder
-        Generate.ErlangCore.Function
         Generate.ErlangCore.String
         Nitpick.Pattern
         Nitpick.PatternMatches

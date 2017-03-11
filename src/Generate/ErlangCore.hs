@@ -2,6 +2,7 @@
 module Generate.ErlangCore (generate) where
 
 import qualified Data.Text.Lazy as LazyText
+import Data.Text (Text)
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
@@ -11,20 +12,25 @@ import qualified AST.Expression.Canonical as Can
 import qualified AST.Literal as Literal
 import qualified AST.Expression.Canonical as Can
 import qualified AST.Pattern as Pattern
+import qualified AST.Helpers as Helpers
 import qualified Reporting.Annotation as Annotation
+import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.Function as Function
 import qualified Generate.ErlangCore.String as String
 
 
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
 generate (Module.Module name _path info) =
-  let
-    generateDef (Can.Def _region pattern body _maybeType) =
-      Function.topLevel name pattern (generateExpr body)
-  in
-    Core.functionsToText $ map generateDef (Module.program info)
+  Core.functionsToText $ map (generateDef name) (Module.program info)
+
+
+generateDef :: ModuleName.Canonical -> Can.Def -> Core.Function
+generateDef moduleName (Can.Def _region pattern body _maybeType) =
+  -- wrap all top-level values in a no-arg function.
+  case Annotation.drop pattern of
+    Pattern.Var name ->
+      Core.Function (qualifiedVar moduleName name) [] (generateExpr body)
 
 
 generateExpr :: Can.Expr -> Core.Expr
@@ -40,7 +46,7 @@ generateExpr expr =
       Core.Lit . Core.List $ map generateExpr exprs
 
     Can.Lambda pattern body ->
-      Function.lambda pattern (generateExpr body)
+      generateLambda pattern (generateExpr body)
 
     Can.App f arg ->
       generateApp f arg
@@ -73,15 +79,19 @@ generateLiteral literal =
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
-  case home of
-    Var.Local ->
-      Core.Lit (Core.Var name)
+  let
+    reference moduleName =
+      Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
+  in
+    case home of
+      Var.Local ->
+        Core.Lit (Core.Var name)
 
-    Var.Module moduleName ->
-      Function.reference moduleName name
+      Var.Module moduleName ->
+        reference moduleName
 
-    Var.TopLevel moduleName ->
-      Function.reference moduleName name
+      Var.TopLevel moduleName ->
+        reference moduleName
 
 
 generateApp :: Can.Expr -> Can.Expr -> Core.Expr
@@ -96,10 +106,17 @@ generateApp f arg =
     case Annotation.drop function of
       Can.Var (Var.Canonical (Var.Module moduleName) name)
         | ModuleName.canonicalIsNative moduleName ->
-        Function.nativeCall moduleName name generatedArgs
+        Core.Call (moduleToText moduleName) name generatedArgs
 
       _ ->
-        Function.internalCall (generateExpr function) generatedArgs
+        foldl (\f a -> Core.Apply f [a]) (generateExpr function) generatedArgs
+
+
+generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr
+generateLambda pattern =
+  case Annotation.drop pattern of
+    Pattern.Var name ->
+      Core.Fun [name]
 
 
 generateClause :: (Pattern.Canonical, Can.Expr) -> Core.Clause
@@ -128,8 +145,8 @@ generatePattern pattern =
 
 
 generateCtor :: (Core.Literal a -> a) -> Var.Canonical -> [a] -> a
-generateCtor toInner var | Var.isTuple var =
-  toInner . Core.Tuple
-
-generateCtor toInner (Var.Canonical _home name) =
-  toInner . Core.Tuple . (:) (toInner (Core.Atom name))
+generateCtor toInner var =
+  if Var.isTuple var then
+    toInner . Core.Tuple
+  else
+    toInner . Core.Tuple . (:) (toInner (Core.Atom (Var._name var)))

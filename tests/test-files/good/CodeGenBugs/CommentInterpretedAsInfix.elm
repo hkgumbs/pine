@@ -5,8 +5,8 @@
 
 (|>) a f = f a
 
-always x s = x 
+always x s = x
 
-value = "Hi"
-    |> always "Hello"
+value = 1
+    |> always 2
     --|> always "Bye"

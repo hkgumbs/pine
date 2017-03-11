@@ -27,10 +27,31 @@ generate (Module.Module name _path info) =
 
 generateDef :: ModuleName.Canonical -> Can.Def -> Core.Function
 generateDef moduleName (Can.Def _region pattern body _maybeType) =
-  -- wrap all top-level values in a no-arg function.
   case Annotation.drop pattern of
+    Pattern.Var name | Helpers.isOp name ->
+      uncurry (generateOp moduleName name) (Can.collectLambdas body)
+
     Pattern.Var name ->
       Core.Function (qualifiedVar moduleName name) [] (generateExpr body)
+
+
+generateOp
+  :: ModuleName.Canonical
+  -> Text
+  -> [Pattern.Canonical]
+  -> Can.Expr
+  -> Core.Function
+generateOp moduleName name args body =
+  let
+    patternToText p =
+      case Annotation.drop p of
+        Pattern.Var text ->
+          text
+  in
+    Core.Function
+      (qualifiedVar moduleName name)
+      (map patternToText args)
+      (generateExpr body)
 
 
 generateExpr :: Can.Expr -> Core.Expr
@@ -44,6 +65,9 @@ generateExpr expr =
 
     Can.List exprs ->
       Core.Lit . Core.List $ map generateExpr exprs
+
+    Can.Binop var lhs rhs ->
+      Core.Apply (generateVar var) [generateExpr lhs, generateExpr rhs]
 
     Can.Lambda pattern body ->
       generateLambda pattern (generateExpr body)
@@ -81,7 +105,10 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
     reference moduleName =
-      Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
+      if Helpers.isOp name then
+        Core.FunctionRef (qualifiedVar moduleName name) 2
+      else
+        Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
   in
     case home of
       Var.Local ->

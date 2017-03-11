@@ -33,7 +33,7 @@ data Expr
   | FunctionRef Text Int -- 'f'/0
 
 
-data Literal a
+data Literal context
   = Int Int
   | Char Char
   | Float Double
@@ -41,8 +41,8 @@ data Literal a
   | Var Text
   | Anything
   | BitString ByteString
-  | Tuple [a]
-  | List [a]
+  | Tuple [context]
+  | List [context]
 
 
 data Clause

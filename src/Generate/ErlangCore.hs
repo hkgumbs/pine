@@ -90,17 +90,20 @@ generateExpr expr =
 generateLiteral :: Literal.Literal -> Core.Literal a
 generateLiteral literal =
   case literal of
-    Literal.FloatNum n ->
-      Core.Float n
-
-    Literal.IntNum n ->
-      Core.Int n
-
     Literal.Chr c ->
       String.character c
 
     Literal.Str text ->
       String.bitString text
+
+    Literal.IntNum n ->
+      Core.Int n
+
+    Literal.FloatNum n ->
+      Core.Float n
+
+    Literal.Boolean b ->
+      Core.Atom $ if b then "true" else "false"
 
 
 generateVar :: Var.Canonical -> Core.Expr
@@ -144,12 +147,16 @@ generateApp f arg =
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr
 generateLambda pattern body =
   case Annotation.drop pattern of
+    Pattern.Ctor _var _args ->
+      Core.Fun ["_tmp"] $
+        Core.Case (Core.Lit (Core.Var "_tmp")) [generateClause pattern body]
+
+    Pattern.Alias name aliased ->
+      Core.Fun [name] $
+        Core.Case (Core.Lit (Core.Var name)) [generateClause aliased body]
+
     Pattern.Var name ->
       Core.Fun [name] body
-
-    Pattern.Ctor _var _args ->
-      Core.Fun ["tmp"] $
-        Core.Case (Core.Lit (Core.Var "tmp")) [generateClause pattern body]
 
 
 generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause

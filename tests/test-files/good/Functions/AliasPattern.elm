@@ -1,5 +1,8 @@
 
 type A = A Bool
 
-toNumber (A bool1) (A bool2) =
-  1
+unpackParams (A bool1) (A bool2) =
+  False
+
+paramAs (A _ as a) =
+  True

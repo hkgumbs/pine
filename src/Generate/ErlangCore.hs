@@ -147,17 +147,20 @@ generateApp f arg =
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr
 generateLambda pattern body =
-  case Annotation.drop pattern of
-    Pattern.Ctor _var _args ->
-      Core.Fun ["_tmp"] $
-        Core.Case (Core.Lit (Core.Var "_tmp")) [generateClause pattern body]
-
-    Pattern.Alias name aliased ->
+  let
+    immediateCase name match =
       Core.Fun [name] $
-        Core.Case (Core.Lit (Core.Var name)) [generateClause aliased body]
+        Core.Case (Core.Lit (Core.Var name)) [generateClause match body]
+  in
+    case Annotation.drop pattern of
+      Pattern.Ctor _var _args ->
+        immediateCase "_tmp" pattern
 
-    Pattern.Var name ->
-      Core.Fun [name] body
+      Pattern.Alias name aliased ->
+        immediateCase name aliased
+
+      Pattern.Var name ->
+        Core.Fun [name] body
 
 
 generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause
@@ -182,20 +185,20 @@ generatePattern pattern =
 
 
 generateCtor :: (Core.Literal a -> a) -> Var.Canonical -> [a] -> a
-generateCtor toInner var =
+generateCtor toContext var args =
   if Var.isPrim "[]" var then
-    \_ -> toInner Core.Nil
+    toContext Core.Nil
 
   else if Var.isPrim "::" var then
-    foldl1 (generateCons toInner)
+    foldl1 (generateCons toContext) args
 
   else if Var.isTuple var then
-    toInner . Core.Tuple
+    toContext . Core.Tuple $ args
 
   else
-    toInner . Core.Tuple . (:) (toInner (Core.Atom (Var._name var)))
+    toContext . Core.Tuple $ toContext (Core.Atom (Var._name var)) : args
 
 
 generateCons :: (Core.Literal a -> a) -> a -> a -> a
-generateCons toContext first rest =
-  toContext (Core.Cons first rest)
+generateCons toContext first =
+  toContext . Core.Cons first

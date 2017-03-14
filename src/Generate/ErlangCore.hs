@@ -65,7 +65,8 @@ generateExpr expr =
       generateVar var
 
     Can.List exprs ->
-      Core.Lit . Core.List $ map generateExpr exprs
+      foldr (generateCons Core.Lit) (Core.Lit Core.Nil) $
+        map generateExpr exprs
 
     Can.Binop var lhs rhs ->
       Core.Apply (generateVar var) [generateExpr lhs, generateExpr rhs]
@@ -182,7 +183,19 @@ generatePattern pattern =
 
 generateCtor :: (Core.Literal a -> a) -> Var.Canonical -> [a] -> a
 generateCtor toInner var =
-  if Var.isTuple var then
+  if Var.isPrim "[]" var then
+    \_ -> toInner Core.Nil
+
+  else if Var.isPrim "::" var then
+    foldl1 (generateCons toInner)
+
+  else if Var.isTuple var then
     toInner . Core.Tuple
+
   else
     toInner . Core.Tuple . (:) (toInner (Core.Atom (Var._name var)))
+
+
+generateCons :: (Core.Literal a -> a) -> a -> a -> a
+generateCons toContext first rest =
+  toContext (Core.Cons first rest)

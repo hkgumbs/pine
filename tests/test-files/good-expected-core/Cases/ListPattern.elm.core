@@ -1,0 +1,6 @@
+'elm_lang@core@Main@length'/0 = fun () ->
+	fun (_list) -> case _list of
+	<[]> when 'true' -> 0
+	<[_a|[]]> when 'true' -> 1
+	<[_a|_rest]> when 'true' -> 2
+	end

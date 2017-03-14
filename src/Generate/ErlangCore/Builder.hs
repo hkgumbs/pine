@@ -42,7 +42,8 @@ data Literal context
   | Anything
   | BitString ByteString
   | Tuple [context]
-  | List [context]
+  | Cons context context
+  | Nil
 
 
 data Clause
@@ -146,8 +147,11 @@ fromLiteral buildInner literal =
     Tuple inners ->
       "{" <> commaSep buildInner inners <> "}"
 
-    List inners ->
-      "[" <> commaSep buildInner inners <> "]"
+    Cons first rest ->
+      "[" <> buildInner first <> "|" <> buildInner rest <> "]"
+
+    Nil ->
+      "[]"
 
 
 fromPattern :: Pattern -> Builder

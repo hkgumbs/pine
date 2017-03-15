@@ -2,7 +2,6 @@
 module Generate.ErlangCore (generate) where
 
 import qualified Data.Text.Lazy as LazyText
-import qualified Data.Text as Text
 import Data.Text (Text)
 
 import qualified AST.Module as Module
@@ -19,6 +18,7 @@ import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
 import qualified Generate.ErlangCore.String as String
+import qualified Generate.ErlangCore.Application as App
 
 
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
@@ -69,7 +69,7 @@ generateExpr expr =
         map generateExpr exprs
 
     Can.Binop var lhs rhs ->
-      Core.Apply (generateVar var) [generateExpr lhs, generateExpr rhs]
+      App.generate (generateVar var) [generateExpr lhs, generateExpr rhs]
 
     Can.Lambda pattern body ->
       generateLambda pattern (generateExpr body)
@@ -114,7 +114,7 @@ generateVar (Var.Canonical home name) =
       if Helpers.isOp name then
         Core.FunctionRef (qualifiedVar moduleName name) 2
       else
-        Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
+        App.generate (Core.FunctionRef (qualifiedVar moduleName name) 0) []
   in
     case home of
       Var.Local ->
@@ -142,7 +142,7 @@ generateApp f arg =
         Core.Call (moduleToText moduleName) name generatedArgs
 
       _ ->
-        foldl (\f a -> Core.Apply f [a]) (generateExpr function) generatedArgs
+        foldl App.generate1 (generateExpr function) generatedArgs
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr

@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore (generate) where
 
+import qualified Control.Monad.State as State
 import qualified Data.Text.Lazy as LazyText
 import Data.Text (Text)
 
@@ -33,7 +34,8 @@ generateDef moduleName (Can.Def _region pattern body _maybeType) =
       uncurry (generateOp moduleName name) (Can.collectLambdas body)
 
     Pattern.Var name ->
-      Core.Function (qualifiedVar moduleName name) [] (generateExpr body)
+      Core.Function (qualifiedVar moduleName name) [] $
+        State.evalState (generateExpr body) 1
 
 
 generateOp
@@ -52,37 +54,40 @@ generateOp moduleName name args body =
     Core.Function
       (qualifiedVar moduleName name)
       (map patternToText args)
-      (generateExpr body)
+      (State.evalState (generateExpr body) 1)
 
 
-generateExpr :: Can.Expr -> Core.Expr
+generateExpr :: Can.Expr -> State.State Int Core.Expr
 generateExpr expr =
   case Annotation.drop expr of
     Can.Literal literal ->
-      Core.Lit (generateLiteral literal)
+      return $ Core.Lit (generateLiteral literal)
 
     Can.Var var ->
-      generateVar var
+      return $ generateVar var
 
     Can.List exprs ->
-      foldr (generateCons Core.Lit) (Core.Lit Core.Nil) $
-        map generateExpr exprs
+      foldr (generateCons Core.Lit) (Core.Lit Core.Nil)
+        <$> mapM generateExpr exprs
 
     Can.Binop var lhs rhs ->
-      App.generate (generateVar var) [generateExpr lhs, generateExpr rhs]
+      do  left <- generateExpr lhs
+          right <- generateExpr rhs
+          return $ App.generate (generateVar var) [left, right]
 
     Can.Lambda pattern body ->
-      generateLambda pattern (generateExpr body)
+      generateLambda pattern <$> generateExpr body
 
     Can.App f arg ->
       generateApp f arg
 
     Can.Ctor var exprs ->
-      generateCtor Core.Lit var (map generateExpr exprs)
+      generateCtor Core.Lit var <$> mapM generateExpr exprs
 
     Can.Case expr clauses ->
-      Core.Case (generateExpr expr) $
-        map (\(pat, body) -> generateClause pat (generateExpr body)) clauses
+      do  switch <- generateExpr expr
+          Core.Case switch <$>
+            mapM (\(pat, body) -> generateClause pat <$> generateExpr body) clauses
 
     Can.Program _main expr ->
       generateExpr expr
@@ -127,11 +132,11 @@ generateVar (Var.Canonical home name) =
         reference moduleName
 
 
-generateApp :: Can.Expr -> Can.Expr -> Core.Expr
+generateApp :: Can.Expr -> Can.Expr -> State.State Int Core.Expr
 generateApp f arg =
   let
     splitFunction apps =
-      (head apps, map generateExpr (tail apps ++ [arg]))
+      (head apps, mapM generateExpr (tail apps ++ [arg]))
 
     (function, generatedArgs) =
       splitFunction (Can.collectApps f)
@@ -139,10 +144,11 @@ generateApp f arg =
     case Annotation.drop function of
       Can.Var (Var.Canonical (Var.Module moduleName) name)
         | ModuleName.canonicalIsNative moduleName ->
-        Core.Call (moduleToText moduleName) name generatedArgs
+        Core.Call (moduleToText moduleName) name <$> generatedArgs
 
       _ ->
-        foldl App.generate1 (generateExpr function) generatedArgs
+        generateExpr function >>= \fun ->
+          foldl App.generate1 fun <$> generatedArgs
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr

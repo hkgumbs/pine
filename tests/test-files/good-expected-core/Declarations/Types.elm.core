@@ -1,4 +1,7 @@
-'elm_lang@core@Main@B'/0 = fun () ->
-	fun (_v1) -> {'B', _v1}
-'elm_lang@core@Main@A'/0 = fun () ->
-	{'A'}
+'elm_lang@core@Main@B'/0 =
+	fun () ->
+		fun (_v1) ->
+			{'B', _v1}
+'elm_lang@core@Main@A'/0 =
+	fun () ->
+		{'A'}

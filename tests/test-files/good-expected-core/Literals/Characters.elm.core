@@ -1,4 +1,6 @@
-'elm_lang@core@Main@uppercase'/0 = fun () ->
-	66
-'elm_lang@core@Main@lowercase'/0 = fun () ->
-	97
+'elm_lang@core@Main@uppercase'/0 =
+	fun () ->
+		66
+'elm_lang@core@Main@lowercase'/0 =
+	fun () ->
+		97

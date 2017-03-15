@@ -1,0 +1,20 @@
+'elm_lang@core@Main@-'/2 =
+	fun (_x, _y) ->
+		_x
+'elm_lang@core@Main@minus'/0 =
+	fun () ->
+		apply 'elm_lang@core@Main@-'/2 (3, 4)
+'elm_lang@core@Main@minusNegative'/0 =
+	fun () ->
+		apply 'elm_lang@core@Main@-'/2 (3, apply 'elm_lang@core@Main@-'/2 (0, 4))
+'elm_lang@core@Main@negativeMinusNegative'/0 =
+	fun () ->
+		apply 'elm_lang@core@Main@-'/2 (apply 'elm_lang@core@Main@-'/2 (0, 3), apply 'elm_lang@core@Main@-'/2 (0, 4))
+'elm_lang@core@Main@negativeInParens'/0 =
+	fun () ->
+		apply 'elm_lang@core@Main@-'/2 (0, 2)
+'elm_lang@core@Main@funcMinus'/0 =
+	fun () ->
+		apply apply fun (_x) ->
+			fun (_y) ->
+				apply 'elm_lang@core@Main@-'/2 (_x, _y) (3) (4)

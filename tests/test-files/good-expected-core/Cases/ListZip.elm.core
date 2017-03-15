@@ -1,10 +1,20 @@
-'elm_lang@core@Main@Cons'/0 = fun () ->
-	fun (_v1) -> fun (_v2) -> {'Cons', _v1, _v2}
-'elm_lang@core@Main@Nil'/0 = fun () ->
-	{'Nil'}
-'elm_lang@core@Main@zip'/0 = fun () ->
-	fun (_list1) -> fun (_list2) -> case {_list1, _list2} of
-	<{{'Nil'}, _}> when 'true' -> apply 'elm_lang@core@Main@Nil'/0 ()
-	<{_, {'Nil'}}> when 'true' -> apply 'elm_lang@core@Main@Nil'/0 ()
-	<{{'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' -> apply apply apply 'elm_lang@core@Main@Cons'/0 () ({_x, _y}) (apply apply apply 'elm_lang@core@Main@zip'/0 () (_xs) (_ys))
-	end
+'elm_lang@core@Main@Cons'/0 =
+	fun () ->
+		fun (_v1) ->
+			fun (_v2) ->
+				{'Cons', _v1, _v2}
+'elm_lang@core@Main@Nil'/0 =
+	fun () ->
+		{'Nil'}
+'elm_lang@core@Main@zip'/0 =
+	fun () ->
+		fun (_list1) ->
+			fun (_list2) ->
+				case {_list1, _list2} of
+					<{{'Nil'}, _}> when 'true' ->
+						apply 'elm_lang@core@Main@Nil'/0 ()
+					<{_, {'Nil'}}> when 'true' ->
+						apply 'elm_lang@core@Main@Nil'/0 ()
+					<{{'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
+						apply apply apply 'elm_lang@core@Main@Cons'/0 () ({_x, _y}) (apply apply apply 'elm_lang@core@Main@zip'/0 () (_xs) (_ys))
+				end

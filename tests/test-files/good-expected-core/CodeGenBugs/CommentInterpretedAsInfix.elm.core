@@ -1,6 +1,11 @@
-'elm_lang@core@Main@always'/0 = fun () ->
-	fun (_x) -> fun (_s) -> _x
-'elm_lang@core@Main@|>'/2 = fun (_a, _f) ->
-	apply _f (_a)
-'elm_lang@core@Main@value'/0 = fun () ->
-	apply 'elm_lang@core@Main@|>'/2 (1, apply apply 'elm_lang@core@Main@always'/0 () (2))
+'elm_lang@core@Main@always'/0 =
+	fun () ->
+		fun (_x) ->
+			fun (_s) ->
+				_x
+'elm_lang@core@Main@|>'/2 =
+	fun (_a, _f) ->
+		apply _f (_a)
+'elm_lang@core@Main@value'/0 =
+	fun () ->
+		apply 'elm_lang@core@Main@|>'/2 (1, apply apply 'elm_lang@core@Main@always'/0 () (2))

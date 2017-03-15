@@ -7,7 +7,6 @@ module Generate.ErlangCore.Builder
   )
   where
 
-import Prelude hiding (break)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.ByteString (ByteString)
@@ -72,44 +71,49 @@ functionsToText functions =
 
 fromFunction :: Function -> Builder
 fromFunction function =
-  case function of
-    Function name args body ->
-      fromFunctionName name (length args) <> " = "
-      <> fromFun args break (fromExpr body) <> "\n"
+  let
+    indent =
+      "\t"
+  in
+    case function of
+      Function name args body ->
+        fromFunctionName name (length args) <> " =\n"
+        <> indent <> fromFun args indent body <> "\n"
 
 
 
 -- EXPRESSIONS
 
 
-fromExpr :: Expr -> Builder
-fromExpr expression =
+fromExpr :: Builder -> Expr -> Builder
+fromExpr indent expression =
   case expression of
     Lit lit ->
-      fromLiteral fromExpr lit
+      fromLiteral (fromExpr indent) lit
 
     Apply function args ->
-      "apply " <> fromExpr function <> " ("
-      <> commaSep fromExpr args
+      "apply " <> fromExpr indent function <> " ("
+      <> commaSep (fromExpr indent) args
       <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
-      <> commaSep fromExpr args
+      <> commaSep (fromExpr indent) args
       <> ")"
 
     Case expr clauses ->
       let
         clause (Clause pattern guard body) =
-          break <> "<" <> fromPattern pattern
-          <> "> when " <> fromExpr guard
-          <> " -> " <> fromExpr body
+          "\n" <> deeper indent <> "<" <> fromPattern pattern
+          <> "> when " <> fromExpr indent guard <> " ->\n"
+          <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
-        "case " <> fromExpr expr <> " of" <> mconcat (map clause clauses)
-        <> break <> "end"
+        "case " <> fromExpr indent expr <> " of"
+        <> mconcat (map clause clauses)
+        <> "\n" <> indent <> "end"
 
     Fun args body ->
-      fromFun args " " (fromExpr body)
+      fromFun args indent body
 
     FunctionRef name airity ->
       fromFunctionName name airity
@@ -164,9 +168,10 @@ fromFunctionName name airity =
   quoted name <> "/" <> decimal airity
 
 
-fromFun :: [Text] -> Builder -> Builder -> Builder
-fromFun args separator body =
-  "fun (" <> commaSep safeVar args <> ") ->" <> separator <> body
+fromFun :: [Text] -> Builder -> Expr -> Builder
+fromFun args indent body =
+  "fun (" <> commaSep safeVar args <> ") ->\n"
+  <> deeper indent <> fromExpr (deeper indent) body
 
 
 
@@ -188,6 +193,6 @@ quoted str =
   "'" <> fromText str <> "'"
 
 
-break :: Builder
-break =
-  "\n\t"
+deeper :: Builder -> Builder
+deeper indent =
+  indent <> "\t"

@@ -28,6 +28,7 @@ data Expr
   | Apply Expr [Expr] -- apply 'f'/0 ()
   | Call Text Text [Expr] -- call 'module':'f' ()
   | Case Expr [Clause] -- case <_cor0> of ...
+  | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | Fun [Text] Expr -- fun () -> ...
   | FunctionRef Text Int -- 'f'/0
 
@@ -111,6 +112,12 @@ fromExpr indent expression =
         "case " <> fromExpr indent expr <> " of"
         <> mconcat (map clause clauses)
         <> "\n" <> indent <> "end"
+
+    Let var binding body ->
+      "let <" <> safeVar var <> "> =\n"
+      <> deeper indent <> fromExpr (deeper indent) binding <> "\n"
+      <> indent <> "in\n"
+      <> deeper indent <> fromExpr (deeper indent) body
 
     Fun args body ->
       fromFun args indent body

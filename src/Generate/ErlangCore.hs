@@ -19,7 +19,7 @@ import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
 import qualified Generate.ErlangCore.String as String
-import qualified Generate.ErlangCore.Application as App
+import qualified Generate.ErlangCore.Substitution as Subst
 
 
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
@@ -73,7 +73,7 @@ generateExpr expr =
     Can.Binop var lhs rhs ->
       do  left <- generateExpr lhs
           right <- generateExpr rhs
-          App.reduce3 (generateVar var) left right
+          Subst.app2 (generateVar var) left right
 
     Can.Lambda pattern body ->
       generateLambda pattern <$> generateExpr body
@@ -149,7 +149,7 @@ generateApp f arg =
       _ ->
         do  fun <- generateExpr function
             args <- generatedArgs
-            State.foldM App.reduce2 fun args
+            State.foldM Subst.app fun args
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr

@@ -73,7 +73,7 @@ generateExpr expr =
     Can.Binop var lhs rhs ->
       do  left <- generateExpr lhs
           right <- generateExpr rhs
-          return $ App.generate (generateVar var) [left, right]
+          App.reduce3 (generateVar var) left right
 
     Can.Lambda pattern body ->
       generateLambda pattern <$> generateExpr body
@@ -119,7 +119,7 @@ generateVar (Var.Canonical home name) =
       if Helpers.isOp name then
         Core.FunctionRef (qualifiedVar moduleName name) 2
       else
-        App.generate (Core.FunctionRef (qualifiedVar moduleName name) 0) []
+        Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
   in
     case home of
       Var.Local ->
@@ -147,8 +147,9 @@ generateApp f arg =
         Core.Call (moduleToText moduleName) name <$> generatedArgs
 
       _ ->
-        generateExpr function >>= \fun ->
-          foldl App.generate1 fun <$> generatedArgs
+        do  fun <- generateExpr function
+            args <- generatedArgs
+            State.foldM App.reduce2 fun args
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr

@@ -8,4 +8,10 @@
 		apply _f (_a)
 'elm_lang@core@Main@value'/0 =
 	fun () ->
-		apply 'elm_lang@core@Main@|>'/2 (1, apply apply 'elm_lang@core@Main@always'/0 () (2))
+		let <_2> =
+			let <_1> =
+				apply 'elm_lang@core@Main@always'/0 ()
+			in
+				apply _1 (2)
+		in
+			apply 'elm_lang@core@Main@|>'/2 (1, _2)

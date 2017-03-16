@@ -6,15 +6,30 @@
 		apply 'elm_lang@core@Main@-'/2 (3, 4)
 'elm_lang@core@Main@minusNegative'/0 =
 	fun () ->
-		apply 'elm_lang@core@Main@-'/2 (3, apply 'elm_lang@core@Main@-'/2 (0, 4))
+		let <_1> =
+			apply 'elm_lang@core@Main@-'/2 (0, 4)
+		in
+			apply 'elm_lang@core@Main@-'/2 (3, _1)
 'elm_lang@core@Main@negativeMinusNegative'/0 =
 	fun () ->
-		apply 'elm_lang@core@Main@-'/2 (apply 'elm_lang@core@Main@-'/2 (0, 3), apply 'elm_lang@core@Main@-'/2 (0, 4))
+		let <_1> =
+			apply 'elm_lang@core@Main@-'/2 (0, 3)
+		in
+			let <_2> =
+				apply 'elm_lang@core@Main@-'/2 (0, 4)
+			in
+				apply 'elm_lang@core@Main@-'/2 (_1, _2)
 'elm_lang@core@Main@negativeInParens'/0 =
 	fun () ->
 		apply 'elm_lang@core@Main@-'/2 (0, 2)
 'elm_lang@core@Main@funcMinus'/0 =
 	fun () ->
-		apply apply fun (_x) ->
-			fun (_y) ->
-				apply 'elm_lang@core@Main@-'/2 (_x, _y) (3) (4)
+		let <_2> =
+			let <_1> =
+				fun (_x) ->
+					fun (_y) ->
+						apply 'elm_lang@core@Main@-'/2 (_x, _y)
+			in
+				apply _1 (3)
+		in
+			apply _2 (4)

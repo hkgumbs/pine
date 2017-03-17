@@ -31,20 +31,20 @@ generateDef :: ModuleName.Canonical -> Can.Def -> Core.Function
 generateDef moduleName (Can.Def _region pattern body _maybeType) =
   case Annotation.drop pattern of
     Pattern.Var name | Helpers.isOp name ->
-      uncurry (generateOp moduleName name) (Can.collectLambdas body)
+      uncurry (generateOpDef moduleName name) (Can.collectLambdas body)
 
     Pattern.Var name ->
       Core.Function (qualifiedVar moduleName name) [] $
         State.evalState (generateExpr body) 1
 
 
-generateOp
+generateOpDef
   :: ModuleName.Canonical
   -> Text
   -> [Pattern.Canonical]
   -> Can.Expr
   -> Core.Function
-generateOp moduleName name args body =
+generateOpDef moduleName name args body =
   let
     patternToText p =
       case Annotation.drop p of
@@ -73,7 +73,7 @@ generateExpr expr =
     Can.Binop var lhs rhs ->
       do  left <- generateExpr lhs
           right <- generateExpr rhs
-          Subst.app2 (generateVar var) left right
+          generateOp var left right
 
     Can.Lambda pattern body ->
       generateLambda pattern <$> generateExpr body
@@ -91,6 +91,23 @@ generateExpr expr =
 
     Can.Program _main expr ->
       generateExpr expr
+
+
+generateOp
+  :: Var.Canonical
+  -> Core.Expr
+  -> Core.Expr
+  -> State.State Int Core.Expr
+generateOp (Var.Canonical home name) =
+  let
+    moduleName =
+      case home of
+        Var.Local -> error "infix operators should only be defined in top-level declarations"
+        Var.BuiltIn -> error "there should be no built-in infix operators"
+        Var.Module moduleName -> moduleName
+        Var.TopLevel moduleName -> moduleName
+  in
+    Subst.binop (qualifiedVar moduleName name)
 
 
 generateLiteral :: Literal.Literal -> Core.Literal a
@@ -116,10 +133,7 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
     reference moduleName =
-      if Helpers.isOp name then
-        Core.FunctionRef (qualifiedVar moduleName name) 2
-      else
-        Core.Apply (Core.FunctionRef (qualifiedVar moduleName name) 0) []
+      Core.Apply (qualifiedVar moduleName name) (Just 0) []
   in
     case home of
       Var.Local ->

@@ -13,12 +13,12 @@
 'elm_lang@core@Main@negativeMinusNegative'/0 =
 	fun () ->
 		let <_1> =
-			apply 'elm_lang@core@Main@-'/2 (0, 3)
+			apply 'elm_lang@core@Main@-'/2 (0, 4)
 		in
 			let <_2> =
-				apply 'elm_lang@core@Main@-'/2 (0, 4)
+				apply 'elm_lang@core@Main@-'/2 (0, 3)
 			in
-				apply 'elm_lang@core@Main@-'/2 (_1, _2)
+				apply 'elm_lang@core@Main@-'/2 (_2, _1)
 'elm_lang@core@Main@negativeInParens'/0 =
 	fun () ->
 		apply 'elm_lang@core@Main@-'/2 (0, 2)

@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Literal(..), Clause(..), Pattern(..)
+  ( Expr(..), Literal(..), Clause(..)
   , Function(..)
   , functionsToText
   )
@@ -24,15 +24,15 @@ import qualified Data.Char as Char
 
 
 data Expr
-  = Lit (Literal Expr)
-  | Apply Text (Maybe Int) [Literal Expr] -- apply 'f'/0 ()
-  | Call Text Text [Literal Expr] -- call 'module':'f' ()
+  = Lit Literal
+  | Apply Text (Maybe Int) [Literal] -- apply 'f'/0 ()
+  | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Expr [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | Fun [Text] Expr -- fun () -> ...
 
 
-data Literal context
+data Literal
   = Int Int
   | Char Char
   | Float Double
@@ -40,21 +40,18 @@ data Literal context
   | Var Text
   | Anything
   | BitString ByteString
-  | Tuple [context]
-  | Cons context context
+  | Tuple [Literal]
+  | Cons Literal Literal
   | Nil
 
 
 data Clause
   = Clause
-    { _pattern :: Pattern
+    { _pattern :: Literal
     , _guard :: Expr
     , _body :: Expr
     }
 
-
-data Pattern
-  = Pattern (Literal Pattern)
 
 
 -- TOP LEVEL
@@ -89,21 +86,21 @@ fromExpr :: Builder -> Expr -> Builder
 fromExpr indent expression =
   case expression of
     Lit lit ->
-      fromLiteral (fromExpr indent) lit
+      fromLiteral lit
 
     Apply name maybeAirity args ->
       "apply " <> maybe (safeVar name) (fromFunctionName name) maybeAirity
-      <> " (" <> commaSep (fromLiteral (fromExpr indent)) args <> ")"
+      <> " (" <> commaSep fromLiteral args <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
-      <> commaSep (fromLiteral (fromExpr indent)) args
+      <> commaSep fromLiteral args
       <> ")"
 
     Case expr clauses ->
       let
         clause (Clause pattern guard body) =
-          "\n" <> deeper indent <> "<" <> fromPattern pattern
+          "\n" <> deeper indent <> "<" <> fromLiteral pattern
           <> "> when " <> fromExpr indent guard <> " ->\n"
           <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
@@ -121,8 +118,8 @@ fromExpr indent expression =
       fromFun args indent body
 
 
-fromLiteral :: (a -> Builder) -> Literal a -> Builder
-fromLiteral buildInner literal =
+fromLiteral :: Literal -> Builder
+fromLiteral literal =
   case literal of
     Int n ->
       decimal n
@@ -151,18 +148,13 @@ fromLiteral buildInner literal =
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
 
     Tuple inners ->
-      "{" <> commaSep buildInner inners <> "}"
+      "{" <> commaSep fromLiteral inners <> "}"
 
     Cons first rest ->
-      "[" <> buildInner first <> "|" <> buildInner rest <> "]"
+      "[" <> fromLiteral first <> "|" <> fromLiteral rest <> "]"
 
     Nil ->
       "[]"
-
-
-fromPattern :: Pattern -> Builder
-fromPattern (Pattern lit) =
-  fromLiteral fromPattern lit
 
 
 fromFunctionName :: Text -> Int -> Builder

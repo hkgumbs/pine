@@ -67,8 +67,7 @@ generateExpr expr =
       return $ generateVar var
 
     Can.List exprs ->
-      foldr (generateCons Core.Lit) (Core.Lit Core.Nil)
-        <$> mapM generateExpr exprs
+      mapM generateExpr exprs >>= Subst.list
 
     Can.Binop var lhs rhs ->
       do  left <- generateExpr lhs
@@ -82,7 +81,7 @@ generateExpr expr =
       generateApp f arg
 
     Can.Ctor var exprs ->
-      generateCtor Core.Lit var <$> mapM generateExpr exprs
+      mapM generateExpr exprs >>= Subst.ctor (generateCtor var)
 
     Can.Case expr clauses ->
       do  switch <- generateExpr expr
@@ -110,7 +109,7 @@ generateOp (Var.Canonical home name) =
     Subst.binop (qualifiedVar moduleName name)
 
 
-generateLiteral :: Literal.Literal -> Core.Literal a
+generateLiteral :: Literal.Literal -> Core.Literal
 generateLiteral literal =
   case literal of
     Literal.Chr c ->
@@ -190,37 +189,32 @@ generateClause pattern expr =
   Core.Clause (generatePattern pattern) (Core.Lit (Core.Atom "true")) expr
 
 
-generatePattern :: Pattern.Canonical -> Core.Pattern
+generatePattern :: Pattern.Canonical -> Core.Literal
 generatePattern pattern =
   case Annotation.drop pattern of
     Pattern.Anything ->
-      Core.Pattern Core.Anything
+      Core.Anything
 
     Pattern.Var name ->
-      Core.Pattern (Core.Var name)
+      Core.Var name
 
     Pattern.Literal literal ->
-      Core.Pattern (generateLiteral literal)
+      generateLiteral literal
 
     Pattern.Ctor var args ->
-      generateCtor Core.Pattern var (map generatePattern args)
+      generateCtor var (map generatePattern args)
 
 
-generateCtor :: (Core.Literal a -> a) -> Var.Canonical -> [a] -> a
-generateCtor toContext var args =
+generateCtor :: Var.Canonical -> [Core.Literal] -> Core.Literal
+generateCtor var args =
   if Var.isPrim "[]" var then
-    toContext Core.Nil
+    Core.Nil
 
   else if Var.isPrim "::" var then
-    foldl1 (generateCons toContext) args
+    foldl1 Core.Cons args
 
   else if Var.isTuple var then
-    toContext . Core.Tuple $ args
+    Core.Tuple args
 
   else
-    toContext . Core.Tuple $ toContext (Core.Atom (Var._name var)) : args
-
-
-generateCons :: (Core.Literal a -> a) -> a -> a -> a
-generateCons toContext first =
-  toContext . Core.Cons first
+    Core.Tuple $ Core.Atom (Var._name var) : args

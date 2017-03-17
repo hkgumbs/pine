@@ -14,12 +14,12 @@ import qualified Numeric
 import Generate.ErlangCore.Builder as Core
 
 
-character :: Text -> Core.Literal a
+character :: Text -> Core.Literal
 character =
   Core.Char . Text.head . unescape
 
 
-bitString :: Text -> Core.Literal a
+bitString :: Text -> Core.Literal
 bitString =
   Core.BitString . encodeUtf8 . unescape
 

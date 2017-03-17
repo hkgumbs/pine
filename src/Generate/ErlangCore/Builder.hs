@@ -25,8 +25,8 @@ import qualified Data.Char as Char
 
 data Expr
   = Lit (Literal Expr)
-  | Apply Text (Maybe Int) [Expr] -- apply 'f'/0 ()
-  | Call Text Text [Expr] -- call 'module':'f' ()
+  | Apply Text (Maybe Int) [Literal Expr] -- apply 'f'/0 ()
+  | Call Text Text [Literal Expr] -- call 'module':'f' ()
   | Case Expr [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | Fun [Text] Expr -- fun () -> ...
@@ -93,11 +93,11 @@ fromExpr indent expression =
 
     Apply name maybeAirity args ->
       "apply " <> maybe (safeVar name) (fromFunctionName name) maybeAirity
-      <> " (" <> commaSep (fromExpr indent) args <> ")"
+      <> " (" <> commaSep (fromLiteral (fromExpr indent)) args <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
-      <> commaSep (fromExpr indent) args
+      <> commaSep (fromLiteral (fromExpr indent)) args
       <> ")"
 
     Case expr clauses ->

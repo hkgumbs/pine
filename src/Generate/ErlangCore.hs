@@ -158,12 +158,13 @@ generateApp f arg =
     case Annotation.drop function of
       Can.Var (Var.Canonical (Var.Module moduleName) name)
         | ModuleName.canonicalIsNative moduleName ->
-        Core.Call (moduleToText moduleName) name <$> generatedArgs
+        do  args <- generatedArgs
+            Subst.call (moduleToText moduleName) name args
 
       _ ->
         do  fun <- generateExpr function
             args <- generatedArgs
-            State.foldM Subst.app fun args
+            State.foldM Subst.apply fun args
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr

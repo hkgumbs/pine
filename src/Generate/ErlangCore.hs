@@ -3,6 +3,7 @@ module Generate.ErlangCore (generate) where
 
 import qualified Control.Monad.State as State
 import qualified Data.Text.Lazy as LazyText
+import Control.Monad (foldM)
 import Data.Text (Text)
 
 import qualified AST.Module as Module
@@ -23,38 +24,36 @@ import qualified Generate.ErlangCore.Substitution as Subst
 
 
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
-generate (Module.Module name _path info) =
-  Core.functionsToText $ map (generateDef name) (Module.program info)
-
-
-generateDef :: ModuleName.Canonical -> Can.Def -> Core.Function
-generateDef moduleName (Can.Def _region pattern body _maybeType) =
-  case Annotation.drop pattern of
-    Pattern.Var name | Helpers.isOp name ->
-      uncurry (generateOpDef moduleName name) (Can.collectLambdas body)
-
-    Pattern.Var name ->
-      Core.Function (qualifiedVar moduleName name) [] $
-        State.evalState (generateExpr body) 1
-
-
-generateOpDef
-  :: ModuleName.Canonical
-  -> Text
-  -> [Pattern.Canonical]
-  -> Can.Expr
-  -> Core.Function
-generateOpDef moduleName name args body =
+generate (Module.Module moduleName _path info) =
   let
-    patternToText p =
-      case Annotation.drop p of
-        Pattern.Var text ->
-          text
+    function name args body =
+      Core.Function (qualifiedVar moduleName name) args body
   in
-    Core.Function
-      (qualifiedVar moduleName name)
-      (map patternToText args)
-      (State.evalState (generateExpr body) 1)
+    Core.functionsToText $ map (generateDef function) (Module.program info)
+
+
+generateDef :: (Text -> [Text] -> Core.Expr -> a) -> Can.Def -> a
+generateDef gen (Can.Def _region pattern body _maybeType) =
+  let
+    eval state =
+      State.evalState state 1
+
+    (patterns, function) =
+      Can.collectLambdas body
+
+    collectArgs (args, expr) pat =
+      case Annotation.drop pat of
+        Pattern.Var name ->
+          return (name : args, expr)
+  in
+    case Annotation.drop pattern of
+      Pattern.Var name | Helpers.isOp name ->
+        uncurry (gen name) $ eval $
+          do  f <- generateExpr function
+              foldM collectArgs ([], f) (reverse patterns)
+
+      Pattern.Var name ->
+        gen name [] (eval (generateExpr body))
 
 
 generateExpr :: Can.Expr -> State.State Int Core.Expr
@@ -79,6 +78,11 @@ generateExpr expr =
 
     Can.App f arg ->
       generateApp f arg
+
+    Can.Let defs expr ->
+      do  e <- generateExpr expr
+          return $
+            foldr (generateDef (\name _ body -> Core.Let name body)) e defs
 
     Can.Case expr clauses ->
       do  switch <- generateExpr expr
@@ -163,7 +167,7 @@ generateApp f arg =
       _ ->
         do  fun <- generateExpr function
             args <- generatedArgs
-            State.foldM Subst.apply fun args
+            foldM Subst.apply fun args
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Expr

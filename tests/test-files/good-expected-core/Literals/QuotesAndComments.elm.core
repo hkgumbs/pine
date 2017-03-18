@@ -1,9 +1,6 @@
-'elm_lang@core@Main@commentStart'/0 =
-	fun () ->
-		#{#<123>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']])}#
-'elm_lang@core@Main@singleQuote'/0 =
-	fun () ->
-		39
-'elm_lang@core@Main@doubleQuote'/0 =
-	fun () ->
-		34
+'elm_lang@core@Main@commentStart'/0 = fun () ->
+	#{#<123>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']])}#
+'elm_lang@core@Main@singleQuote'/0 = fun () ->
+	39
+'elm_lang@core@Main@doubleQuote'/0 = fun () ->
+	34

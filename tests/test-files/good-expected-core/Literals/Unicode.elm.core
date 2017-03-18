@@ -1,18 +1,12 @@
-'elm_lang@core@Main@stringWithUnicode'/0 =
-	fun () ->
-		#{#<85>(8,1,'integer',['unsigned'|['big']]), #<83>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<186>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<184>(8,1,'integer',['unsigned'|['big']])}#
-'elm_lang@core@Main@unicodeEscapeCode'/0 =
-	fun () ->
-		57629
-'elm_lang@core@Main@unicodeCharacter'/0 =
-	fun () ->
-		128293
-'elm_lang@core@Main@newline'/0 =
-	fun () ->
-		10
-'elm_lang@core@Main@multipleTabs'/0 =
-	fun () ->
-		#{#<9>(8,1,'integer',['unsigned'|['big']]), #<11>(8,1,'integer',['unsigned'|['big']])}#
-'elm_lang@core@Main@singleTab'/0 =
-	fun () ->
-		11
+'elm_lang@core@Main@stringWithUnicode'/0 = fun () ->
+	#{#<85>(8,1,'integer',['unsigned'|['big']]), #<83>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<45>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<186>(8,1,'integer',['unsigned'|['big']]), #<240>(8,1,'integer',['unsigned'|['big']]), #<159>(8,1,'integer',['unsigned'|['big']]), #<135>(8,1,'integer',['unsigned'|['big']]), #<184>(8,1,'integer',['unsigned'|['big']])}#
+'elm_lang@core@Main@unicodeEscapeCode'/0 = fun () ->
+	57629
+'elm_lang@core@Main@unicodeCharacter'/0 = fun () ->
+	128293
+'elm_lang@core@Main@newline'/0 = fun () ->
+	10
+'elm_lang@core@Main@multipleTabs'/0 = fun () ->
+	#{#<9>(8,1,'integer',['unsigned'|['big']]), #<11>(8,1,'integer',['unsigned'|['big']])}#
+'elm_lang@core@Main@singleTab'/0 = fun () ->
+	11

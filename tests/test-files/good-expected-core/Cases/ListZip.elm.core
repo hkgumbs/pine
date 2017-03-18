@@ -1,35 +1,32 @@
-'elm_lang@core@Main@Cons'/0 =
-	fun () ->
-		fun (_v1) ->
-			fun (_v2) ->
-				{'Cons', _v1, _v2}
-'elm_lang@core@Main@Nil'/0 =
-	fun () ->
-		{'Nil'}
-'elm_lang@core@Main@zip'/0 =
-	fun () ->
-		fun (_list1) ->
-			fun (_list2) ->
-				case {_list1, _list2} of
-					<{{'Nil'}, _}> when 'true' ->
-						apply 'elm_lang@core@Main@Nil'/0 ()
-					<{_, {'Nil'}}> when 'true' ->
-						apply 'elm_lang@core@Main@Nil'/0 ()
-					<{{'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
-						let <_4> =
-							let <_3> =
-								apply 'elm_lang@core@Main@Cons'/0 ()
-							in
-								apply _3 ({_x, _y})
+'elm_lang@core@Main@Cons'/0 = fun () ->
+	fun (_v1) ->
+		fun (_v2) ->
+			{'Cons', _v1, _v2}
+'elm_lang@core@Main@Nil'/0 = fun () ->
+	{'Nil'}
+'elm_lang@core@Main@zip'/0 = fun () ->
+	fun (_list1) ->
+		fun (_list2) ->
+			case {_list1, _list2} of
+				<{{'Nil'}, _}> when 'true' ->
+					apply 'elm_lang@core@Main@Nil'/0 ()
+				<{_, {'Nil'}}> when 'true' ->
+					apply 'elm_lang@core@Main@Nil'/0 ()
+				<{{'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
+					let <_4> =
+						let <_3> =
+							apply 'elm_lang@core@Main@Cons'/0 ()
 						in
-							let <_5> =
-								let <_2> =
-									let <_1> =
-										apply 'elm_lang@core@Main@zip'/0 ()
-									in
-										apply _1 (_xs)
+							apply _3 ({_x, _y})
+					in
+						let <_5> =
+							let <_2> =
+								let <_1> =
+									apply 'elm_lang@core@Main@zip'/0 ()
 								in
-									apply _2 (_ys)
+									apply _1 (_xs)
 							in
-								apply _4 (_5)
-				end
+								apply _2 (_ys)
+						in
+							apply _4 (_5)
+			end

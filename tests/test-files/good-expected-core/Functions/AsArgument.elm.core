@@ -1,7 +1,6 @@
-'elm_lang@core@Main@f'/0 =
-	fun () ->
-		fun (_g) ->
-			let <_1> =
-				apply _g (1)
-			in
-				apply _1 (2)
+'elm_lang@core@Main@f'/0 = fun () ->
+	fun (_g) ->
+		let <_1> =
+			apply _g (1)
+		in
+			apply _1 (2)

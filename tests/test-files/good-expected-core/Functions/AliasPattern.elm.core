@@ -1,22 +1,19 @@
-'elm_lang@core@Main@paramAs'/0 =
-	fun () ->
-		fun (_a) ->
-			case _a of
-				<{'A', _}> when 'true' ->
-					'true'
-			end
-'elm_lang@core@Main@unpackParams'/0 =
-	fun () ->
-		fun (__tmp) ->
-			case __tmp of
-				<{'A', _bool1}> when 'true' ->
-					fun (__tmp) ->
-						case __tmp of
-							<{'A', _bool2}> when 'true' ->
-								'false'
-						end
-			end
-'elm_lang@core@Main@A'/0 =
-	fun () ->
-		fun (_v1) ->
-			{'A', _v1}
+'elm_lang@core@Main@paramAs'/0 = fun () ->
+	fun (_a) ->
+		case _a of
+			<{'A', _}> when 'true' ->
+				'true'
+		end
+'elm_lang@core@Main@unpackParams'/0 = fun () ->
+	fun (__tmp) ->
+		case __tmp of
+			<{'A', _bool1}> when 'true' ->
+				fun (__tmp) ->
+					case __tmp of
+						<{'A', _bool2}> when 'true' ->
+							'false'
+					end
+		end
+'elm_lang@core@Main@A'/0 = fun () ->
+	fun (_v1) ->
+		{'A', _v1}

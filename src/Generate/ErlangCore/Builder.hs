@@ -58,7 +58,7 @@ data Clause
 
 
 data Function
-  = Function Text [Text] Expr -- 'f'/0 = fun () -> [1, 2]
+  = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
 
 
 functionsToText :: [Function] -> LazyText.Text
@@ -68,14 +68,10 @@ functionsToText functions =
 
 fromFunction :: Function -> Builder
 fromFunction function =
-  let
-    indent =
-      "\t"
-  in
-    case function of
-      Function name args body ->
-        fromFunctionName name (length args) <> " =\n"
-        <> indent <> fromFun args indent body <> "\n"
+  case function of
+    Function name args body ->
+      fromFunctionName name (length args) <> " = "
+      <> fromFun args "" body <> "\n"
 
 
 

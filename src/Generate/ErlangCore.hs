@@ -42,9 +42,8 @@ generateDef gen (Can.Def _region pattern body _maybeType) =
       Can.collectLambdas body
 
     collectArgs (args, expr) pat =
-      case Annotation.drop pat of
-        Pattern.Var name ->
-          return (name : args, expr)
+      do  (name, e) <- patternMatch (,) pat expr
+          return (name : args, e)
   in
     case Annotation.drop pattern of
       Pattern.Var name | Helpers.isOp name ->
@@ -171,22 +170,8 @@ generateApp f arg =
 
 
 generateLambda :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Expr
-generateLambda pattern body =
-  let
-    immediateCase name match =
-      Core.Fun [name] $
-        Core.Case (Core.C (Core.Var name)) [generateClause match body]
-  in
-    case Annotation.drop pattern of
-      Pattern.Ctor _var _args ->
-        do  name <- Subst.fresh
-            return $ immediateCase name pattern
-
-      Pattern.Alias name aliased ->
-        return $ immediateCase name aliased
-
-      Pattern.Var name ->
-        return $ Core.Fun [name] body
+generateLambda =
+  patternMatch $ \arg -> Core.Fun [arg]
 
 
 generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause
@@ -223,3 +208,30 @@ generateCtor var args =
 
   else
     Core.Tuple $ Core.Atom (Var._name var) : args
+
+
+
+-- HELPERS
+
+
+patternMatch
+  :: (Text -> Core.Expr -> a)
+  -> Pattern.Canonical
+  -> Core.Expr
+  -> State.State Int a
+patternMatch use pattern expr =
+  let
+    deconstruct name match =
+      use name $
+        Core.Case (Core.C (Core.Var name)) [generateClause match expr]
+  in
+    case Annotation.drop pattern of
+      Pattern.Ctor _var _args ->
+        do  name <- Subst.fresh
+            return $ deconstruct name pattern
+
+      Pattern.Alias name aliased ->
+        return $ deconstruct name aliased
+
+      Pattern.Var name ->
+        return $ use name expr

@@ -132,7 +132,7 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
     reference moduleName =
-      Core.Apply (qualifiedVar moduleName name) (Just 0) []
+      Core.Apply False (qualifiedVar moduleName name) []
   in
     case home of
       Var.Local ->

@@ -25,7 +25,7 @@ import qualified Data.Char as Char
 
 data Expr
   = C Constant
-  | Apply Text (Maybe Int) [Constant] -- apply 'f'/0 ()
+  | Apply Bool Text [Constant] -- apply 'f'/0 ()
   | Call Text Text [Constant] -- call 'module':'f' ()
   | Case Expr [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
@@ -84,9 +84,15 @@ fromExpr indent expression =
     C constant ->
       fromConstant constant
 
-    Apply name maybeAirity args ->
-      "apply " <> maybe (safeVar name) (fromFunctionName name) maybeAirity
-      <> " (" <> commaSep fromConstant args <> ")"
+    Apply isVariable name args ->
+      let
+        f =
+          if isVariable then
+            safeVar name
+          else
+            fromFunctionName name (length args)
+      in
+        "apply " <> f <> " (" <> commaSep fromConstant args <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("

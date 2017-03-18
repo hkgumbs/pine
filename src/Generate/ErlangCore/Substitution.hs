@@ -60,7 +60,7 @@ apply function arg =
     varName f =
       case f of
         Core.Var name ->
-          Core.Apply name Nothing
+          Core.Apply True name
 
         _ ->
           error "only variable literals can be applied"
@@ -72,7 +72,7 @@ apply function arg =
 
 binop :: Text -> Core.Expr -> Core.Expr -> State.State Int Core.Expr
 binop name lhs rhs =
-  run (Core.Apply name (Just 2)) $ foldWith (:) [] [rhs, lhs]
+  run (Core.Apply False name) $ foldWith (:) [] [rhs, lhs]
 
 
 call :: Text -> Text -> [Core.Expr] -> State.State Int Core.Expr

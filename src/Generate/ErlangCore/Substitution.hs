@@ -39,9 +39,9 @@ foldWith combine initial =
   let
     fold (outerUse, oldValue) next =
       do  (innerUse, value) <- substitute next (flip combine oldValue)
-          return (outerUse . innerUse, value)
+          return (innerUse . outerUse, value)
   in
-    State.foldM fold (id, initial) . reverse
+    State.foldM fold (id, initial)
 
 
 
@@ -67,17 +67,17 @@ apply function arg =
 
 binop :: Text -> Core.Expr -> Core.Expr -> State.State Int Core.Expr
 binop name lhs rhs =
-  run (Core.Apply name (Just 2)) . foldWith (:) [] $ [lhs, rhs]
+  run (Core.Apply name (Just 2)) $ foldWith (:) [] [rhs, lhs]
 
 
 call :: Text -> Text -> [Core.Expr] -> State.State Int Core.Expr
 call modul name =
-  run (Core.Call modul name) . foldWith (:) []
+  run (Core.Call modul name) . foldWith (:) [] . reverse
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  run Core.C . foldWith Core.Cons Core.Nil
+  run Core.C . foldWith Core.Cons Core.Nil . reverse
 
 
 ctor
@@ -85,7 +85,7 @@ ctor
   -> [Core.Expr]
   -> State.State Int Core.Expr
 ctor toCtor =
-  run (Core.C . toCtor) . foldWith (:) []
+  run (Core.C . toCtor) . foldWith (:) [] . reverse
 
 
 

@@ -61,7 +61,7 @@ generateExpr :: Can.Expr -> State.State Int Core.Expr
 generateExpr expr =
   case Annotation.drop expr of
     Can.Literal literal ->
-      return $ Core.Lit (generateLiteral literal)
+      return $ Core.C (generateLiteral literal)
 
     Can.Var var ->
       return $ generateVar var
@@ -109,7 +109,7 @@ generateOp (Var.Canonical home name) =
     Subst.binop (qualifiedVar moduleName name)
 
 
-generateLiteral :: Literal.Literal -> Core.Literal
+generateLiteral :: Literal.Literal -> Core.Constant
 generateLiteral literal =
   case literal of
     Literal.Chr c ->
@@ -136,7 +136,7 @@ generateVar (Var.Canonical home name) =
   in
     case home of
       Var.Local ->
-        Core.Lit (Core.Var name)
+        Core.C (Core.Var name)
 
       Var.Module moduleName ->
         reference moduleName
@@ -171,7 +171,7 @@ generateLambda pattern body =
   let
     immediateCase name match =
       Core.Fun [name] $
-        Core.Case (Core.Lit (Core.Var name)) [generateClause match body]
+        Core.Case (Core.C (Core.Var name)) [generateClause match body]
   in
     case Annotation.drop pattern of
       Pattern.Ctor _var _args ->
@@ -186,10 +186,10 @@ generateLambda pattern body =
 
 generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause
 generateClause pattern expr =
-  Core.Clause (generatePattern pattern) (Core.Lit (Core.Atom "true")) expr
+  Core.Clause (generatePattern pattern) (Core.C (Core.Atom "true")) expr
 
 
-generatePattern :: Pattern.Canonical -> Core.Literal
+generatePattern :: Pattern.Canonical -> Core.Constant
 generatePattern pattern =
   case Annotation.drop pattern of
     Pattern.Anything ->
@@ -205,7 +205,7 @@ generatePattern pattern =
       generateCtor var (map generatePattern args)
 
 
-generateCtor :: Var.Canonical -> [Core.Literal] -> Core.Literal
+generateCtor :: Var.Canonical -> [Core.Constant] -> Core.Constant
 generateCtor var args =
   if Var.isPrim "[]" var then
     Core.Nil

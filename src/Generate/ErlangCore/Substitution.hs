@@ -23,18 +23,18 @@ run toExpr state =
       return (use (toExpr a))
 
 
-substitute :: Core.Expr -> (Core.Literal -> a) -> Collector a
+substitute :: Core.Expr -> (Core.Constant -> a) -> Collector a
 substitute value use =
   case value of
-    Core.Lit literal ->
-      return (id, use literal)
+    Core.C constant ->
+      return (id, use constant)
 
     _ ->
       do  name <- fresh
           return (Core.Let name value, use (Core.Var name))
 
 
-foldWith :: (Core.Literal -> a -> a) -> a -> [Core.Expr] -> Collector a
+foldWith :: (Core.Constant -> a -> a) -> a -> [Core.Expr] -> Collector a
 foldWith combine initial =
   let
     fold (outerUse, oldValue) next =
@@ -77,15 +77,15 @@ call modul name =
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  run Core.Lit . foldWith Core.Cons Core.Nil
+  run Core.C . foldWith Core.Cons Core.Nil
 
 
 ctor
-  :: ([Core.Literal] -> Core.Literal)
+  :: ([Core.Constant] -> Core.Constant)
   -> [Core.Expr]
   -> State.State Int Core.Expr
 ctor toCtor =
-  run (Core.Lit . toCtor) . foldWith (:) []
+  run (Core.C . toCtor) . foldWith (:) []
 
 
 

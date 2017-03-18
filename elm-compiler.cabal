@@ -88,6 +88,7 @@ Library
         Generate.ErlangCore.Builder,
         Generate.ErlangCore.String,
         Generate.ErlangCore.Substitution,
+        Generate.ErlangCore.Pattern,
         Nitpick.Pattern,
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
@@ -208,6 +209,7 @@ Test-Suite compiler-tests
         Generate.ErlangCore.Builder
         Generate.ErlangCore.String
         Generate.ErlangCore.Substitution
+        Generate.ErlangCore.Pattern
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes

@@ -100,7 +100,7 @@ generateOp
   -> Core.Expr
   -> Core.Expr
   -> State.State Int Core.Expr
-generateOp (Var.Canonical home name) =
+generateOp (Var.Canonical home name) lhs rhs =
   let
     moduleName =
       case home of
@@ -109,7 +109,7 @@ generateOp (Var.Canonical home name) =
         Var.Module moduleName -> moduleName
         Var.TopLevel moduleName -> moduleName
   in
-    Subst.binop (qualifiedVar moduleName name)
+    Subst.applyVar False (qualifiedVar moduleName name) [lhs, rhs]
 
 
 generateVar :: Var.Canonical -> Core.Expr
@@ -147,4 +147,4 @@ generateApp f arg =
       _ ->
         do  fun <- generateExpr function
             args <- generatedArgs
-            foldM Subst.apply fun args
+            foldM (\f a -> Subst.apply f [a]) fun args

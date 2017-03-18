@@ -1,5 +1,5 @@
 module Generate.ErlangCore.Substitution
-  ( apply, binop, call, list, ctor
+  ( apply, applyVar, call, list, ctor
   , fresh
   ) where
 
@@ -47,7 +47,7 @@ foldWith combine initial =
       do  (innerUse, value) <- substitute next (flip combine oldValue)
           return (innerUse . outerUse, value)
   in
-    State.foldM fold (id, initial)
+    State.foldM fold (id, initial) . reverse
 
 
 
@@ -55,35 +55,34 @@ foldWith combine initial =
 -- GENERATE CORE
 
 
-apply :: Core.Expr -> Core.Expr -> State.State Int Core.Expr
-apply function arg =
+apply :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
+apply function args =
   let
     varName f =
       case f of
         Core.Var name ->
-          Core.Apply True name
+          name
 
         _ ->
           error "only variable literals can be applied"
   in
-    do  (useFun, f) <- substitute function varName
-        (useArg, body) <- substitute arg (f . \a -> [a])
-        return (useFun (useArg body))
+    substitute function varName >>= \(use, name) ->
+      use <$> applyVar True name args
 
 
-binop :: Text -> Core.Expr -> Core.Expr -> State.State Int Core.Expr
-binop name lhs rhs =
-  run (Core.Apply False name) $ foldWith (:) [] [rhs, lhs]
+applyVar :: Bool -> Text -> [Core.Expr] -> State.State Int Core.Expr
+applyVar isVariable name =
+  run (Core.Apply isVariable name) . foldWith (:) []
 
 
 call :: Text -> Text -> [Core.Expr] -> State.State Int Core.Expr
 call modul name =
-  run (Core.Call modul name) . foldWith (:) [] . reverse
+  run (Core.Call modul name) . foldWith (:) []
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  run Core.C . foldWith Core.Cons Core.Nil . reverse
+  run Core.C . foldWith Core.Cons Core.Nil
 
 
 ctor
@@ -91,7 +90,7 @@ ctor
   -> [Core.Expr]
   -> State.State Int Core.Expr
 ctor toCtor =
-  run (Core.C . toCtor) . foldWith (:) [] . reverse
+  run (Core.C . toCtor) . foldWith (:) []
 
 
 

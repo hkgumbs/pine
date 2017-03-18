@@ -67,7 +67,7 @@ generateExpr expr =
       return $ generateVar var
 
     Can.List exprs ->
-      mapM generateExpr exprs >>= Subst.list
+      Subst.list =<< mapM generateExpr exprs
 
     Can.Binop var lhs rhs ->
       do  left <- generateExpr lhs
@@ -75,13 +75,13 @@ generateExpr expr =
           generateOp var left right
 
     Can.Lambda pattern body ->
-      generateLambda pattern <$> generateExpr body
+      generateLambda pattern =<< generateExpr body
 
     Can.App f arg ->
       generateApp f arg
 
     Can.Ctor var exprs ->
-      mapM generateExpr exprs >>= Subst.ctor (generateCtor var)
+      Subst.ctor (generateCtor var) =<< mapM generateExpr exprs
 
     Can.Case expr clauses ->
       do  switch <- generateExpr expr
@@ -166,7 +166,7 @@ generateApp f arg =
             State.foldM Subst.apply fun args
 
 
-generateLambda :: Pattern.Canonical -> Core.Expr -> Core.Expr
+generateLambda :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Expr
 generateLambda pattern body =
   let
     immediateCase name match =
@@ -175,13 +175,14 @@ generateLambda pattern body =
   in
     case Annotation.drop pattern of
       Pattern.Ctor _var _args ->
-        immediateCase "_tmp" pattern
+        do  name <- Subst.fresh
+            return $ immediateCase name pattern
 
       Pattern.Alias name aliased ->
-        immediateCase name aliased
+        return $ immediateCase name aliased
 
       Pattern.Var name ->
-        Core.Fun [name] body
+        return $ Core.Fun [name] body
 
 
 generateClause :: Pattern.Canonical -> Core.Expr -> Core.Clause

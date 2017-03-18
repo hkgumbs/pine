@@ -1,5 +1,6 @@
 module Generate.ErlangCore.Substitution
   ( apply, binop, call, list, ctor
+  , fresh
   ) where
 
 

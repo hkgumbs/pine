@@ -70,7 +70,7 @@ fromFunction :: Function -> Builder
 fromFunction function =
   case function of
     Function name args body ->
-      fromFunctionName name (length args) <> " = "
+      fromFunctionName name args <> " = "
       <> fromFun args "" body <> "\n"
 
 
@@ -90,7 +90,7 @@ fromExpr indent expression =
           if isVariable then
             safeVar name
           else
-            fromFunctionName name (length args)
+            fromFunctionName name args
       in
         "apply " <> f <> " (" <> commaSep fromConstant args <> ")"
 
@@ -159,9 +159,9 @@ fromConstant constant =
       "[]"
 
 
-fromFunctionName :: Text -> Int -> Builder
-fromFunctionName name airity =
-  quoted name <> "/" <> decimal airity
+fromFunctionName :: Text -> [a] -> Builder
+fromFunctionName name args =
+  quoted name <> "/" <> decimal (length args)
 
 
 fromFun :: [Text] -> Builder -> Expr -> Builder

@@ -80,13 +80,13 @@ generateExpr expr =
     Can.App f arg ->
       generateApp f arg
 
-    Can.Ctor var exprs ->
-      Subst.ctor (generateCtor var) =<< mapM generateExpr exprs
-
     Can.Case expr clauses ->
       do  switch <- generateExpr expr
           Core.Case switch <$>
             mapM (\(pat, body) -> generateClause pat <$> generateExpr body) clauses
+
+    Can.Ctor var exprs ->
+      Subst.ctor (generateCtor var) =<< mapM generateExpr exprs
 
     Can.Program _main expr ->
       generateExpr expr

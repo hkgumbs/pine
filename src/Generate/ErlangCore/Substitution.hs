@@ -10,8 +10,13 @@ import Data.Text (Text)
 import qualified Generate.ErlangCore.Builder as Core
 
 
+
 -- COLLECTOR
 
+{-| Keeps track of the variables that we want to bind with `let`.
+ -  This lets us think in terms of just the thing we're accumulating,
+ -  and bind all of the values afterwards.
+ -}
 
 type Collector a
   = State.State Int (Core.Expr -> Core.Expr, a)

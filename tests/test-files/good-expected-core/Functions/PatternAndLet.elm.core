@@ -1,0 +1,9 @@
+'elm_lang@core@Main@nestedFirst'/0 = fun () ->
+	fun (_1) ->
+		case _1 of
+			<{_a, _b}> when 'true' ->
+				case _a of
+					<{_c, _d}> when 'true' ->
+						_c
+				end
+		end

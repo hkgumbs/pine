@@ -1,7 +1,7 @@
 'elm_lang@core@Main@apply'/0 = fun () ->
 	fun (_f) ->
-		let <_g> =
-			fun (_x) ->
-				apply _f (_x)
-		in
-			_g
+		case fun (_x) ->
+			apply _f (_x) of
+			<_g> when 'true' ->
+				_g
+		end

@@ -26,18 +26,29 @@ import qualified Generate.ErlangCore.Pattern as Pattern
 generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
 generate (Module.Module moduleName _path info) =
   let
-    function name args body =
-      Core.Function (qualifiedVar moduleName name) args body
+    defToFunction def =
+      State.evalState (generateDef moduleName def) 1
   in
-    Core.functionsToText $ map (generateDef function) (Module.program info)
+    Core.functionsToText $ map defToFunction (Module.program info)
 
 
-generateDef :: (Text -> [Text] -> Core.Expr -> a) -> Can.Def -> a
-generateDef gen (Can.Def _region pattern body _maybeType) =
+generateDef :: ModuleName.Canonical -> Can.Def -> State.State Int Core.Function
+generateDef moduleName (Can.Def _region pattern body _maybeType) =
   let
-    eval state =
-      State.evalState state 1
+    function name =
+      Core.Function (qualifiedVar moduleName name)
+  in
+    case Annotation.drop pattern of
+      AST.Pattern.Var name | Helpers.isOp name ->
+        generateOpDef (function name) body
+      _ ->
+        do  b <- generateExpr body
+            Pattern.match (\name -> function name []) pattern b
 
+
+generateOpDef :: ([Text] -> Core.Expr -> a) -> Can.Expr -> State.State Int a
+generateOpDef gen body =
+  let
     (patterns, function) =
       Can.collectLambdas body
 
@@ -45,14 +56,9 @@ generateDef gen (Can.Def _region pattern body _maybeType) =
       do  (name, e) <- Pattern.match (,) pat expr
           return (name : args, e)
   in
-    case Annotation.drop pattern of
-      AST.Pattern.Var name | Helpers.isOp name ->
-        uncurry (gen name) $ eval $
-          do  f <- generateExpr function
-              foldM collectArgs ([], f) (reverse patterns)
-
-      AST.Pattern.Var name ->
-        gen name [] (eval (generateExpr body))
+    uncurry gen <$>
+      do  f <- generateExpr function
+          foldM collectArgs ([], f) (reverse patterns)
 
 
 generateExpr :: Can.Expr -> State.State Int Core.Expr
@@ -79,9 +85,12 @@ generateExpr expr =
       generateApp f arg
 
     Can.Let defs expr ->
-      do  e <- generateExpr expr
-          return $
-            foldr (generateDef (\name _ body -> Core.Let name body)) e defs
+      let
+        collectLet e (Can.Def _ pat body _) =
+          flip Core.Case [Pattern.clause pat e] <$> generateExpr body
+      in
+        do  body <- generateExpr expr
+            foldM collectLet body (reverse defs)
 
     Can.Case expr clauses ->
       do  switch <- generateExpr expr

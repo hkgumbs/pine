@@ -1,5 +1,5 @@
 module Generate.ErlangCore.Substitution
-  ( apply, applyVar, call, list, ctor
+  ( applyExpr, apply, call, list, ctor
   , fresh
   ) where
 
@@ -23,8 +23,8 @@ type Collector a
   = State.State Int (Core.Expr -> Core.Expr, a)
 
 
-run :: (a -> Core.Expr) -> Collector a -> State.State Int Core.Expr
-run toExpr state =
+(|>) :: Collector a -> (a -> Core.Expr) -> State.State Int Core.Expr
+(|>) state toExpr =
   do  (use, a) <- state
       return (use (toExpr a))
 
@@ -51,12 +51,11 @@ foldWith combine initial =
 
 
 
-
 -- GENERATE CORE
 
 
-apply :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
-apply function args =
+applyExpr :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
+applyExpr function args =
   let
     varName f =
       case f of
@@ -67,30 +66,34 @@ apply function args =
           error "only variable literals can be applied"
   in
     substitute function varName >>= \(use, name) ->
-      use <$> applyVar True name args
+      use <$> apply True name args
 
 
-applyVar :: Bool -> Text -> [Core.Expr] -> State.State Int Core.Expr
-applyVar isVariable name =
-  run (Core.Apply isVariable name) . foldWith (:) []
+apply :: Bool -> Text -> [Core.Expr] -> State.State Int Core.Expr
+apply isVariable name exprs =
+  foldWith (:) [] exprs
+    |> Core.Apply isVariable name
 
 
 call :: Text -> Text -> [Core.Expr] -> State.State Int Core.Expr
-call modul name =
-  run (Core.Call modul name) . foldWith (:) []
+call modul name exprs =
+  foldWith (:) [] exprs
+    |> Core.Call modul name
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
-list =
-  run Core.C . foldWith Core.Cons Core.Nil
+list exprs =
+  foldWith Core.Cons Core.Nil exprs
+    |> Core.C
 
 
 ctor
   :: ([Core.Constant] -> Core.Constant)
   -> [Core.Expr]
   -> State.State Int Core.Expr
-ctor toCtor =
-  run (Core.C . toCtor) . foldWith (:) []
+ctor toCtor exprs =
+  foldWith (:) [] exprs
+    |> (Core.C . toCtor)
 
 
 

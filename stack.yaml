@@ -1,0 +1,12 @@
+resolver: lts-6.30
+
+packages:
+- '.'
+- profiling/
+
+extra-deps:
+- ghc-time-alloc-prof-0.1.0
+
+flags: {}
+
+extra-package-dbs: []

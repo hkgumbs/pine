@@ -1,5 +1,5 @@
 module Generate.ErlangCore.Substitution
-  ( applyExpr, apply, call, list, ctor
+  ( applyExpr, apply, call, list, ctor, case_
   , fresh
   ) where
 
@@ -94,6 +94,12 @@ ctor
 ctor toCtor exprs =
   foldWith (:) [] exprs
     |> (Core.C . toCtor)
+
+
+case_ :: Core.Expr -> [Core.Clause] -> State.State Int Core.Expr
+case_ switch clauses =
+  do  (use, value) <- substitute switch (\c -> Core.Case c clauses)
+      return $ use value
 
 
 

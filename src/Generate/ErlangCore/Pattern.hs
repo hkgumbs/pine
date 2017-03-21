@@ -24,24 +24,40 @@ match
 match use pattern expr =
   let
     deconstruct name match =
-      use name $
-        Core.Case (Core.C (Core.Var name)) [clause match expr]
+      do  c <- clause match expr
+          return $ use name (Core.Case (Core.Var name) [c])
   in
     case Annotation.drop pattern of
       Pattern.Ctor _var _args ->
         do  name <- Subst.fresh
-            return $ deconstruct name pattern
+            deconstruct name pattern
 
       Pattern.Alias name aliased ->
-        return $ deconstruct name aliased
+        deconstruct name aliased
 
       Pattern.Var name ->
         return $ use name expr
 
 
-clause :: Pattern.Canonical -> Core.Expr -> Core.Clause
+clause :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Clause
 clause pattern expr =
-  Core.Clause (toConstant pattern) (Core.C (Core.Atom "true")) expr
+  let
+    toCore p =
+      case Annotation.drop p of
+        Pattern.Anything ->
+          Core.Var <$> Subst.fresh
+
+        Pattern.Var name ->
+          return $ Core.Var name
+
+        Pattern.Literal literal ->
+          return $ constant literal
+
+        Pattern.Ctor var args ->
+          ctor var <$> mapM toCore args
+  in
+    do  p <- toCore pattern
+        return $ Core.Clause p (Core.C (Core.Atom "true")) expr
 
 
 ctor :: Var.Canonical -> [Core.Constant] -> Core.Constant
@@ -76,19 +92,3 @@ constant literal =
 
     Literal.Boolean b ->
       Core.Atom $ if b then "true" else "false"
-
-
-toConstant :: Pattern.Canonical -> Core.Constant
-toConstant pattern =
-  case Annotation.drop pattern of
-    Pattern.Anything ->
-      Core.Anything
-
-    Pattern.Var name ->
-      Core.Var name
-
-    Pattern.Literal literal ->
-      constant literal
-
-    Pattern.Ctor var args ->
-      ctor var (map toConstant args)

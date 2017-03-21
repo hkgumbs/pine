@@ -1,7 +1,7 @@
 'elm_lang@core@Main@paramAs'/0 = fun () ->
 	fun (_a) ->
 		case _a of
-			<{'A', _}> when 'true' ->
+			<{'A', _1}> when 'true' ->
 				'true'
 		end
 'elm_lang@core@Main@unpackParams'/0 = fun () ->

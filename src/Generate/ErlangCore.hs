@@ -41,6 +41,7 @@ generateDef moduleName (Can.Def _region pattern body _maybeType) =
     case Annotation.drop pattern of
       AST.Pattern.Var name | Helpers.isOp name ->
         generateOpDef (function name) body
+
       _ ->
         do  b <- generateExpr body
             Pattern.match (\name -> function name []) pattern b
@@ -87,15 +88,16 @@ generateExpr expr =
     Can.Let defs expr ->
       let
         collectLet e (Can.Def _ pat body _) =
-          flip Core.Case [Pattern.clause pat e] <$> generateExpr body
+          do  c <- Pattern.clause pat e
+              flip Subst.case_ [c] =<< generateExpr body
       in
         do  body <- generateExpr expr
             foldM collectLet body (reverse defs)
 
     Can.Case expr clauses ->
       do  switch <- generateExpr expr
-          Core.Case switch <$>
-            mapM (\(pat, body) -> Pattern.clause pat <$> generateExpr body) clauses
+          Subst.case_ switch =<<
+            mapM (\(pat, body) -> Pattern.clause pat =<< generateExpr body) clauses
 
     Can.Ctor var exprs ->
       Subst.ctor (Pattern.ctor var) =<< mapM generateExpr exprs

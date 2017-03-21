@@ -27,7 +27,7 @@ data Expr
   = C Constant
   | Apply Bool Text [Constant] -- apply 'f'/0 ()
   | Call Text Text [Constant] -- call 'module':'f' ()
-  | Case Expr [Clause] -- case <_cor0> of ...
+  | Case Constant [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | Fun [Text] Expr -- fun () -> ...
 
@@ -99,14 +99,14 @@ fromExpr indent expression =
       <> commaSep fromConstant args
       <> ")"
 
-    Case expr clauses ->
+    Case switch clauses ->
       let
         clause (Clause pattern guard body) =
           "\n" <> deeper indent <> "<" <> fromConstant pattern
           <> "> when " <> fromExpr indent guard <> " ->\n"
           <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
-        "case " <> fromExpr indent expr <> " of"
+        "case " <> fromConstant switch <> " of"
         <> mconcat (map clause clauses)
         <> "\n" <> indent <> "end"
 

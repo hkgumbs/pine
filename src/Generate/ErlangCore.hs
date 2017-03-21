@@ -88,8 +88,9 @@ generateExpr expr =
     Can.Let defs expr ->
       let
         collectLet e (Can.Def _ pat body _) =
-          do  c <- Pattern.clause pat e
-              flip Subst.case_ [c] =<< generateExpr body
+          do  clause <- Pattern.clause pat e
+              switch <- generateExpr body
+              Subst.case_ switch [clause]
       in
         do  body <- generateExpr expr
             foldM collectLet body (reverse defs)

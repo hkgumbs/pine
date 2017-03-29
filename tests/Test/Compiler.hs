@@ -29,8 +29,8 @@ import qualified AST.Variable as Variable
 import qualified AST.Type as Type
 
 
-writeExpectedJsEnvVarName :: String
-writeExpectedJsEnvVarName =
+writeExpectedOutputEnvVarName :: String
+writeExpectedOutputEnvVarName =
   "ELM_WRITE_NEW_EXPECTED"
 
 
@@ -39,12 +39,12 @@ compilerTests =
   buildTest $
     do  goods <- testIf isSuccess =<< getElms "good"
         bads  <- testIf isFailure =<< getElms "bad"
-        expectedJsTests <- testMatchesExpected "good" "good-expected-js"
+        expectedOutputTests <- testMatchesExpected "good" "good-expected-core"
         return $
             testGroup "Compile Tests"
               [ testGroup "Good Tests" goods
               , testGroup "Bad Tests"  bads
-              , testGroup "Expected JS Tests" expectedJsTests
+              , testGroup "Expected Output Tests" expectedOutputTests
               ]
 
 
@@ -64,12 +64,12 @@ testsDir :: FilePath
 testsDir =
     "tests" </> "test-files"
 
-convertToExpectedJsFilePath :: String -> FilePath -> FilePath
-convertToExpectedJsFilePath expectedJsDir filePath =
+convertToExpectedOutputFilePath :: String -> FilePath -> FilePath
+convertToExpectedOutputFilePath expectedOutputDir filePath =
     testsDir
-      </> expectedJsDir
+      </> expectedOutputDir
       </> joinPath (drop 3 (splitDirectories filePath))
-      <.> ".js"
+      <.> ".core"
 
 
 
@@ -145,46 +145,50 @@ testIf handleResult filePaths =
 
 
 doMatchesExpectedTest :: String -> FilePath -> IO Test
-doMatchesExpectedTest expectedJsDir filePath =
+doMatchesExpectedTest expectedOutputDir filePath =
   do  source <- Text.readFile filePath
-      expectedJs <- readFileOrErrorStr (convertToExpectedJsFilePath expectedJsDir filePath)
+      expectedOutput <- readFileOrErrorStr (convertToExpectedOutputFilePath expectedOutputDir filePath)
 
       let formattedResult = compile filePath source
-      let assertion = matchesExpected expectedJs formattedResult
+      let assertion = matchesExpected expectedOutput formattedResult
 
       return $ testCase filePath assertion
 
 
 doWriteNewExpectedTest :: String -> FilePath -> IO Test
-doWriteNewExpectedTest expectedJsDir filePath =
+doWriteNewExpectedTest expectedOutputDir filePath =
   do  source <- Text.readFile filePath
       let formattedResult = compile filePath source
-      let expectedFilePath = convertToExpectedJsFilePath expectedJsDir filePath
+      let expectedFilePath = convertToExpectedOutputFilePath expectedOutputDir filePath
       let assertion =
             case formattedResult of
-                Right (Compiler.Result _ _ js) ->
+                Right (Compiler.Result _ _ core) ->
                   do  createDirectoryIfMissing True (dropFileName expectedFilePath)
-                      -- Force the evaluation of `js` before `writeFile`
+                      -- Force the evaluation of `core` before `writeFile`
                       --  so that if an error is raised we do not unintentionally write an empty file.
-                      --  NB: `js` can be an empty string in the case of NoExpressions.elm
-                      assertBool "" (LText.length js >= 0)
-                      LText.writeFile expectedFilePath js
-                      assertFailure ("Wrote new expected js: " ++ expectedFilePath)
+                      --  NB: `core` can be an empty string in the case of NoExpressions.elm
+                      assertBool "" (LText.length core >= 0)
+                      LText.writeFile expectedFilePath core
+                      assertFailure ("Wrote new expected core: " ++ expectedFilePath)
 
                 _ ->
-                  assertFailure "Compile failed. Could not write new expected js."
+                  assertFailure "Compile failed. Could not write new expected core."
       return $ testCase filePath assertion
 
 
 testMatchesExpected :: String -> String -> IO [Test]
-testMatchesExpected elmDir expectedJsDir =
-  do  elmFiles <- getElms elmDir
-      envVar <- lookupEnv writeExpectedJsEnvVarName
+testMatchesExpected elmDir expectedOutputDir =
+  do  -- TODO: elmFiles <- getElms elmDir
+      envVar <- lookupEnv writeExpectedOutputEnvVarName
       if isJust envVar
         then
-          traverse (doWriteNewExpectedTest expectedJsDir) elmFiles
+          traverse (doWriteNewExpectedTest expectedOutputDir) elmFiles
         else
-          traverse (doMatchesExpectedTest expectedJsDir) elmFiles
+          traverse (doMatchesExpectedTest expectedOutputDir) elmFiles
+  where
+      elmFiles = map ((</>) $ testsDir </> elmDir)
+          [ "Literals" </> "Numbers.elm"
+          ]
 
 
 
@@ -212,10 +216,10 @@ isFailure result =
 
 
 matchesExpected :: String -> Either String Compiler.Result -> Assertion
-matchesExpected expectedJs result =
+matchesExpected expectedOutput result =
     case result of
-      Right (Compiler.Result _ _ js) ->
-          assertEqual matchFailureMessage (LText.pack expectedJs) js
+      Right (Compiler.Result _ _ core) ->
+          assertEqual matchFailureMessage (LText.pack expectedOutput) core
 
       Left errorMessages ->
           assertFailure $ "Compile failed:\n" ++ errorMessages
@@ -223,6 +227,6 @@ matchesExpected expectedJs result =
 
 matchFailureMessage :: String
 matchFailureMessage =
-  "Compiled JS did not match expected JS." ++
+  "Compiled Output did not match expected Output." ++
   "\n  If the change is intentional, rerun " ++
-  "the tests with environment variable: " ++ writeExpectedJsEnvVarName ++ "=1"
+  "the tests with environment variable: " ++ writeExpectedOutputEnvVarName ++ "=1"

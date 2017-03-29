@@ -84,6 +84,8 @@ Library
         Elm.Compiler.Imports,
         Elm.Compiler.Type.Extract,
         Elm.Compiler.Version,
+        Generate.ErlangCore,
+        Generate.ErlangCore.Builder,
         Generate.JavaScript,
         Generate.JavaScript.Builder,
         Generate.JavaScript.BuiltIn,
@@ -158,30 +160,6 @@ Library
         union-find >= 0.2 && < 0.3
 
 
-Executable elm
-    ghc-options:
-        -threaded -O2 -W
-
-    Hs-Source-Dirs:
-        src
-
-    Main-is:
-        CommandLineRouter.hs
-
-    other-modules:
-        Elm.Compiler.Version,
-        Paths_elm_compiler
-
-    Build-depends:
-        base >=4.2 && <5,
-        aeson >= 0.11,
-        binary >= 0.7.0.0 && < 0.8,
-        directory >= 1.0 && < 2.0,
-        filepath >= 1 && < 2.0,
-        text >= 1 && < 2,
-        process
-
-
 Test-Suite compiler-tests
     ghc-options:
         -O0
@@ -200,7 +178,87 @@ Test-Suite compiler-tests
         Test.Property
         Test.Property.Arbitrary
         AST.Helpers
+        AST.Declaration
+        AST.Effects
+        AST.Expression.Canonical
+        AST.Expression.Optimized
+        AST.Expression.Source
         AST.Literal
+        AST.Module
+        AST.Module.Name
+        AST.Pattern
+        AST.Type
+        AST.Variable
+        Canonicalize
+        Canonicalize.Binops
+        Canonicalize.Body
+        Canonicalize.Effects
+        Canonicalize.Environment
+        Canonicalize.Setup
+        Canonicalize.Sort
+        Canonicalize.Type
+        Canonicalize.Variable
+        Compile
+        Docs.AST
+        Docs.Centralize
+        Docs.Check
+        Elm.Compiler
+        Elm.Compiler.Imports
+        Elm.Compiler.Module
+        Elm.Compiler.Type
+        Elm.Compiler.Type.Extract
+        Elm.Compiler.Version
+        Elm.Docs
+        Elm.Package
+        Elm.Utils
+        Generate.ErlangCore
+        Generate.ErlangCore.Builder
+        Generate.JavaScript.Builder
+        Generate.JavaScript.Helpers
+        Generate.JavaScript.Variable
+        Nitpick.Pattern
+        Nitpick.PatternMatches
+        Nitpick.TopLevelTypes
+        Optimize
+        Optimize.Case
+        Optimize.DecisionTree
+        Optimize.Environment
+        Optimize.Inline
+        Parse.Declaration
+        Parse.Expression
+        Parse.Helpers
+        Parse.Literal
+        Parse.Module
+        Parse.Parse
+        Parse.Pattern
+        Parse.Primitives
+        Parse.Type
+        Reporting.Annotation
+        Reporting.Bag
+        Reporting.Error
+        Reporting.Error.Canonicalize
+        Reporting.Error.Docs
+        Reporting.Error.Pattern
+        Reporting.Error.Syntax
+        Reporting.Error.Type
+        Reporting.Helpers
+        Reporting.Region
+        Reporting.Render.Code
+        Reporting.Render.Type
+        Reporting.Report
+        Reporting.Result
+        Reporting.Warning
+        Type.Constrain.Effects
+        Type.Constrain.Expression
+        Type.Constrain.Literal
+        Type.Constrain.Pattern
+        Type.Environment
+        Type.Inference
+        Type.Solve
+        Type.State
+        Type.Type
+        Type.Unify
+        Validate
 
     build-depends:
         test-framework > 0.8 && < 0.9,

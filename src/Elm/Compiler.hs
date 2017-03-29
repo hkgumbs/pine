@@ -24,7 +24,7 @@ import qualified Elm.Compiler.Module as PublicModule
 import qualified Elm.Compiler.Version
 import qualified Elm.Docs as Docs
 import qualified Elm.Package as Package
-import qualified Generate.JavaScript as JS
+import qualified Generate.ErlangCore as Core
 import qualified Parse.Helpers as Parse (run)
 import qualified Parse.Module as Parse (header)
 import qualified Reporting.Annotation as A
@@ -99,9 +99,9 @@ compile context source interfaces =
           docs <- Result.format id (docsGen isExposed modul)
 
           let interface = Module.toInterface packageName modul
-          let javascript = {-# SCC elm_compiler_generate #-} JS.generate modul
+          let core = {-# SCC elm_compiler_generate #-} Core.generate modul
 
-          return (Result docs interface javascript)
+          return (Result docs interface core)
   in
     ( Result.oneToValue dummyLocalizer Localizer oneLocalizer
     , Bag.toList Warning warnings

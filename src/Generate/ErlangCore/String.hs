@@ -6,7 +6,7 @@ module Generate.ErlangCore.String
 
 
 import Data.Text (Text)
-import Data.Text.Encoding (encodeUtf8)
+import qualified Data.Text.Encoding as Encoding
 import qualified Data.Text as Text
 import qualified Data.Char as Char
 import qualified Numeric
@@ -21,7 +21,7 @@ character =
 
 bitString :: Text -> Core.Constant
 bitString =
-  Core.BitString . encodeUtf8 . unescape
+  Core.BitString . Encoding.encodeUtf8 . unescape
 
 
 data Escaping

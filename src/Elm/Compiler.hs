@@ -11,7 +11,7 @@ module Elm.Compiler
 
 import qualified Data.Aeson as Json
 import qualified Data.Map as Map
-import qualified Data.Text.Lazy as LazyText
+import qualified Data.ByteString.Builder as BS
 import Data.Text (Text)
 import System.IO (Handle)
 
@@ -120,7 +120,7 @@ data Context =
 data Result = Result
     { _docs :: Maybe Docs.Documentation
     , _interface :: PublicModule.Interface
-    , _js :: LazyText.Text
+    , _core :: BS.Builder
     }
 
 

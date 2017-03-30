@@ -5,8 +5,9 @@ module Test.Compiler (compilerTests) where
 
 import Control.Exception (try, IOException)
 
-import qualified Data.Text.Lazy as LText
-import qualified Data.Text.Lazy.IO as LText
+import qualified Data.ByteString.Lazy as BS
+import Data.ByteString.Builder (toLazyByteString)
+import Data.ByteString.Lazy.Char8 (pack)
 import qualified Data.Map as Map
 import Data.Maybe (isJust)
 import qualified Data.Text.IO as Text
@@ -116,15 +117,15 @@ compile filePath source =
       either (Left . formatErrors) Right result
 
 
-readFileOrErrorStr :: FilePath -> IO String
+readFileOrErrorStr :: FilePath -> IO BS.ByteString
 readFileOrErrorStr filePath =
-  do  strOrExc <- try $ readFile filePath
+  do  strOrExc <- try $ BS.readFile filePath
       case strOrExc of
         Right s ->
           return s
 
         Left (e :: IOException) ->
-          return (show e)
+          return $ pack (show e)
 
 
 
@@ -163,12 +164,13 @@ doWriteNewExpectedTest expectedOutputDir filePath =
       let assertion =
             case formattedResult of
                 Right (Compiler.Result _ _ core) ->
-                  do  createDirectoryIfMissing True (dropFileName expectedFilePath)
+                  do  let str = toLazyByteString core
+                      createDirectoryIfMissing True (dropFileName expectedFilePath)
                       -- Force the evaluation of `core` before `writeFile`
                       --  so that if an error is raised we do not unintentionally write an empty file.
                       --  NB: `core` can be an empty string in the case of NoExpressions.elm
-                      assertBool "" (LText.length core >= 0)
-                      LText.writeFile expectedFilePath core
+                      assertBool "" (BS.length str >= 0)
+                      BS.writeFile expectedFilePath str
                       assertFailure ("Wrote new expected core: " ++ expectedFilePath)
 
                 _ ->
@@ -233,11 +235,12 @@ isFailure result =
           assertBool "" True
 
 
-matchesExpected :: String -> Either String Compiler.Result -> Assertion
+matchesExpected :: BS.ByteString -> Either String Compiler.Result -> Assertion
 matchesExpected expectedOutput result =
     case result of
       Right (Compiler.Result _ _ core) ->
-          assertEqual matchFailureMessage (LText.pack expectedOutput) core
+          assertEqual matchFailureMessage expectedOutput $
+            toLazyByteString core
 
       Left errorMessages ->
           assertFailure $ "Compile failed:\n" ++ errorMessages

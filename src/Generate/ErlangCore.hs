@@ -2,7 +2,7 @@
 module Generate.ErlangCore (generate) where
 
 import qualified Control.Monad.State as State
-import qualified Data.Text.Lazy as LazyText
+import qualified Data.ByteString.Builder as BS
 import Control.Monad (foldM)
 import Data.Text (Text)
 
@@ -23,13 +23,13 @@ import qualified Generate.ErlangCore.Substitution as Subst
 import qualified Generate.ErlangCore.Pattern as Pattern
 
 
-generate :: Module.Module (Module.Info [Can.Def]) -> LazyText.Text
+generate :: Module.Module (Module.Info [Can.Def]) -> BS.Builder
 generate (Module.Module moduleName _path info) =
   let
     defToFunction def =
       State.evalState (generateDef moduleName def) 1
   in
-    Core.functionsToText $ map defToFunction (Module.program info)
+    Core.encodeUtf8 $ map defToFunction (Module.program info)
 
 
 generateDef :: ModuleName.Canonical -> Can.Def -> State.State Int Core.Function

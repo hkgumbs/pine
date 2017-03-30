@@ -3,18 +3,16 @@
 module Generate.ErlangCore.Builder
   ( Expr(..), Constant(..), Clause(..)
   , Function(..)
-  , functionsToText
+  , encodeUtf8
   )
   where
 
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.ByteString (ByteString)
-import Data.Text.Lazy.Builder
-import Data.Text.Lazy.Builder.Int (decimal)
-import Data.Text.Lazy.Builder.RealFloat (formatRealFloat, FPFormat(..))
-import qualified Data.Text.Lazy as LazyText
+import Data.ByteString.Builder
 import qualified Data.ByteString as ByteString
+import qualified Data.Text.Encoding as Text
 import qualified Data.List as List
 import qualified Data.Char as Char
 
@@ -61,9 +59,9 @@ data Function
   = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
 
 
-functionsToText :: [Function] -> LazyText.Text
-functionsToText functions =
-  toLazyText (mconcat (map fromFunction functions))
+encodeUtf8 :: [Function] -> Builder
+encodeUtf8 functions =
+  mconcat (map fromFunction functions)
 
 
 fromFunction :: Function -> Builder
@@ -124,13 +122,13 @@ fromConstant :: Constant -> Builder
 fromConstant constant =
   case constant of
     Int n ->
-      decimal n
+      intDec n
 
     Char c ->
-      decimal (Char.ord c)
+      intDec (Char.ord c)
 
     Float n ->
-      formatRealFloat Exponent (Just 20) n
+      doubleDec n
 
     Atom name ->
       quoted name
@@ -143,9 +141,8 @@ fromConstant constant =
 
     BitString str ->
       let
-        collectWord c rest =
-          "#<" <> fromString (show c)
-          <> ">(8,1,'integer',['unsigned'|['big']])" : rest
+        collectWord w rest =
+          "#<" <> word8Dec w <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
 
@@ -161,7 +158,7 @@ fromConstant constant =
 
 fromFunctionName :: Text -> [a] -> Builder
 fromFunctionName name args =
-  quoted name <> "/" <> decimal (length args)
+  quoted name <> "/" <> intDec (length args)
 
 
 fromFun :: [Text] -> Builder -> Expr -> Builder
@@ -181,12 +178,12 @@ commaSep toBuilder as =
 
 safeVar :: Text -> Builder
 safeVar name =
-  "_" <> fromText name
+  "_" <> Text.encodeUtf8Builder name
 
 
 quoted :: Text -> Builder
-quoted str =
-  "'" <> fromText str <> "'"
+quoted text =
+  "'" <> Text.encodeUtf8Builder text <> "'"
 
 
 deeper :: Builder -> Builder

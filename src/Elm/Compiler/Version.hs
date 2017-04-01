@@ -2,7 +2,7 @@
 module Elm.Compiler.Version (version) where
 
 import qualified Data.Version as Version
-import qualified Paths_elm_compiler as This
+import qualified Paths_elm_beam as This
 import Elm.Package (Version(Version))
 
 

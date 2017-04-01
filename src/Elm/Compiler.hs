@@ -87,7 +87,7 @@ getDeps pkgName (Module.Header sourceTag name _ _ _ imports) =
 -- COMPILATION
 
 
-{-| Compiles Elm source code to JavaScript. -}
+{-| Compiles Elm source code to Core Erlang. -}
 compile :: Context -> Text -> PublicModule.Interfaces -> (Localizer, [Warning], Either [Error] Result)
 compile context source interfaces =
   let

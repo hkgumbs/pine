@@ -1,24 +1,9 @@
 
-Name: elm-compiler
+Name: elm-beam
 Version: 0.18
-
-Synopsis:
-    Values to help with elm-package, elm-make, and elm-lang.org.
-
-Description:
-    Elm aims to make client-side web-development pleasant. It is a
-    statically/strongly typed, functional reactive language that compiles to
-    HTML, CSS, and JS. This package provides a couple helpful values that are
-    intended for use in packages such as elm-package and elm-make.
-
-Homepage: http://elm-lang.org
 
 License: BSD3
 License-file: LICENSE
-
-Author:     Evan Czaplicki
-Maintainer: info@elm-lang.org
-Copyright:  Copyright (c) 2011-2016 Evan Czaplicki
 
 Category: Compiler, Language
 
@@ -29,31 +14,19 @@ Build-type: Simple
 
 source-repository head
     type:     git
-    location: git://github.com/elm-lang/elm-compiler.git
+    location: git://github.com/hkgumbs/elm-beam.git
 
 
-Flag dev {
-  Description: Turn off optimization and make warnings errors
-  Default: False
-}
 
+Executable elm-beam
+    ghc-options:
+        -threaded -O2 -W
 
-Library
-    if flag(dev)
-        ghc-options: -O0 -W -Werror
-    else
-        ghc-options: -O2
+    Main-is:
+        Main.hs
 
     Hs-Source-Dirs:
         src
-
-    exposed-modules:
-        Elm.Compiler,
-        Elm.Compiler.Module,
-        Elm.Compiler.Type,
-        Elm.Docs,
-        Elm.Package,
-        Elm.Utils
 
     other-modules:
         AST.Declaration,
@@ -81,9 +54,15 @@ Library
         Docs.AST,
         Docs.Centralize,
         Docs.Check,
+        Elm.Compiler,
         Elm.Compiler.Imports,
+        Elm.Compiler.Module,
+        Elm.Compiler.Type,
         Elm.Compiler.Type.Extract,
         Elm.Compiler.Version,
+        Elm.Docs,
+        Elm.Package,
+        Elm.Utils,
         Generate.ErlangCore,
         Generate.ErlangCore.Builder,
         Generate.ErlangCore.String,
@@ -131,7 +110,7 @@ Library
         Type.Type,
         Type.Unify,
         Validate,
-        Paths_elm_compiler
+        Paths_elm_beam
 
     Build-depends:
         aeson >= 0.11,
@@ -156,7 +135,7 @@ Library
 
 Test-Suite compiler-tests
     ghc-options:
-        -O0
+        -O0 -W -Werror
 
     Type:
         exitcode-stdio-1.0

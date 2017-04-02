@@ -1,5 +1,5 @@
 module Generate.ErlangCore.Substitution
-  ( applyExpr, apply, call, list, ctor, case_
+  ( one, two, many
   , fresh
   ) where
 
@@ -9,7 +9,6 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 
 import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.Constant as Constant
 
 
 
@@ -41,63 +40,37 @@ substitute value use =
           return (Core.Let name value, use (Core.Var name))
 
 
-foldWith :: (Core.Constant -> a -> a) -> a -> [Core.Expr] -> Collector a
-foldWith combine initial =
+
+-- PUBLIC
+
+
+one :: (Core.Constant -> Core.Expr) -> Core.Expr -> State.State Int Core.Expr
+one use expr =
+  substitute expr use |> id
+
+
+two
+  :: (Core.Constant -> Core.Constant -> Core.Expr)
+  -> Core.Expr
+  -> Core.Expr
+  -> State.State Int Core.Expr
+two use first second =
+  substitute first id >>= \(firstUse, firstC) ->
+    substitute second id >>= \(secondUse, secondC) ->
+      return $ firstUse (secondUse (use firstC secondC))
+
+
+many
+  :: ([Core.Constant] -> Core.Expr)
+  -> [Core.Expr]
+  -> State.State Int Core.Expr
+many use exprs =
   let
     fold (outerUse, oldValue) next =
-      do  (innerUse, value) <- substitute next (flip combine oldValue)
+      do  (innerUse, value) <- substitute next (: oldValue)
           return (innerUse . outerUse, value)
   in
-    State.foldM fold (id, initial) . reverse
-
-
-
--- GENERATE CORE
-
-
-applyExpr :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
-applyExpr function args =
-  let
-    varName f =
-      case f of
-        Core.Var name ->
-          name
-
-        _ ->
-          error "only variable literals can be applied"
-  in
-    substitute function varName >>= \(use, name) ->
-      use <$> apply True name args
-
-
-apply :: Bool -> Text -> [Core.Expr] -> State.State Int Core.Expr
-apply isVariable name exprs =
-  foldWith (:) [] exprs
-    |> Core.Apply isVariable name
-
-
-call :: Text -> Text -> [Core.Expr] -> State.State Int Core.Expr
-call modul name exprs =
-  foldWith (:) [] exprs
-    |> Core.Call modul name
-
-
-list :: [Core.Expr] -> State.State Int Core.Expr
-list exprs =
-  foldWith Core.Cons Core.Nil exprs
-    |> Core.C
-
-
-ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
-ctor name exprs =
-  foldWith (:) [] exprs
-    |> (Core.C . Constant.ctor name)
-
-
-case_ :: Core.Expr -> [Core.Clause] -> State.State Int Core.Expr
-case_ switch clauses =
-  do  (use, value) <- substitute switch (\c -> Core.Case c clauses)
-      return $ use value
+    State.foldM fold (id, []) (reverse exprs) |> use
 
 
 

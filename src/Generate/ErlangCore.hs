@@ -51,12 +51,10 @@ generateExpr expr =
       return $ generateVar var
 
     Opt.List exprs ->
-      Subst.list =<< mapM generateExpr exprs
+      Subst.many (Core.C . foldr Core.Cons Core.Nil) =<< mapM generateExpr exprs
 
     Opt.Binop var lhs rhs ->
-      do  left <- generateExpr lhs
-          right <- generateExpr rhs
-          foldM (\f a -> Subst.applyExpr f [a]) (generateVar var) [left, right]
+      generateCall (Opt.Var var) [lhs, rhs]
 
     Opt.Function args body ->
       do  body' <- generateExpr body
@@ -66,7 +64,7 @@ generateExpr expr =
       generateCall function args
 
     Opt.TailCall name _ args ->
-      Subst.apply False name =<< mapM generateExpr args
+      Subst.many (Core.Apply False name) =<< mapM generateExpr args
 
     Opt.Let defs body ->
       foldr
@@ -78,7 +76,7 @@ generateExpr expr =
       generateCase switch decider branches
 
     Opt.Ctor var exprs ->
-      Subst.ctor var =<< mapM generateExpr exprs
+      Subst.many (Core.C . Constant.ctor var) =<< mapM generateExpr exprs
 
     Opt.Program _ expr ->
       generateExpr expr
@@ -112,16 +110,22 @@ generateCall function args =
   do  args' <-
         mapM generateExpr args
 
-      let app f a =
-            Subst.applyExpr f [a]
+      let applyVar var argument =
+            case var of
+              Core.Var name -> Core.Apply True name [argument]
+              _ -> error "only variable literals can be applied"
 
       case function of
         Opt.Var (Var.Canonical (Var.Module moduleName) name)
           | ModuleName.canonicalIsNative moduleName ->
-          Subst.call (moduleToText moduleName) name args'
+          Subst.many (Core.Call (moduleToText moduleName) name) args'
 
         _ ->
-          flip (foldM app) args' =<< generateExpr function
+          flip (foldM (Subst.two applyVar)) args' =<< generateExpr function
+
+
+
+-- CASE
 
 
 generateCase
@@ -193,7 +197,7 @@ generateTestChain switch chain =
     combine left right =
       do  left' <- left
           right' <- right
-          Subst.call "erlang" "and" [left', right']
+          Subst.many (Core.Call "erlang" "and") [left', right']
   in
     foldl1 combine (map check chain)
 
@@ -203,18 +207,18 @@ generateTest test expr =
   case test of
     DT.Constructor (Var.Canonical _ name) ->
       do  element <-
-            Subst.call "erlang" "element" [expr, Core.C (Core.Int 1)]
+            Subst.one
+              (\arg -> Core.Call "erlang" "element" [Core.Int 1, arg])
+              expr
 
-          Subst.call "erlang" "=:="
-            [ Core.C (Core.Atom name)
-            , element
-            ]
+          Subst.one
+            (\arg -> Core.Call "erlang" "=:=" [Core.Atom name, arg])
+            element
 
     DT.Literal lit ->
-      Subst.call "erlang" "=:="
-        [ expr
-        , Core.C (Constant.literal lit)
-        ]
+      Subst.one
+        (\arg -> Core.Call "erlang" "=:=" [arg , Constant.literal lit])
+        expr
 
 
 generatePath :: DT.Path -> Core.Expr -> State.State Int Core.Expr
@@ -222,7 +226,9 @@ generatePath path root =
   case path of
     DT.Position i subPath ->
       do  field <-
-            Subst.call "erlang" "element" [root, Core.C (Core.Int (i + 1))]
+            Subst.one
+              (\arg -> Core.Call "erlang" "element" [Core.Int (i + 1), arg])
+              root
 
           generatePath subPath field
 

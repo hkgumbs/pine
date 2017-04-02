@@ -1,10 +1,25 @@
 'elm_lang@core@Main@length'/0 = fun () ->
 	fun (_list) ->
-		case _list of
-			<[]> when 'true' ->
-				0
-			<[_a|[]]> when 'true' ->
-				1
-			<[_a|_rest]> when 'true' ->
-				2
-		end
+		let <__p0> =
+			_list
+		in
+			case __p0 of
+				<_2> when let <_3> =
+				call 'erlang':'element' (__p0, 1)
+			in
+				call 'erlang':'=:=' ('[]', _3) ->
+					0
+				<_2> when 'true' ->
+					case __p0 of
+						<_4> when let <_6> =
+						let <_5> =
+							call 'erlang':'element' (__p0, 2)
+						in
+							call 'erlang':'element' (_5, 1)
+					in
+						call 'erlang':'=:=' ('[]', _6) ->
+							1
+						<_4> when 'true' ->
+							2
+					end
+			end

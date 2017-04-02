@@ -1,127 +1,90 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore (generate) where
 
-import qualified Control.Monad.State as State
-import qualified Data.ByteString.Builder as BS
 import Control.Monad (foldM)
-import Data.Text (Text)
+import qualified Control.Monad.State as State
+
+import qualified Data.ByteString.Builder as BS
+import qualified Data.Text as Text
+import Data.Monoid ((<>))
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
-import qualified Generate.ErlangCore.Builder as Core
-import qualified AST.Expression.Canonical as Can
-import qualified AST.Literal as Literal
-import qualified AST.Expression.Canonical as Can
-import qualified AST.Helpers as Helpers
-import qualified AST.Pattern
-import qualified Reporting.Annotation as Annotation
+import qualified AST.Expression.Optimized as Opt
+import qualified Optimize.DecisionTree as DT
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
 import qualified Generate.ErlangCore.Substitution as Subst
-import qualified Generate.ErlangCore.Pattern as Pattern
+import qualified Generate.ErlangCore.Constant as Constant
 
 
-generate :: Module.Module (Module.Info [Can.Def]) -> BS.Builder
+generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
 generate (Module.Module moduleName _path info) =
   let
-    defToFunction def =
-      State.evalState (generateDef moduleName def) 1
-  in
-    Core.encodeUtf8 $ map defToFunction (Module.program info)
-
-
-generateDef :: ModuleName.Canonical -> Can.Def -> State.State Int Core.Function
-generateDef moduleName (Can.Def _region pattern body _maybeType) =
-  let
     function name =
-      Core.Function (qualifiedVar moduleName name)
+      Core.Function (qualifiedVar moduleName name) []
   in
-    case Annotation.drop pattern of
-      AST.Pattern.Var name | Helpers.isOp name ->
-        generateOpDef (function name) body
-
-      _ ->
-        do  b <- generateExpr body
-            Pattern.match (\name -> function name []) pattern b
+    Core.encodeUtf8 $
+      map (flip State.evalState 1 . generateDef function) (Module.program info)
 
 
-generateOpDef :: ([Text] -> Core.Expr -> a) -> Can.Expr -> State.State Int a
-generateOpDef gen body =
-  let
-    (patterns, function) =
-      Can.collectLambdas body
+generateDef :: (Text.Text -> Core.Expr -> a) -> Opt.Def -> State.State Int a
+generateDef gen def =
+  case def of
+    Opt.Def _ name body ->
+      gen name <$> generateExpr body
 
-    collectArgs (args, expr) pat =
-      do  (name, e) <- Pattern.match (,) pat expr
-          return (name : args, e)
-  in
-    uncurry gen <$>
-      do  f <- generateExpr function
-          foldM collectArgs ([], f) (reverse patterns)
+    Opt.TailDef _ name args body ->
+      do  body' <- generateExpr body
+          return $ gen name (Core.Fun args body')
 
 
-generateExpr :: Can.Expr -> State.State Int Core.Expr
+generateExpr :: Opt.Expr -> State.State Int Core.Expr
 generateExpr expr =
-  case Annotation.drop expr of
-    Can.Literal literal ->
-      return $ Core.C (Pattern.constant literal)
+  case expr of
+    Opt.Literal lit ->
+      return $ Core.C (Constant.literal lit)
 
-    Can.Var var ->
+    Opt.Var var ->
       return $ generateVar var
 
-    Can.List exprs ->
+    Opt.List exprs ->
       Subst.list =<< mapM generateExpr exprs
 
-    Can.Binop var lhs rhs ->
+    Opt.Binop var lhs rhs ->
       do  left <- generateExpr lhs
           right <- generateExpr rhs
-          generateOp var left right
+          foldM (\f a -> Subst.applyExpr f [a]) (generateVar var) [left, right]
 
-    Can.Lambda pattern body ->
-      Pattern.match (\arg -> Core.Fun [arg]) pattern =<< generateExpr body
+    Opt.Function args body ->
+      do  body' <- generateExpr body
+          return $ foldr (\a -> Core.Fun [a]) body' args
 
-    Can.App f arg ->
-      generateApp f arg
+    Opt.Call function args ->
+      generateCall function args
 
-    Can.Let defs expr ->
-      let
-        collectLet e (Can.Def _ pat body _) =
-          do  clause <- Pattern.clause pat e
-              switch <- generateExpr body
-              Subst.case_ switch [clause]
-      in
-        do  body <- generateExpr expr
-            foldM collectLet body (reverse defs)
+    Opt.TailCall name _ args ->
+      Subst.apply False name =<< mapM generateExpr args
 
-    Can.Case expr clauses ->
-      do  switch <- generateExpr expr
-          Subst.case_ switch =<<
-            mapM (\(pat, body) -> Pattern.clause pat =<< generateExpr body) clauses
+    Opt.Let defs body ->
+      foldr
+        (\def state -> generateDef Core.Let def <*> state)
+        (generateExpr body)
+        defs
 
-    Can.Ctor var exprs ->
-      Subst.ctor (Pattern.ctor var) =<< mapM generateExpr exprs
+    Opt.Case switch decider branches ->
+      generateCase switch decider branches
 
-    Can.Program _main expr ->
+    Opt.Ctor var exprs ->
+      Subst.ctor var =<< mapM generateExpr exprs
+
+    Opt.Program _ expr ->
       generateExpr expr
 
-
-generateOp
-  :: Var.Canonical
-  -> Core.Expr
-  -> Core.Expr
-  -> State.State Int Core.Expr
-generateOp (Var.Canonical home name) lhs rhs =
-  let
-    moduleName =
-      case home of
-        Var.Local -> error "infix operators should only be defined in top-level declarations"
-        Var.BuiltIn -> error "there should be no built-in infix operators"
-        Var.Module moduleName -> moduleName
-        Var.TopLevel moduleName -> moduleName
-  in
-    Subst.apply False (qualifiedVar moduleName name) [lhs, rhs]
+    _ ->
+      error "TODO"
 
 
 generateVar :: Var.Canonical -> Core.Expr
@@ -140,23 +103,134 @@ generateVar (Var.Canonical home name) =
       Var.TopLevel moduleName ->
         reference moduleName
 
+      Var.BuiltIn ->
+        error "TODO: remove. this doesn't exist in upstream/dev"
 
-generateApp :: Can.Expr -> Can.Expr -> State.State Int Core.Expr
-generateApp f arg =
+
+generateCall :: Opt.Expr -> [Opt.Expr] -> State.State Int Core.Expr
+generateCall function args =
+  do  args' <-
+        mapM generateExpr args
+
+      let app f a =
+            Subst.applyExpr f [a]
+
+      case function of
+        Opt.Var (Var.Canonical (Var.Module moduleName) name)
+          | ModuleName.canonicalIsNative moduleName ->
+          Subst.call (moduleToText moduleName) name args'
+
+        _ ->
+          flip (foldM app) args' =<< generateExpr function
+
+
+generateCase
+  :: Text.Text
+  -> Opt.Decider Opt.Choice
+  -> [(Int, Opt.Expr)]
+  -> State.State Int Core.Expr
+generateCase switch decider branches =
+  do  root <-
+        Subst.fresh
+
+      let toTarget i =
+            root <> "_" <> Text.pack (show i)
+
+          label transform (i, expr) =
+            (transform .) <$> Core.Let (toTarget i) <$> generateExpr expr
+
+      withLabels <-
+        foldM label id branches
+
+      withLabels
+        <$> generateDecider (Core.Var switch) toTarget decider
+
+
+generateDecider
+  :: Core.Constant
+  -> (Int -> Text.Text)
+  -> Opt.Decider Opt.Choice
+  -> State.State Int Core.Expr
+generateDecider switch toTarget decider =
+  case decider of
+    Opt.Leaf (Opt.Inline expr) ->
+      generateExpr expr
+
+    Opt.Leaf (Opt.Jump i) ->
+      return $ Core.C (Core.Var (toTarget i))
+
+    Opt.Chain testChain success failure ->
+      do  toClause <-
+            Core.Clause <$> Core.Var <$> Subst.fresh
+
+          testChain' <-
+            generateTestChain switch testChain
+
+          success' <-
+            generateDecider switch toTarget success
+
+          failure' <-
+            generateDecider switch toTarget failure
+
+          return $ Core.Case switch
+            [ toClause testChain' success'
+            , toClause (Core.C (Core.Atom "true")) failure'
+            ]
+
+    Opt.FanOut _path _tests _fallback ->
+      error "TODO: Opt.FanOut"
+
+
+generateTestChain
+  :: Core.Constant
+  -> [(DT.Path, DT.Test)]
+  -> State.State Int Core.Expr
+generateTestChain switch chain =
   let
-    splitFunction apps =
-      (head apps, mapM generateExpr (tail apps ++ [arg]))
+    check (path, test) =
+      generateTest test =<< generatePath path (Core.C switch)
 
-    (function, generatedArgs) =
-      splitFunction (Can.collectApps f)
+    combine left right =
+      do  left' <- left
+          right' <- right
+          Subst.call "erlang" "and" [left', right']
   in
-    case Annotation.drop function of
-      Can.Var (Var.Canonical (Var.Module moduleName) name)
-        | ModuleName.canonicalIsNative moduleName ->
-        do  args <- generatedArgs
-            Subst.call (moduleToText moduleName) name args
+    foldl1 combine (map check chain)
 
-      _ ->
-        do  fun <- generateExpr function
-            args <- generatedArgs
-            foldM (\f a -> Subst.applyExpr f [a]) fun args
+
+generateTest :: DT.Test -> Core.Expr -> State.State Int Core.Expr
+generateTest test expr =
+  case test of
+    DT.Constructor (Var.Canonical _ name) ->
+      do  element <-
+            Subst.call "erlang" "element" [expr, Core.C (Core.Int 1)]
+
+          Subst.call "erlang" "=:="
+            [ Core.C (Core.Atom name)
+            , element
+            ]
+
+    DT.Literal lit ->
+      Subst.call "erlang" "=:="
+        [ expr
+        , Core.C (Constant.literal lit)
+        ]
+
+
+generatePath :: DT.Path -> Core.Expr -> State.State Int Core.Expr
+generatePath path root =
+  case path of
+    DT.Position i subPath ->
+      do  field <-
+            Subst.call "erlang" "element" [root, Core.C (Core.Int (i + 1))]
+
+          generatePath subPath field
+
+    DT.Field _text _path ->
+      error "TODO: DecisionTree.Field"
+
+    DT.Empty ->
+      return root
+
+    DT.Alias ->
+      return root

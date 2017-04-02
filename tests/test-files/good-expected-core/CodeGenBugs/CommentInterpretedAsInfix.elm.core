@@ -2,13 +2,21 @@
 	fun (_x) ->
 		fun (_s) ->
 			_x
-'elm_lang@core@Main@|>'/2 = fun (_a, _f) ->
-	apply _f (_a)
+'elm_lang@core@Main@|>'/0 = fun () ->
+	fun (_a) ->
+		fun (_f) ->
+			apply _f (_a)
 'elm_lang@core@Main@value'/0 = fun () ->
-	let <_2> =
-		let <_1> =
-			apply 'elm_lang@core@Main@always'/0 ()
+	let <_3> =
+		let <_2> =
+			apply 'elm_lang@core@Main@|>'/0 ()
 		in
-			apply _1 (2)
+			apply _2 (1)
 	in
-		apply 'elm_lang@core@Main@|>'/2 (1, _2)
+		let <_4> =
+			let <_1> =
+				apply 'elm_lang@core@Main@always'/0 ()
+			in
+				apply _1 (2)
+		in
+			apply _3 (_4)

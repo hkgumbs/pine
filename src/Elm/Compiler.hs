@@ -99,9 +99,9 @@ compile context source interfaces =
           docs <- Result.format id (docsGen isExposed modul)
 
           let interface = Module.toInterface packageName modul
-          let core = {-# SCC elm_compiler_generate #-} Core.generate modul
+          let javascript = {-# SCC elm_compiler_generate #-} Core.generate modul
 
-          return (Result docs interface core)
+          return (Result docs interface javascript)
   in
     ( Result.oneToValue dummyLocalizer Localizer oneLocalizer
     , Bag.toList Warning warnings
@@ -124,7 +124,7 @@ data Result = Result
     }
 
 
-docsGen :: Bool -> Module.Module (Module.Info a) -> Result.Result () w Error.Error (Maybe Docs.Documentation)
+docsGen :: Bool -> Module.Optimized -> Result.Result () w Error.Error (Maybe Docs.Documentation)
 docsGen isExposed (Module.Module name _ info) =
   if not isExposed then
     Result.ok Nothing

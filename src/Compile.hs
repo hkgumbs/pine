@@ -10,6 +10,7 @@ import qualified Canonicalize
 import qualified Elm.Package as Package
 import qualified Nitpick.PatternMatches as Nitpick
 import qualified Nitpick.TopLevelTypes as Nitpick
+import qualified Optimize
 import qualified Parse.Parse as Parse (program)
 import qualified Reporting.Error as Error
 import qualified Reporting.Render.Type as RenderType
@@ -31,7 +32,7 @@ compile
     -> [ModuleName.Canonical]
     -> Module.Interfaces
     -> Text
-    -> Result (Module.Module (Module.Info [Can.Def]))
+    -> Result Module.Optimized
 compile packageName canonicalImports interfaces source =
   do
       -- Parse the source code
@@ -58,16 +59,21 @@ compile packageName canonicalImports interfaces source =
             Nitpick.topLevelTypes types $
               Can.toSortedDefs (Module.program (Module.info canonicalModule))
 
-      _tagDict <-
+      tagDict <-
         Result.format Error.Pattern $
           {-# SCC elm_compiler_exhaustiveness #-}
           Nitpick.patternMatches interfaces canonicalModule
+
+      -- Do some basic optimizations
+      let optimisedDefs =
+            {-# SCC elm_compiler_optimization #-}
+            Optimize.optimize tagDict (Module.name canonicalModule) canonicalDefs
 
       -- Add the real list of types
       let info =
             (Module.info canonicalModule)
               { Module.types = types
-              , Module.program = canonicalDefs
+              , Module.program = optimisedDefs
               }
 
       return $ canonicalModule { Module.info = info }

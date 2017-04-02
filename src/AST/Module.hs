@@ -202,7 +202,7 @@ data Interface =
     }
 
 
-toInterface :: Package.Name -> Module (Info a) -> Interface
+toInterface :: Package.Name -> Optimized -> Interface
 toInterface pkgName modul =
   let
     myInfo =

@@ -9,6 +9,7 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 
 import qualified Generate.ErlangCore.Builder as Core
+import qualified Generate.ErlangCore.Constant as Constant
 
 
 
@@ -87,13 +88,10 @@ list exprs =
     |> Core.C
 
 
-ctor
-  :: ([Core.Constant] -> Core.Constant)
-  -> [Core.Expr]
-  -> State.State Int Core.Expr
-ctor toCtor exprs =
+ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
+ctor name exprs =
   foldWith (:) [] exprs
-    |> (Core.C . toCtor)
+    |> (Core.C . Constant.ctor name)
 
 
 case_ :: Core.Expr -> [Core.Clause] -> State.State Int Core.Expr

@@ -1,19 +1,19 @@
 'elm_lang@core@Main@paramAs'/0 = fun () ->
-	fun (_a) ->
-		case _a of
-			<{'A', _1}> when 'true' ->
-				'true'
-		end
+	fun (__p0) ->
+		let <__p1> =
+			__p0
+		in
+			'true'
 'elm_lang@core@Main@unpackParams'/0 = fun () ->
-	fun (_2) ->
-		case _2 of
-			<{'A', _bool1}> when 'true' ->
-				fun (_1) ->
-					case _1 of
-						<{'A', _bool2}> when 'true' ->
-							'false'
-					end
-		end
+	fun (__p3) ->
+		fun (__p2) ->
+			let <__p4> =
+				__p3
+			in
+				let <__p5> =
+					__p2
+				in
+					'false'
 'elm_lang@core@Main@A'/0 = fun () ->
 	fun (_v1) ->
 		{'A', _v1}

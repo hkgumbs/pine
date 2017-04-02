@@ -13,7 +13,7 @@ import qualified Generate.ErlangCore.String as String
 
 ctor :: Text -> [Core.Constant] -> Core.Constant
 ctor name args =
-  Core.Tuple $ Core.Atom name : args
+  foldr Core.Cons Core.Nil (Core.Atom name : args)
 
 
 literal :: Literal.Literal -> Core.Constant

@@ -55,8 +55,12 @@ two
   -> Core.Expr
   -> State.State Int Core.Expr
 two use first second =
-  substitute first id >>= \(firstUse, firstC) ->
-    substitute second id >>= \(secondUse, secondC) ->
+  do  (firstUse, firstC) <-
+        substitute first id
+
+      (secondUse, secondC) <-
+        substitute second id
+
       return $ firstUse (secondUse (use firstC secondC))
 
 

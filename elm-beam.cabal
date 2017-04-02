@@ -66,6 +66,7 @@ Executable elm-beam
         Generate.ErlangCore,
         Generate.ErlangCore.Builder,
         Generate.ErlangCore.Constant,
+        Generate.ErlangCore.Pattern,
         Generate.ErlangCore.String,
         Generate.ErlangCore.Substitution,
         Nitpick.Pattern,
@@ -188,6 +189,7 @@ Test-Suite compiler-tests
         Generate.ErlangCore
         Generate.ErlangCore.Builder
         Generate.ErlangCore.Constant
+        Generate.ErlangCore.Pattern
         Generate.ErlangCore.String
         Generate.ErlangCore.Substitution
         Nitpick.Pattern

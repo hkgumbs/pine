@@ -6,18 +6,19 @@ import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
 import qualified Data.Text as Text
-import Data.Monoid ((<>))
+import qualified Data.Map as Map
+import Data.Map ((!))
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
 import qualified AST.Expression.Optimized as Opt
-import qualified Optimize.DecisionTree as DT
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.Substitution as Subst
 import qualified Generate.ErlangCore.Constant as Constant
+import qualified Generate.ErlangCore.Substitution as Subst
+import qualified Generate.ErlangCore.Pattern as Pattern
 
 
 generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
@@ -73,7 +74,8 @@ generateExpr expr =
         defs
 
     Opt.Case switch decider branches ->
-      generateCase switch decider branches
+      Core.Case (Core.Var switch)
+        <$> generateDecider decider (Map.fromList branches)
 
     Opt.Ctor var exprs ->
       Subst.many (Core.C . Constant.ctor var) =<< mapM generateExpr exprs
@@ -128,115 +130,39 @@ generateCall function args =
 -- CASE
 
 
-generateCase
-  :: Text.Text
-  -> Opt.Decider Opt.Choice
-  -> [(Int, Opt.Expr)]
-  -> State.State Int Core.Expr
-generateCase switch decider branches =
-  do  root <-
-        Subst.fresh
-
-      let toTarget i =
-            root <> "_" <> Text.pack (show i)
-
-          label transform (i, expr) =
-            (transform .) <$> Core.Let (toTarget i) <$> generateExpr expr
-
-      withLabels <-
-        foldM label id branches
-
-      withLabels
-        <$> generateDecider (Core.Var switch) toTarget decider
-
-
 generateDecider
-  :: Core.Constant
-  -> (Int -> Text.Text)
-  -> Opt.Decider Opt.Choice
-  -> State.State Int Core.Expr
-generateDecider switch toTarget decider =
+  :: Opt.Decider Opt.Choice
+  -> Map.Map Int Opt.Expr
+  -> State.State Int [Core.Clause]
+generateDecider decider branches =
+  mapM Pattern.toClause =<< collectDeciders decider branches []
+
+
+collectDeciders
+  :: Opt.Decider Opt.Choice
+  -> Map.Map Int Opt.Expr
+  -> [Pattern.Match]
+  -> State.State Int [([Pattern.Match], Core.Expr)]
+collectDeciders decider branches matches =
   case decider of
     Opt.Leaf (Opt.Inline expr) ->
-      generateExpr expr
+      singleton <$> generateExpr expr
 
     Opt.Leaf (Opt.Jump i) ->
-      return $ Core.C (Core.Var (toTarget i))
+      singleton <$> generateExpr (branches ! i)
 
     Opt.Chain testChain success failure ->
-      do  toClause <-
-            Core.Clause <$> Core.Var <$> Subst.fresh
-
-          testChain' <-
-            generateTestChain switch testChain
+      do  let newMatches =
+                foldr Pattern.insert [] testChain
 
           success' <-
-            generateDecider switch toTarget success
+            collectDeciders success branches (matches ++ newMatches)
 
-          failure' <-
-            generateDecider switch toTarget failure
-
-          return $ Core.Case switch
-            [ toClause testChain' success'
-            , toClause (Core.C (Core.Atom "true")) failure'
-            ]
+          (success' ++) <$> collectDeciders failure branches matches
 
     Opt.FanOut _path _tests _fallback ->
       error "TODO: Opt.FanOut"
 
-
-generateTestChain
-  :: Core.Constant
-  -> [(DT.Path, DT.Test)]
-  -> State.State Int Core.Expr
-generateTestChain switch chain =
-  let
-    check (path, test) =
-      generateTest test =<< generatePath path (Core.C switch)
-
-    combine left right =
-      do  left' <- left
-          right' <- right
-          Subst.many (Core.Call "erlang" "and") [left', right']
-  in
-    foldl1 combine (map check chain)
-
-
-generateTest :: DT.Test -> Core.Expr -> State.State Int Core.Expr
-generateTest test expr =
-  case test of
-    DT.Constructor (Var.Canonical _ name) ->
-      do  element <-
-            Subst.one
-              (\arg -> Core.Call "erlang" "element" [Core.Int 1, arg])
-              expr
-
-          Subst.one
-            (\arg -> Core.Call "erlang" "=:=" [Core.Atom name, arg])
-            element
-
-    DT.Literal lit ->
-      Subst.one
-        (\arg -> Core.Call "erlang" "=:=" [arg , Constant.literal lit])
-        expr
-
-
-generatePath :: DT.Path -> Core.Expr -> State.State Int Core.Expr
-generatePath path root =
-  case path of
-    DT.Position i subPath ->
-      do  field <-
-            Subst.one
-              (\arg -> Core.Call "erlang" "element" [Core.Int (i + 1), arg])
-              root
-
-          generatePath subPath field
-
-    DT.Field _text _path ->
-      error "TODO: DecisionTree.Field"
-
-    DT.Empty ->
-      return root
-
-    DT.Alias ->
-      return root
+  where
+    singleton a =
+      [(matches, a)]

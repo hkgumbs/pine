@@ -38,8 +38,7 @@ generateDef gen def =
       gen name <$> generateExpr body
 
     Opt.TailDef _ name args body ->
-      do  body' <- generateExpr body
-          return $ gen name (Core.Fun args body')
+      gen name . Core.Fun args <$> generateExpr body
 
 
 generateExpr :: Opt.Expr -> State.State Int Core.Expr
@@ -118,6 +117,9 @@ generateExpr expr =
 
 
 
+-- VARIABLES
+
+
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
@@ -143,11 +145,6 @@ generateCall function args =
   do  args' <-
         mapM generateExpr args
 
-      let applyVar var argument =
-            case var of
-              Core.Var name -> Core.Apply True name [argument]
-              _ -> error "only variable literals can be applied"
-
       case function of
         Opt.Var (Var.Canonical (Var.Module moduleName) name)
           | ModuleName.canonicalIsNative moduleName ->
@@ -155,6 +152,16 @@ generateCall function args =
 
         _ ->
           flip (foldM (Subst.two applyVar)) args' =<< generateExpr function
+
+
+applyVar :: Core.Constant -> Core.Constant -> Core.Expr
+applyVar var argument =
+  case var of
+    Core.Var name ->
+      Core.Apply True name [argument]
+
+    _ ->
+      error "only variable literals can be applied"
 
 
 

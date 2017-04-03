@@ -16,7 +16,7 @@ import qualified AST.Expression.Optimized as Opt
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.Constant as Constant
+import qualified Generate.ErlangCore.Constant as Const
 import qualified Generate.ErlangCore.Substitution as Subst
 import qualified Generate.ErlangCore.Pattern as Pattern
 
@@ -46,7 +46,7 @@ generateExpr :: Opt.Expr -> State.State Int Core.Expr
 generateExpr expr =
   case expr of
     Opt.Literal lit ->
-      return $ Core.C (Constant.literal lit)
+      return $ Core.C (Const.literal lit)
 
     Opt.Var var ->
       return $ generateVar var
@@ -78,7 +78,7 @@ generateExpr expr =
         <$> generateDecider decider (Map.fromList branches)
 
     Opt.Ctor var exprs ->
-      Subst.many (Core.C . Constant.ctor var) =<< mapM generateExpr exprs
+      Subst.many (Core.C . Pattern.ctor var) =<< mapM generateExpr exprs
 
     Opt.Program _ expr ->
       generateExpr expr

@@ -2,16 +2,18 @@
 module Generate.ErlangCore.Pattern
   ( Match, new, insert
   , toClause
+  , ctor
   ) where
 
 import qualified Control.Monad.State as State
 import Control.Monad (foldM)
+import Data.Text (Text)
 
 import qualified AST.Variable as Var
 import qualified Optimize.DecisionTree as DT
 
 import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.Constant as Constant
+import qualified Generate.ErlangCore.Constant as Const
 import qualified Generate.ErlangCore.Substitution as Subst
 
 
@@ -82,7 +84,7 @@ toConstant match =
       return (Core.Atom name)
 
     Test (DT.Literal lit) ->
-      return (Constant.literal lit)
+      return (Const.literal lit)
 
     Placeholder ->
       Core.Var <$> Subst.fresh
@@ -99,3 +101,14 @@ toConstant match =
             toConstant next
 
           return $ Core.Cons next' acc
+
+
+
+-- CTOR
+-- Here because it is intrinsically related to the Group notion
+-- Both must use the same data structure!
+
+
+ctor :: Text -> [Core.Constant] -> Core.Constant
+ctor name args =
+  foldr Core.Cons Core.Nil (Core.Atom name : args)

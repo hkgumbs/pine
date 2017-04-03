@@ -70,11 +70,16 @@ many
   -> State.State Int Core.Expr
 many use exprs =
   let
-    fold (outerUse, oldValue) next =
-      do  (innerUse, value) <- substitute next (: oldValue)
+    combine next acc =
+      do  (outerUse, oldValue) <-
+            acc
+
+          (innerUse, value) <-
+            substitute next (: oldValue)
+
           return (innerUse . outerUse, value)
   in
-    State.foldM fold (id, []) (reverse exprs) |> use
+    foldr combine (return (id, [])) exprs |> use
 
 
 

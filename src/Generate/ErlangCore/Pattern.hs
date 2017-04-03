@@ -1,7 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore.Pattern (Match, insert, toClause) where
+module Generate.ErlangCore.Pattern
+  ( Match, new, insert
+  , toClause
+  ) where
 
 import qualified Control.Monad.State as State
+import Control.Monad (foldM)
 
 import qualified AST.Variable as Var
 import qualified Optimize.DecisionTree as DT
@@ -12,46 +16,61 @@ import qualified Generate.ErlangCore.Substitution as Subst
 
 
 data Match
-  = Check Core.Constant
+  = Test DT.Test
   | Placeholder
-  | Deeper [Match]
+  | Group [Match]
 
 
-insert :: (DT.Path, DT.Test) -> [Match] -> [Match]
-insert (path, test) matches =
+new :: Match
+new =
+  Placeholder
+
+
+insert :: (DT.Path, DT.Test) -> Match -> Match
+insert (path, test) =
+  combine (toMatch path test)
+
+
+toMatch :: DT.Path -> DT.Test -> Match
+toMatch path test =
   case path of
     DT.Position i subPath ->
-      if i > length matches then
-        matches
-        ++ replicate (i - length matches - 1) Placeholder
-        ++ [Deeper (insert (subPath, test) [])]
-
-      else
-        take (i - 1) matches
-        ++ [Deeper (insert (subPath, test) [])]
-        ++ drop i matches
+      Group (replicate i Placeholder ++ [toMatch subPath test])
 
     DT.Field _text _subPath ->
       error "TODO: DecisionTree.Field to Pattern.Match"
 
     DT.Empty ->
-      [fromTest test]
+      Test test
 
     DT.Alias ->
-      [fromTest test]
-
-  where
-    fromTest (DT.Constructor (Var.Canonical _ name)) =
-      Check (Core.Atom name)
-
-    fromTest (DT.Literal lit) =
-      Check (Constant.literal lit)
+      Test test
 
 
-toClause :: ([Match], Core.Expr) -> State.State Int Core.Clause
-toClause (matches, body) =
+combine :: Match -> Match -> Match
+combine first second =
+  case (first, second) of
+    (_, Placeholder) ->
+      first
+
+    (Placeholder, _) ->
+      second
+
+    (Group first, Group second) ->
+      Group $ take
+        (max (length first) (length second))
+        (zipWith combine
+          (first ++ repeat Placeholder)
+          (second ++ repeat Placeholder))
+
+    (_, _) ->
+      error "Something tricky happened while pattern-matching!"
+
+
+toClause :: (Match, Core.Expr) -> State.State Int Core.Clause
+toClause (match, body) =
   do  c <-
-        toConstant (Deeper matches)
+        toConstant match
 
       return $ Core.Clause c (Core.C (Core.Atom "true")) body
 
@@ -59,17 +78,20 @@ toClause (matches, body) =
 toConstant :: Match -> State.State Int Core.Constant
 toConstant match =
   case match of
-    Check constant ->
-      return constant
+    Test (DT.Constructor (Var.Canonical _ name)) ->
+      return (Core.Atom name)
+
+    Test (DT.Literal lit) ->
+      return (Constant.literal lit)
 
     Placeholder ->
       Core.Var <$> Subst.fresh
 
-    Deeper matches ->
+    Group matches ->
       do  tail <-
             Core.Var <$> Subst.fresh
 
-          State.foldM collectMatch tail (reverse matches)
+          foldM collectMatch tail (reverse matches)
 
   where
     collectMatch acc next =

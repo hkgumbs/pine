@@ -135,15 +135,15 @@ generateDecider
   -> Map.Map Int Opt.Expr
   -> State.State Int [Core.Clause]
 generateDecider decider branches =
-  mapM Pattern.toClause =<< collectDeciders decider branches []
+  mapM Pattern.toClause =<< collectDeciders decider branches Pattern.new
 
 
 collectDeciders
   :: Opt.Decider Opt.Choice
   -> Map.Map Int Opt.Expr
-  -> [Pattern.Match]
-  -> State.State Int [([Pattern.Match], Core.Expr)]
-collectDeciders decider branches matches =
+  -> Pattern.Match
+  -> State.State Int [(Pattern.Match, Core.Expr)]
+collectDeciders decider branches currentMatch =
   case decider of
     Opt.Leaf (Opt.Inline expr) ->
       singleton <$> generateExpr expr
@@ -152,17 +152,17 @@ collectDeciders decider branches matches =
       singleton <$> generateExpr (branches ! i)
 
     Opt.Chain testChain success failure ->
-      do  let newMatches =
-                foldr Pattern.insert [] testChain
+      do  let newMatch =
+                foldr Pattern.insert currentMatch testChain
 
           success' <-
-            collectDeciders success branches (matches ++ newMatches)
+            collectDeciders success branches newMatch
 
-          (success' ++) <$> collectDeciders failure branches matches
+          (success' ++) <$> collectDeciders failure branches currentMatch
 
     Opt.FanOut _path _tests _fallback ->
       error "TODO: Opt.FanOut"
 
   where
     singleton a =
-      [(matches, a)]
+      [(currentMatch, a)]

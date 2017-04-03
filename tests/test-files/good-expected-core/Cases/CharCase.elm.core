@@ -4,8 +4,8 @@
 			_x
 		in
 			case __p0 of
-				<[65|_1]> when 'true' ->
+				<65> when 'true' ->
 					#{#<104>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']])}#
-				<_2> when 'true' ->
+				<_1> when 'true' ->
 					#{#<108>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<114>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<119>(8,1,'integer',['unsigned'|['big']]), #<97>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']])}#
 			end

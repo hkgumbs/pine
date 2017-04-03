@@ -52,7 +52,7 @@ generateExpr expr =
       return $ generateVar var
 
     Opt.List exprs ->
-      Subst.many (Core.C . foldr Core.Cons Core.Nil) =<< mapM generateExpr exprs
+      Pattern.list =<< mapM generateExpr exprs
 
     Opt.Binop var lhs rhs ->
       generateCall (Opt.Var var) [lhs, rhs]
@@ -67,6 +67,9 @@ generateExpr expr =
     Opt.TailCall name _ args ->
       Subst.many (Core.Apply False name) =<< mapM generateExpr args
 
+    Opt.If _branches _else ->
+      error "TODO Opt.If to Core.Expr"
+
     Opt.Let defs body ->
       foldr
         (\def state -> generateDef Core.Let def <*> state)
@@ -77,14 +80,42 @@ generateExpr expr =
       Core.Case (Core.Var switch)
         <$> generateDecider decider (Map.fromList branches)
 
-    Opt.Ctor var exprs ->
-      Subst.many (Core.C . Pattern.ctor var) =<< mapM generateExpr exprs
+    Opt.Ctor name exprs ->
+      Pattern.ctor name =<< mapM generateExpr exprs
 
-    Opt.Program _ expr ->
-      generateExpr expr
+    Opt.CtorAccess expr index ->
+      Pattern.ctorAccess index =<< generateExpr expr
 
-    _ ->
-      error "TODO"
+    Opt.Access _record _field ->
+      error "TODO Opt.Access to Core.Expr"
+
+    Opt.Update _record _fields ->
+      error "TODO Opt.Update to Core.Expr"
+
+    Opt.Record _fields ->
+      error "TODO Opt.Record to Core.Expr"
+
+    Opt.Cmd _moduleName ->
+      error "TODO Opt.Cmd to Core.Expr"
+
+    Opt.Sub _moduleName ->
+      error "TODO Opt.Sub to Core.Expr"
+
+    Opt.OutgoingPort _name _type ->
+      error "TODO Opt.OutgoingPort to Core.Expr"
+
+    Opt.IncomingPort _name _type ->
+      error "TODO Opt.IncomingPort to Core.Expr"
+
+    Opt.Program _type _expr ->
+      error "TODO Opt.Program to Core.Expr"
+
+    Opt.GLShader _ _ _ ->
+      error "TODO Opt.GLShader to Core.Expr"
+
+    Opt.Crash _moduleName _region _maybeExpr ->
+      error "TODO Opt.Crash to Core.Expr"
+
 
 
 generateVar :: Var.Canonical -> Core.Expr

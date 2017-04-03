@@ -4,10 +4,10 @@
 			_list
 		in
 			case __p0 of
-				<'[]'> when 'true' ->
+				<['[]'|_1]> when 'true' ->
 					0
-				<[_1|[_2|['[]'|_3]]]> when 'true' ->
+				<[_2|[_3|[['[]'|_4]|_5]]]> when 'true' ->
 					1
-				<_4> when 'true' ->
+				<_6> when 'true' ->
 					2
 			end

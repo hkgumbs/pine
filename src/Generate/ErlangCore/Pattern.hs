@@ -2,11 +2,10 @@
 module Generate.ErlangCore.Pattern
   ( Match, new, insert
   , toClause
-  , ctor
+  , ctor, ctorAccess, list
   ) where
 
 import qualified Control.Monad.State as State
-import Control.Monad (foldM)
 import Data.Text (Text)
 
 import qualified AST.Variable as Var
@@ -18,7 +17,7 @@ import qualified Generate.ErlangCore.Substitution as Subst
 
 
 data Match
-  = Test DT.Test
+  = Test Core.Constant
   | Placeholder
   | Group [Match]
 
@@ -37,16 +36,26 @@ toMatch :: DT.Path -> DT.Test -> Match
 toMatch path test =
   case path of
     DT.Position i subPath ->
-      Group (replicate i Placeholder ++ [toMatch subPath test])
+      Group (replicate (i + 1) Placeholder ++ [toMatch subPath test])
 
     DT.Field _text _subPath ->
       error "TODO: DecisionTree.Field to Pattern.Match"
 
     DT.Empty ->
-      Test test
+      testToMatch test
 
     DT.Alias ->
-      Test test
+      testToMatch test
+
+
+testToMatch :: DT.Test -> Match
+testToMatch test =
+  case test of
+    DT.Constructor (Var.Canonical _ name) ->
+      Group [Test (Core.Atom name)]
+
+    DT.Literal lit ->
+      Test (Const.literal lit)
 
 
 combine :: Match -> Match -> Match
@@ -80,35 +89,43 @@ toClause (match, body) =
 toConstant :: Match -> State.State Int Core.Constant
 toConstant match =
   case match of
-    Test (DT.Constructor (Var.Canonical _ name)) ->
-      return (Core.Atom name)
-
-    Test (DT.Literal lit) ->
-      return (Const.literal lit)
+    Test constant ->
+      return constant
 
     Placeholder ->
       Core.Var <$> Subst.fresh
 
     Group matches ->
-      do  tail <-
-            Core.Var <$> Subst.fresh
+      let
+        collectMatch next acc =
+          do  next' <-
+                toConstant next
 
-          foldM collectMatch tail (reverse matches)
-
-  where
-    collectMatch acc next =
-      do  next' <-
-            toConstant next
-
-          return $ Core.Cons next' acc
+              Core.Cons next' <$> acc
+      in
+        foldr collectMatch (Core.Var <$> Subst.fresh) matches
 
 
 
--- CTOR
+-- CONSTRUCTORS
 -- Here because it is intrinsically related to the Group notion
--- Both must use the same data structure!
+-- Must use the same data structures!
 
 
-ctor :: Text -> [Core.Constant] -> Core.Constant
+ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
 ctor name args =
-  foldr Core.Cons Core.Nil (Core.Atom name : args)
+  Subst.many (Core.C . foldr Core.Cons Core.Nil . (Core.Atom name :)) args
+
+
+ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
+ctorAccess index =
+  Subst.one (\list -> Core.Call "lists" "nth" [Core.Int (index + 2), list])
+
+
+list :: [Core.Expr] -> State.State Int Core.Expr
+list =
+  Subst.many $
+    Core.C
+    . foldr
+        (\h t -> Core.Cons (Core.Atom "::") (Core.Cons h t))
+        (Core.Cons (Core.Atom "[]") Core.Nil)

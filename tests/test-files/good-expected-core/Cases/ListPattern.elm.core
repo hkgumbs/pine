@@ -1,9 +1,21 @@
+'elm_lang@core@Main@firstWithDefault'/0 = fun () ->
+	fun (_list) ->
+		fun (_default) ->
+			let <__p0> =
+				_list
+			in
+				case __p0 of
+					<['[]'|_1]> when 'true' ->
+						_default
+					<_2> when 'true' ->
+						call 'lists':'nth' (2, __p0)
+				end
 'elm_lang@core@Main@length'/0 = fun () ->
 	fun (_list) ->
-		let <__p0> =
+		let <__p1> =
 			_list
 		in
-			case __p0 of
+			case __p1 of
 				<['[]'|_1]> when 'true' ->
 					0
 				<[_2|[_3|[['[]'|_4]|_5]]]> when 'true' ->

@@ -67,7 +67,8 @@ generateExpr expr =
       Subst.many (Core.Apply False name) =<< mapM generateExpr args
 
     Opt.If _branches _else ->
-      error "TODO Opt.If to Core.Expr"
+      error
+        "TODO: Opt.If to Core.Expr"
 
     Opt.Let defs body ->
       foldr
@@ -86,34 +87,43 @@ generateExpr expr =
       Pattern.ctorAccess index =<< generateExpr expr
 
     Opt.Access _record _field ->
-      error "TODO Opt.Access to Core.Expr"
+      error
+        "TODO: Opt.Access to Core.Expr"
 
     Opt.Update _record _fields ->
-      error "TODO Opt.Update to Core.Expr"
+      error
+        "TODO: Opt.Update to Core.Expr"
 
     Opt.Record _fields ->
-      error "TODO Opt.Record to Core.Expr"
+      error
+        "TODO: Opt.Record to Core.Expr"
 
     Opt.Cmd _moduleName ->
-      error "TODO Opt.Cmd to Core.Expr"
+      error
+        "TODO: Opt.Cmd to Core.Expr"
 
     Opt.Sub _moduleName ->
-      error "TODO Opt.Sub to Core.Expr"
+      error
+        "TODO: Opt.Sub to Core.Expr"
 
     Opt.OutgoingPort _name _type ->
-      error "TODO Opt.OutgoingPort to Core.Expr"
+      error
+        "TODO: Opt.OutgoingPort to Core.Expr"
 
     Opt.IncomingPort _name _type ->
-      error "TODO Opt.IncomingPort to Core.Expr"
+      error
+        "TODO: Opt.IncomingPort to Core.Expr"
 
     Opt.Program _type expr ->
       generateExpr expr
 
     Opt.GLShader _ _ _ ->
-      error "TODO Opt.GLShader to Core.Expr"
+      error
+        "TODO: Opt.GLShader to Core.Expr"
 
     Opt.Crash _moduleName _region _maybeExpr ->
-      error "TODO Opt.Crash to Core.Expr"
+      error
+        "TODO: Opt.Crash to Core.Expr"
 
 
 
@@ -137,7 +147,8 @@ generateVar (Var.Canonical home name) =
         reference moduleName
 
       Var.BuiltIn ->
-        error "TODO: remove. this doesn't exist in upstream/dev"
+        error
+          "Will go away when merged with upstream dev."
 
 
 generateCall :: Opt.Expr -> [Opt.Expr] -> State.State Int Core.Expr
@@ -161,7 +172,9 @@ applyVar var argument =
       Core.Apply True name [argument]
 
     _ ->
-      error "only variable literals can be applied"
+      error
+        "This is an impossible apply \
+        \ - trying to call a tuple, list, or literal."
 
 
 
@@ -202,7 +215,8 @@ collectDeciders decider branches currentMatch =
           return (success' ++ failure')
 
     Opt.FanOut _path _tests _fallback ->
-      error "TODO: Opt.FanOut"
+      error
+        "TODO: Opt.FanOut"
 
   where
     singleton a =

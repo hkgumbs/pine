@@ -43,7 +43,8 @@ toMatch path test =
         ]
 
     DT.Field _text _subPath ->
-      error "TODO: DecisionTree.Field to Pattern.Match"
+      error
+        "TODO: DecisionTree.Field to Pattern.Match"
 
     DT.Empty ->
       testToMatch test
@@ -79,7 +80,9 @@ combine first second =
           (second ++ repeat Placeholder))
 
     (_, _) ->
-      error "Something tricky happened while pattern-matching!"
+      error
+        "This is an impossible pattern match \
+        \ - trying to test the same value in multiple ways."
 
 
 toClause :: (Match, Core.Expr) -> State.State Int Core.Clause

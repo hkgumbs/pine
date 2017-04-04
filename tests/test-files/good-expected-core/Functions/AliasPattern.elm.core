@@ -25,4 +25,4 @@
 				end
 'elm_lang@core@Main@A'/0 = fun () ->
 	fun (_v1) ->
-		['A'|[_v1|[]]]
+		{'A', _v1}

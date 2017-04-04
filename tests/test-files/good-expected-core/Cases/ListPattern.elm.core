@@ -5,10 +5,10 @@
 				_list
 			in
 				case __p0 of
-					<['[]'|_1]> when 'true' ->
+					<{'[]'}> when 'true' ->
 						_default
-					<_2> when 'true' ->
-						call 'lists':'nth' (2, __p0)
+					<_1> when 'true' ->
+						call 'erlang':'element' (2, __p0)
 				end
 'elm_lang@core@Main@length'/0 = fun () ->
 	fun (_list) ->
@@ -16,10 +16,10 @@
 			_list
 		in
 			case __p1 of
-				<['[]'|_1]> when 'true' ->
+				<{'[]'}> when 'true' ->
 					0
-				<[_2|[_3|[['[]'|_4]|_5]]]> when 'true' ->
+				<{_1, _2, {'[]'}}> when 'true' ->
 					1
-				<_6> when 'true' ->
+				<_3> when 'true' ->
 					2
 			end

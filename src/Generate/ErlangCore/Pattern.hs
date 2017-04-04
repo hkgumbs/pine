@@ -29,14 +29,18 @@ new =
 
 chain :: Match -> [(DT.Path, DT.Test)] -> Match
 chain =
-  foldr $ \(path, test) -> combine (toMatch path test)
+  foldr $ combine . uncurry toMatch
 
 
 toMatch :: DT.Path -> DT.Test -> Match
 toMatch path test =
   case path of
-    DT.Position i _ subPath ->
-      Group (replicate (i + 1) Placeholder ++ [toMatch subPath test])
+    DT.Position i size subPath ->
+      Group $ concat
+        [ replicate (i + 1) Placeholder
+        , [ toMatch subPath test ]
+        , replicate (size - i - 1) Placeholder
+        ]
 
     DT.Field _text _subPath ->
       error "TODO: DecisionTree.Field to Pattern.Match"
@@ -51,8 +55,8 @@ toMatch path test =
 testToMatch :: DT.Test -> Match
 testToMatch test =
   case test of
-    DT.Constructor (Var.Canonical _ name) _ ->
-      Group [Test (Core.Atom name)]
+    DT.Constructor (Var.Canonical _ name) size ->
+      Group (Test (Core.Atom name) : replicate size Placeholder)
 
     DT.Literal lit ->
       Test (Const.literal lit)
@@ -96,14 +100,7 @@ toConstant match =
       Core.Var <$> Subst.fresh
 
     Group matches ->
-      let
-        collectMatch next acc =
-          do  next' <-
-                toConstant next
-
-              Core.Cons next' <$> acc
-      in
-        foldr collectMatch (Core.Var <$> Subst.fresh) matches
+      Core.Tuple <$> mapM toConstant matches
 
 
 
@@ -113,19 +110,19 @@ toConstant match =
 
 
 ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
-ctor name args =
-  Subst.many (Core.C . foldr Core.Cons Core.Nil . (Core.Atom name :)) args
+ctor name =
+  Subst.many $
+    Core.C . Core.Tuple . (++) [Core.Atom name]
 
 
 ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
 ctorAccess index =
-  Subst.one (\list -> Core.Call "lists" "nth" [Core.Int (index + 2), list])
+  Subst.one $ \tup ->
+    Core.Call "erlang" "element" [Core.Int (index + 2), tup]
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  Subst.many $
-    Core.C
-    . foldr
-        (\h t -> Core.Cons (Core.Atom "::") (Core.Cons h t))
-        (Core.Cons (Core.Atom "[]") Core.Nil)
+  Subst.many $ Core.C . foldr
+    (\h t -> Core.Tuple [Core.Atom "::", h, t])
+    (Core.Tuple [Core.Atom "[]"])

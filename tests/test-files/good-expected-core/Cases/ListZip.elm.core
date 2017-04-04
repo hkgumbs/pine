@@ -1,21 +1,21 @@
 'elm_lang@core@Main@Cons'/0 = fun () ->
 	fun (_v1) ->
 		fun (_v2) ->
-			['Cons'|[_v1|[_v2|[]]]]
+			{'Cons', _v1, _v2}
 'elm_lang@core@Main@Nil'/0 = fun () ->
-	['Nil'|[]]
+	{'Nil'}
 'elm_lang@core@Main@zip'/0 = fun () ->
 	fun (_list1) ->
 		fun (_list2) ->
 			let <__p0> =
-				['_Tuple2'|[_list1|[_list2|[]]]]
+				{'_Tuple2', _list1, _list2}
 			in
 				case __p0 of
-					<[_15|[['Nil'|_16]|_17]]> when 'true' ->
+					<{_15, {'Nil'}, _16}> when 'true' ->
 						apply 'elm_lang@core@Main@Nil'/0 ()
-					<[_18|[_19|[['Nil'|_20]|_21]]]> when 'true' ->
+					<{_17, _18, {'Nil'}}> when 'true' ->
 						apply 'elm_lang@core@Main@Nil'/0 ()
-					<_22> when 'true' ->
+					<_19> when 'true' ->
 						let <_13> =
 							let <_11> =
 								apply 'elm_lang@core@Main@Cons'/0 ()
@@ -23,17 +23,17 @@
 								let <_12> =
 									let <_4> =
 										let <_1> =
-											call 'lists':'nth' (2, __p0)
+											call 'erlang':'element' (2, __p0)
 										in
-											call 'lists':'nth' (2, _1)
+											call 'erlang':'element' (2, _1)
 									in
 										let <_3> =
 											let <_2> =
-												call 'lists':'nth' (3, __p0)
+												call 'erlang':'element' (3, __p0)
 											in
-												call 'lists':'nth' (2, _2)
+												call 'erlang':'element' (2, _2)
 										in
-											['_Tuple2'|[_4|[_3|[]]]]
+											{'_Tuple2', _4, _3}
 								in
 									apply _11 (_12)
 						in
@@ -44,17 +44,17 @@
 									in
 										let <_8> =
 											let <_5> =
-												call 'lists':'nth' (2, __p0)
+												call 'erlang':'element' (2, __p0)
 											in
-												call 'lists':'nth' (3, _5)
+												call 'erlang':'element' (3, _5)
 										in
 											apply _7 (_8)
 								in
 									let <_10> =
 										let <_6> =
-											call 'lists':'nth' (3, __p0)
+											call 'erlang':'element' (3, __p0)
 										in
-											call 'lists':'nth' (3, _6)
+											call 'erlang':'element' (3, _6)
 									in
 										apply _9 (_10)
 							in

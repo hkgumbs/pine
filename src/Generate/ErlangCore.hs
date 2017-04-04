@@ -106,8 +106,8 @@ generateExpr expr =
     Opt.IncomingPort _name _type ->
       error "TODO Opt.IncomingPort to Core.Expr"
 
-    Opt.Program _type _expr ->
-      error "TODO Opt.Program to Core.Expr"
+    Opt.Program _type expr ->
+      generateExpr expr
 
     Opt.GLShader _ _ _ ->
       error "TODO Opt.GLShader to Core.Expr"
@@ -190,13 +190,16 @@ collectDeciders decider branches currentMatch =
       singleton <$> generateExpr (branches ! i)
 
     Opt.Chain testChain success failure ->
-      do  let newMatch =
-                foldr Pattern.insert currentMatch testChain
+      do  let ifMatches =
+                Pattern.chain currentMatch testChain
 
           success' <-
-            collectDeciders success branches newMatch
+            collectDeciders success branches ifMatches
 
-          (success' ++) <$> collectDeciders failure branches currentMatch
+          failure' <-
+            collectDeciders failure branches currentMatch
+
+          return (success' ++ failure')
 
     Opt.FanOut _path _tests _fallback ->
       error "TODO: Opt.FanOut"

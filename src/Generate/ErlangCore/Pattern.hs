@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Pattern
-  ( Match, new, insert
+  ( Match, new, chain
   , toClause
   , ctor, ctorAccess, list
   ) where
@@ -27,9 +27,9 @@ new =
   Placeholder
 
 
-insert :: (DT.Path, DT.Test) -> Match -> Match
-insert (path, test) =
-  combine (toMatch path test)
+chain :: Match -> [(DT.Path, DT.Test)] -> Match
+chain =
+  foldr $ \(path, test) -> combine (toMatch path test)
 
 
 toMatch :: DT.Path -> DT.Test -> Match

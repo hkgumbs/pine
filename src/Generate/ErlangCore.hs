@@ -37,8 +37,9 @@ generateDef gen def =
     Opt.Def _ name body ->
       gen name <$> generateExpr body
 
-    Opt.TailDef _ name args body ->
-      gen name . Core.Fun args <$> generateExpr body
+    Opt.TailDef _ _name _args _body ->
+      error
+        "TODO: Opt.TailDef"
 
 
 generateExpr :: Opt.Expr -> State.State Int Core.Expr
@@ -63,8 +64,9 @@ generateExpr expr =
     Opt.Call function args ->
       generateCall function args
 
-    Opt.TailCall name _ args ->
-      Subst.many (Core.Apply False name) =<< mapM generateExpr args
+    Opt.TailCall _name _ _args ->
+      error
+        "TODO: Opt.TailCall to Core.Expr"
 
     Opt.If _branches _else ->
       error

@@ -35,7 +35,7 @@ chain =
 toMatch :: DT.Path -> DT.Test -> Match
 toMatch path test =
   case path of
-    DT.Position i subPath ->
+    DT.Position i _ subPath ->
       Group (replicate (i + 1) Placeholder ++ [toMatch subPath test])
 
     DT.Field _text _subPath ->
@@ -51,7 +51,7 @@ toMatch path test =
 testToMatch :: DT.Test -> Match
 testToMatch test =
   case test of
-    DT.Constructor (Var.Canonical _ name) ->
+    DT.Constructor (Var.Canonical _ name) _ ->
       Group [Test (Core.Atom name)]
 
     DT.Literal lit ->

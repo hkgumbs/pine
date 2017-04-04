@@ -79,13 +79,13 @@ data DecisionTree
 
 
 data Test
-    = Constructor Var.Canonical
+    = Constructor Var.Canonical Int
     | Literal L.Literal
     deriving (Eq, Ord)
 
 
 data Path
-    = Position Int Path
+    = Position Int Int Path
     | Field Text Path
     | Empty
     | Alias
@@ -103,8 +103,8 @@ add path finalLink =
     Alias ->
         error "nothing should be added to an alias path"
 
-    Position index subpath ->
-        Position index (add subpath finalLink)
+    Position index size subpath ->
+        Position index size (add subpath finalLink)
 
     Field name subpath ->
         Field name (add subpath finalLink)
@@ -113,7 +113,7 @@ add path finalLink =
 subPositions :: Path -> [CPattern] -> [(Path, CPattern)]
 subPositions path patterns =
     zipWith
-      (\index pattern -> (add path (Position index Empty), pattern))
+      (\index p -> (add path (Position index (length patterns) Empty), p))
       [0..]
       patterns
 
@@ -165,7 +165,7 @@ toDecisionTree variantDict rawBranches =
 isComplete :: VariantDict -> [Test] -> Bool
 isComplete variantDict tests =
   case head tests of
-    Constructor var ->
+    Constructor var _ ->
         getArity variantDict var == length tests
 
     Literal (L.Boolean _) ->
@@ -293,8 +293,8 @@ testAtPath selectedPath (Branch _ pathPatterns) =
 
     Just (A.A _ pattern) ->
         case pattern of
-          P.Ctor name _ ->
-              Just (Constructor name)
+          P.Ctor name patterns ->
+              Just (Constructor name (length patterns))
 
           P.Literal lit ->
               Just (Literal lit)
@@ -327,7 +327,7 @@ toRelevantBranch test path branch@(Branch goal pathPatterns) =
     Just (start, A.A _ pattern, end) ->
         case pattern of
           P.Ctor name patterns ->
-              if test == Constructor name then
+              if test == Constructor name (length patterns) then
                   Just (Branch goal (start ++ subPositions path patterns ++ end))
 
               else

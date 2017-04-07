@@ -72,8 +72,6 @@ Executable elm-beam
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
         Optimize,
-        Optimize.Case,
-        Optimize.DecisionTree,
         Optimize.Environment,
         Optimize.Inline,
         Parse.Declaration,
@@ -194,8 +192,6 @@ Test-Suite compiler-tests
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes
         Optimize
-        Optimize.Case
-        Optimize.DecisionTree
         Optimize.Environment
         Optimize.Inline
         Parse.Declaration

@@ -1,25 +1,19 @@
 'elm_lang@core@Main@firstWithDefault'/0 = fun () ->
 	fun (_list) ->
 		fun (_default) ->
-			let <__p0> =
-				_list
-			in
-				case __p0 of
-					<{'[]'}> when 'true' ->
-						_default
-					<_1> when 'true' ->
-						call 'erlang':'element' (2, __p0)
-				end
+			case _list of
+				<{'[]'}> when 'true' ->
+					_default
+				<{'::', _a, _1}> when 'true' ->
+					_a
+			end
 'elm_lang@core@Main@length'/0 = fun () ->
 	fun (_list) ->
-		let <__p1> =
-			_list
-		in
-			case __p1 of
-				<{'[]'}> when 'true' ->
-					0
-				<{_1, _2, {'[]'}}> when 'true' ->
-					1
-				<_3> when 'true' ->
-					2
-			end
+		case _list of
+			<{'[]'}> when 'true' ->
+				0
+			<{'::', _a, {'[]'}}> when 'true' ->
+				1
+			<{'::', _a, _rest}> when 'true' ->
+				2
+		end

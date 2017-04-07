@@ -1,13 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore (generate) where
 
-import Control.Monad (foldM)
+import Control.Monad (foldM, zipWithM)
 import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
 import qualified Data.Text as Text
-import qualified Data.Map as Map
-import Data.Map ((!))
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
@@ -86,9 +84,14 @@ generateExpr expr =
         (generateExpr body)
         defs
 
-    Opt.Case switch decider branches ->
-      Core.Case (Core.Var switch)
-        <$> generateDecider decider (Map.fromList branches)
+    Opt.Case switch branches ->
+      do  bodies <-
+            mapM (generateExpr . snd) branches
+
+          branches' <-
+            zipWithM Pattern.match (map fst branches) bodies
+
+          Subst.one (flip Core.Case branches') =<< generateExpr switch
 
     Opt.Ctor name exprs ->
       Pattern.ctor name =<< mapM generateExpr exprs
@@ -185,49 +188,3 @@ applyVar var argument =
       error
         "This is an impossible apply \
         \ - trying to call a tuple, list, or literal."
-
-
-
--- CASE
-
-
-generateDecider
-  :: Opt.Decider Opt.Choice
-  -> Map.Map Int Opt.Expr
-  -> State.State Int [Core.Clause]
-generateDecider decider branches =
-  mapM Pattern.toClause =<< collectDeciders decider branches Pattern.new
-
-
-collectDeciders
-  :: Opt.Decider Opt.Choice
-  -> Map.Map Int Opt.Expr
-  -> Pattern.Match
-  -> State.State Int [(Pattern.Match, Core.Expr)]
-collectDeciders decider branches currentMatch =
-  case decider of
-    Opt.Leaf (Opt.Inline expr) ->
-      singleton <$> generateExpr expr
-
-    Opt.Leaf (Opt.Jump i) ->
-      singleton <$> generateExpr (branches ! i)
-
-    Opt.Chain testChain success failure ->
-      do  let ifMatches =
-                Pattern.chain currentMatch testChain
-
-          success' <-
-            collectDeciders success branches ifMatches
-
-          failure' <-
-            collectDeciders failure branches currentMatch
-
-          return (success' ++ failure')
-
-    Opt.FanOut _path _tests _fallback ->
-      error
-        "TODO: Opt.FanOut"
-
-  where
-    singleton a =
-      [(currentMatch, a)]

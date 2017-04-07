@@ -3,7 +3,6 @@
 module Optimize (optimize) where
 
 import qualified Control.Monad as M
-import qualified Data.Map as Map
 import qualified Data.Traversable as T
 import Data.Text (Text)
 
@@ -12,10 +11,8 @@ import qualified AST.Expression.Optimized as Opt
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Pattern as P
 import qualified AST.Variable as Var
-import qualified Optimize.Case as Case
 import qualified Optimize.DecisionTree as DT
 import qualified Optimize.Environment as Env
-import qualified Optimize.Inline as Inline
 import qualified Reporting.Annotation as A
 import qualified Reporting.Region as R
 
@@ -249,13 +246,9 @@ optimizeExpr context annExpr@(A.A region expression) =
             Opt.Let optDefs <$> keepLooking body
 
     Can.Case expr branches ->
-        do  optExpr <- optimizeExpr Nothing expr
-            variantDict <- Env.getVariantDict
-
-            name <- Env.freshName
-            optBranches <- T.traverse (optimizeBranch context region name) branches
-            let optCase = Case.optimize variantDict name optBranches
-            return $ Opt.Let [ Opt.Def Opt.dummyFacts name optExpr ] optCase
+        Opt.Case
+          <$> optimizeExpr Nothing expr
+          <*> T.traverse (optimizeBranch context region) branches
 
     Can.Ctor (Var.Canonical _ name) exprs ->
         Opt.Ctor name <$> T.traverse justConvert exprs
@@ -308,21 +301,11 @@ mapSnd func (x, a) =
 optimizeBranch
     :: Context
     -> R.Region
-    -> Text
     -> (P.Canonical, Can.Expr)
     -> Env.Optimizer (P.Canonical, Opt.Expr)
-optimizeBranch context region exprName (rawPattern, canBranch) =
-  let
-    root =
-      Opt.Var (Var.Canonical Var.Local exprName)
-  in
-    do  optBranch <- optimizeExpr context canBranch
-        (pattern, branch) <- tagCrashBranch region rawPattern optBranch
-
-        let substitutions =
-              Map.fromList (patternToSubstitutions root pattern)
-
-        (,) pattern <$> Inline.inline substitutions branch
+optimizeBranch context region (rawPattern, canBranch) =
+  do  optBranch <- optimizeExpr context canBranch
+      tagCrashBranch region rawPattern optBranch
 
 
 tagCrashBranch

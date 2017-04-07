@@ -7,56 +7,26 @@
 'elm_lang@core@Main@zip'/0 = fun () ->
 	fun (_list1) ->
 		fun (_list2) ->
-			let <__p0> =
-				{'_Tuple2', _list1, _list2}
-			in
-				case __p0 of
-					<{_15, {'Nil'}, _16}> when 'true' ->
-						apply 'elm_lang@core@Main@Nil'/0 ()
-					<{_17, _18, {'Nil'}}> when 'true' ->
-						apply 'elm_lang@core@Main@Nil'/0 ()
-					<_19> when 'true' ->
-						let <_13> =
-							let <_11> =
-								apply 'elm_lang@core@Main@Cons'/0 ()
-							in
-								let <_12> =
-									let <_4> =
-										let <_1> =
-											call 'erlang':'element' (2, __p0)
-										in
-											call 'erlang':'element' (2, _1)
-									in
-										let <_3> =
-											let <_2> =
-												call 'erlang':'element' (3, __p0)
-											in
-												call 'erlang':'element' (2, _2)
-										in
-											{'_Tuple2', _4, _3}
-								in
-									apply _11 (_12)
+			case {'_Tuple2', _list1, _list2} of
+				<{'_Tuple2', {'Nil'}, _6}> when 'true' ->
+					apply 'elm_lang@core@Main@Nil'/0 ()
+				<{'_Tuple2', _7, {'Nil'}}> when 'true' ->
+					apply 'elm_lang@core@Main@Nil'/0 ()
+				<{'_Tuple2', {'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
+					let <_4> =
+						let <_3> =
+							apply 'elm_lang@core@Main@Cons'/0 ()
 						in
-							let <_14> =
-								let <_9> =
-									let <_7> =
-										apply 'elm_lang@core@Main@zip'/0 ()
-									in
-										let <_8> =
-											let <_5> =
-												call 'erlang':'element' (2, __p0)
-											in
-												call 'erlang':'element' (3, _5)
-										in
-											apply _7 (_8)
+							apply _3 ({'_Tuple2', _x, _y})
+					in
+						let <_5> =
+							let <_2> =
+								let <_1> =
+									apply 'elm_lang@core@Main@zip'/0 ()
 								in
-									let <_10> =
-										let <_6> =
-											call 'erlang':'element' (3, __p0)
-										in
-											call 'erlang':'element' (3, _6)
-									in
-										apply _9 (_10)
+									apply _1 (_xs)
 							in
-								apply _13 (_14)
-				end
+								apply _2 (_ys)
+						in
+							apply _4 (_5)
+			end

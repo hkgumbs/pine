@@ -10,6 +10,7 @@ import Data.Text (Text)
 import qualified AST.Expression.Canonical as Can
 import qualified AST.Literal as Literal
 import qualified AST.Module.Name as ModuleName
+import qualified AST.Pattern as Pattern
 import qualified AST.Type as Type
 import qualified AST.Variable as Var
 import qualified Optimize.DecisionTree as DT
@@ -46,7 +47,7 @@ data Expr
     | TailCall Text [Text] [Expr]
     | If [(Expr, Expr)] Expr
     | Let [Def] Expr
-    | Case Text (Decider Choice) [(Int, Expr)]
+    | Case Expr [(Pattern.Canonical, Expr)]
     | Ctor Text [Expr]
     | CtorAccess Expr Int
     | Access Expr Text

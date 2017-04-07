@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Constant(..), Clause(..)
+  ( Expr(..), Ref(..), Constant(..), Clause(..)
   , Function(..)
   , encodeUtf8
   )
@@ -23,12 +23,17 @@ import qualified Data.Char as Char
 
 data Expr
   = C Constant
-  | Apply Bool Text [Constant] -- apply 'f'/0 ()
+  | Apply Ref Text [Constant] -- apply 'f'/0 ()
   | Call Text Text [Constant] -- call 'module':'f' ()
   | Case Constant [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | LetRec Text [Text] Expr Expr -- letrec 'foo'/0 = fun () -> ... in ...
   | Fun [Text] Expr -- fun () -> ...
+
+
+data Ref
+  = VarRef -- _f
+  | FunctionRef -- 'f'/1
 
 
 data Constant
@@ -83,15 +88,13 @@ fromExpr indent expression =
     C constant ->
       fromConstant constant
 
-    Apply isVariable name args ->
-      let
-        f =
-          if isVariable then
-            safeVar name
-          else
-            fromFunctionName name args
-      in
-        "apply " <> f <> " (" <> commaSep fromConstant args <> ")"
+    Apply VarRef name args ->
+      "apply " <> safeVar name
+      <> " (" <> commaSep fromConstant args <> ")"
+
+    Apply FunctionRef name args ->
+      "apply " <> fromFunctionName name args
+      <> " (" <> commaSep fromConstant args <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("

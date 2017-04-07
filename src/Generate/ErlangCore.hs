@@ -42,7 +42,7 @@ generateDef gen def =
             generateExpr body
 
           let appliedLetRec =
-                Core.Apply False name (map Core.Var args)
+                Core.Apply Core.FunctionRef name (map Core.Var args)
 
               letRec =
                   Core.LetRec name args body'
@@ -74,7 +74,7 @@ generateExpr expr =
       generateCall function args
 
     Opt.TailCall name _ args ->
-      Subst.many (Core.Apply False name) =<< mapM generateExpr args
+      Subst.many (Core.Apply Core.FunctionRef name) =<< mapM generateExpr args
 
     Opt.If _branches _else ->
       error
@@ -144,7 +144,7 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
     reference moduleName =
-      Core.Apply False (qualifiedVar moduleName name) []
+      Core.Apply Core.FunctionRef (qualifiedVar moduleName name) []
   in
     case home of
       Var.Local ->
@@ -179,7 +179,7 @@ applyVar :: Core.Constant -> Core.Constant -> Core.Expr
 applyVar var argument =
   case var of
     Core.Var name ->
-      Core.Apply True name [argument]
+      Core.Apply Core.VarRef name [argument]
 
     _ ->
       error

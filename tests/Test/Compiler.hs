@@ -205,6 +205,7 @@ testMatchesExpected elmDir expectedOutputDir =
           , "Functions" </> "Native.elm"
           , "Functions" </> "AliasPattern.elm"
           , "Functions" </> "PatternAndLet.elm"
+          , "Functions" </> "TailCall.elm"
           , "Declarations" </> "Types.elm"
           , "CodeGenBugs" </> "CommentInterpretedAsInfix.elm"
           , "Soundness" </> "Apply.elm"

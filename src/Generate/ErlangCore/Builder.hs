@@ -27,6 +27,7 @@ data Expr
   | Call Text Text [Constant] -- call 'module':'f' ()
   | Case Constant [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
+  | LetRec Text [Text] Expr Expr -- letrec 'foo'/0 = fun () -> ... in ...
   | Fun [Text] Expr -- fun () -> ...
 
 
@@ -111,6 +112,12 @@ fromExpr indent expression =
     Let var binding body ->
       "let <" <> safeVar var <> "> =\n"
       <> deeper indent <> fromExpr (deeper indent) binding <> "\n"
+      <> indent <> "in\n"
+      <> deeper indent <> fromExpr (deeper indent) body
+
+    LetRec name args binding body ->
+      "letrec " <> fromFunctionName name args <> " =\n"
+      <> deeper indent <> fromFun args (deeper indent) binding <> "\n"
       <> indent <> "in\n"
       <> deeper indent <> fromExpr (deeper indent) body
 

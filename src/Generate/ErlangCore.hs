@@ -37,9 +37,18 @@ generateDef gen def =
     Opt.Def _ name body ->
       gen name <$> generateExpr body
 
-    Opt.TailDef _ _name _args _body ->
-      error
-        "TODO: Opt.TailDef"
+    Opt.TailDef _ name args body ->
+      do  body' <-
+            generateExpr body
+
+          let appliedLetRec =
+                Core.Apply False name (map Core.Var args)
+
+              letRec =
+                  Core.LetRec name args body'
+                    (foldr (\a -> Core.Fun [a]) appliedLetRec args)
+
+          return (gen name letRec)
 
 
 generateExpr :: Opt.Expr -> State.State Int Core.Expr
@@ -64,9 +73,8 @@ generateExpr expr =
     Opt.Call function args ->
       generateCall function args
 
-    Opt.TailCall _name _ _args ->
-      error
-        "TODO: Opt.TailCall to Core.Expr"
+    Opt.TailCall name _ args ->
+      Subst.many (Core.Apply False name) =<< mapM generateExpr args
 
     Opt.If _branches _else ->
       error

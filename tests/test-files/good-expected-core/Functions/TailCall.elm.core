@@ -1,0 +1,16 @@
+'elm_lang@core@Main@infiniteCountDown'/0 = fun () ->
+	letrec 'infiniteCountDown'/2 =
+		fun (_n, _x) ->
+			let <__p0> =
+				_n
+			in
+				case __p0 of
+					<0> when 'true' ->
+						0
+					<_1> when 'true' ->
+						apply 'infiniteCountDown'/2 (_n, _x)
+				end
+	in
+		fun (_n) ->
+			fun (_x) ->
+				apply 'infiniteCountDown'/2 (_n, _x)

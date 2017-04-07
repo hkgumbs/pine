@@ -1,2 +1,2 @@
 'elm_lang@core@Main@emptyList'/0 = fun () ->
-	{'[]'}
+	[]

@@ -30,6 +30,18 @@ match pattern body =
 toCorePattern :: Pattern.Canonical -> State.State Int Core.Pattern
 toCorePattern (A _ pattern) =
   case pattern of
+    Pattern.Ctor (Var.Canonical _ "[]") _ ->
+      lift Core.Nil
+
+    Pattern.Ctor (Var.Canonical _ "::") [first, rest] ->
+      do  first' <-
+            toCorePattern first
+
+          rest' <-
+            toCorePattern rest
+
+          lift (Core.Cons first' rest')
+
     Pattern.Ctor (Var.Canonical _ name) args ->
       do  args' <-
             mapM toCorePattern args
@@ -77,5 +89,6 @@ ctorAccess index =
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  error
-    "TODO: Lists"
+  Subst.many $ Core.C . foldr
+    (\first rest -> Core.Literal (Core.Cons first rest))
+    (Core.Literal Core.Nil)

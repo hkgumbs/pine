@@ -19,17 +19,22 @@ import qualified Generate.ErlangCore.Substitution as Subst
 match :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Clause
 match pattern body =
   do  pattern' <-
-        patternToConstant pattern
+        toCorePattern pattern
 
-      return $ Core.Clause pattern' (Core.C (Core.Atom "true")) body
+      let noOpGuard =
+            Core.C (Core.Literal (Core.Atom "true"))
+
+      return $ Core.Clause pattern' noOpGuard body
 
 
-
-patternToConstant :: Pattern.Canonical -> State.State Int Core.Constant
-patternToConstant (A _ pattern) =
+toCorePattern :: Pattern.Canonical -> State.State Int Core.Pattern
+toCorePattern (A _ pattern) =
   case pattern of
     Pattern.Ctor (Var.Canonical _ name) args ->
-      Core.Tuple . (Core.Atom name :) <$> mapM patternToConstant args
+      do  args' <-
+            mapM toCorePattern args
+
+          lift . Core.Tuple . (:) (Core.Pattern (Core.Atom name)) $ args'
 
     Pattern.Record _fields ->
       error
@@ -40,13 +45,17 @@ patternToConstant (A _ pattern) =
         "TODO: Pattern.Alias"
 
     Pattern.Var name ->
-      return (Core.Var name)
+      lift (Core.Var name)
 
     Pattern.Anything ->
-      Core.Var <$> Subst.fresh
+      lift =<< Core.Var <$> Subst.fresh
 
     Pattern.Literal lit ->
-      return (Const.literal lit)
+      lift (Const.literal lit)
+
+  where
+    lift =
+      return . Core.Pattern
 
 
 
@@ -58,17 +67,16 @@ patternToConstant (A _ pattern) =
 ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
 ctor name =
   Subst.many $
-    Core.C . Core.Tuple . (++) [Core.Atom name]
+    Core.C . Core.Literal . Core.Tuple . (:) (Core.Literal (Core.Atom name))
 
 
 ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
 ctorAccess index =
   Subst.one $ \tup ->
-    Core.Call "erlang" "element" [Core.Int (index + 2), tup]
+    Core.Call "erlang" "element" [Core.Literal (Core.Int (index + 2)), tup]
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  Subst.many $ Core.C . foldr
-    (\h t -> Core.Tuple [Core.Atom "::", h, t])
-    (Core.Tuple [Core.Atom "[]"])
+  error
+    "TODO: Lists"

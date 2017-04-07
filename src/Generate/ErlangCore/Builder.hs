@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Ref(..), Constant(..), Clause(..)
+  ( Expr(..), Literal(..), Ref(..), Constant(..)
+  , Clause(..), Pattern(..)
   , Function(..)
   , encodeUtf8
   )
@@ -18,17 +19,21 @@ import qualified Data.Char as Char
 
 
 
--- EXPRESSIONS
+-- AST
 
 
 data Expr
-  = C Constant
-  | Apply Ref Text [Constant] -- apply 'f'/0 ()
-  | Call Text Text [Constant] -- call 'module':'f' ()
-  | Case Constant [Clause] -- case <_cor0> of ...
+  = C Literal
+  | Apply Ref Text [Literal] -- apply 'f'/0 ()
+  | Call Text Text [Literal] -- call 'module':'f' ()
+  | Case Literal [Clause] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | LetRec Text [Text] Expr Expr -- letrec 'foo'/0 = fun () -> ... in ...
   | Fun [Text] Expr -- fun () -> ...
+
+
+data Literal
+  = Literal (Constant Literal)
 
 
 data Ref
@@ -36,7 +41,7 @@ data Ref
   | FunctionRef -- 'f'/1
 
 
-data Constant
+data Constant context
   = Int Int
   | Char Char
   | Float Double
@@ -44,25 +49,30 @@ data Constant
   | Var Text
   | Anything
   | BitString ByteString
-  | Tuple [Constant]
-  | Cons Constant Constant
+  | Tuple [context]
+  | Cons context context
   | Nil
+
+
+data Pattern
+  = Pattern (Constant Pattern)
+  | Alias Text Pattern
 
 
 data Clause
   = Clause
-    { _pattern :: Constant
+    { _pattern :: Pattern
     , _guard :: Expr
     , _body :: Expr
     }
 
 
-
--- TOP LEVEL
-
-
 data Function
   = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
+
+
+
+-- TOP LEVEL
 
 
 encodeUtf8 :: [Function] -> Builder
@@ -85,30 +95,30 @@ fromFunction function =
 fromExpr :: Builder -> Expr -> Builder
 fromExpr indent expression =
   case expression of
-    C constant ->
-      fromConstant constant
+    C literal ->
+      fromLiteral literal
 
     Apply VarRef name args ->
       "apply " <> safeVar name
-      <> " (" <> commaSep fromConstant args <> ")"
+      <> " (" <> commaSep fromLiteral args <> ")"
 
     Apply FunctionRef name args ->
       "apply " <> fromFunctionName name args
-      <> " (" <> commaSep fromConstant args <> ")"
+      <> " (" <> commaSep fromLiteral args <> ")"
 
     Call moduleName functionName args ->
       "call " <> quoted moduleName <> ":" <> quoted functionName <> " ("
-      <> commaSep fromConstant args
+      <> commaSep fromLiteral args
       <> ")"
 
     Case switch clauses ->
       let
         clause (Clause pattern guard body) =
-          "\n" <> deeper indent <> "<" <> fromConstant pattern
+          "\n" <> deeper indent <> "<" <> fromPattern pattern
           <> "> when " <> fromExpr indent guard <> " ->\n"
           <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
-        "case " <> fromConstant switch <> " of"
+        "case " <> fromLiteral switch <> " of"
         <> mconcat (map clause clauses)
         <> "\n" <> indent <> "end"
 
@@ -128,8 +138,23 @@ fromExpr indent expression =
       fromFun args indent body
 
 
-fromConstant :: Constant -> Builder
-fromConstant constant =
+fromLiteral :: Literal -> Builder
+fromLiteral (Literal constant) =
+  fromConstant fromLiteral constant
+
+
+fromPattern :: Pattern -> Builder
+fromPattern pattern =
+  case pattern of
+    Pattern constant ->
+      fromConstant fromPattern constant
+
+    Alias name p ->
+      safeVar name <> " = " <> fromPattern p
+
+
+fromConstant :: (a -> Builder) -> Constant a -> Builder
+fromConstant buildContext constant =
   case constant of
     Int n ->
       intDec n
@@ -157,10 +182,10 @@ fromConstant constant =
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
 
     Tuple inners ->
-      "{" <> commaSep fromConstant inners <> "}"
+      "{" <> commaSep buildContext inners <> "}"
 
     Cons first rest ->
-      "[" <> fromConstant first <> "|" <> fromConstant rest <> "]"
+      "[" <> buildContext first <> "|" <> buildContext rest <> "]"
 
     Nil ->
       "[]"

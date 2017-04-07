@@ -13,7 +13,7 @@ import qualified AST.Literal as Literal
 import qualified Generate.ErlangCore.Builder as Core
 
 
-literal :: Literal.Literal -> Core.Constant
+literal :: Literal.Literal -> Core.Constant a
 literal literal =
   case literal of
     Literal.Chr c ->

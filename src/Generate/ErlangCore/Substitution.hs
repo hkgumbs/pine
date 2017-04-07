@@ -29,7 +29,7 @@ type Collector a
       return (use (toExpr a))
 
 
-substitute :: Core.Expr -> (Core.Constant -> a) -> Collector a
+substitute :: Core.Expr -> (Core.Literal -> a) -> Collector a
 substitute value use =
   case value of
     Core.C constant ->
@@ -37,20 +37,20 @@ substitute value use =
 
     _ ->
       do  name <- fresh
-          return (Core.Let name value, use (Core.Var name))
+          return (Core.Let name value, use (Core.Literal (Core.Var name)))
 
 
 
 -- PUBLIC
 
 
-one :: (Core.Constant -> Core.Expr) -> Core.Expr -> State.State Int Core.Expr
+one :: (Core.Literal -> Core.Expr) -> Core.Expr -> State.State Int Core.Expr
 one use expr =
   substitute expr use |> id
 
 
 two
-  :: (Core.Constant -> Core.Constant -> Core.Expr)
+  :: (Core.Literal -> Core.Literal -> Core.Expr)
   -> Core.Expr
   -> Core.Expr
   -> State.State Int Core.Expr
@@ -65,7 +65,7 @@ two use first second =
 
 
 many
-  :: ([Core.Constant] -> Core.Expr)
+  :: ([Core.Literal] -> Core.Expr)
   -> [Core.Expr]
   -> State.State Int Core.Expr
 many use exprs =

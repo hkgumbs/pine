@@ -39,8 +39,11 @@ generateDef gen def =
       do  body' <-
             generateExpr body
 
-          let appliedLetRec =
-                Core.Apply Core.FunctionRef name (map Core.Var args)
+          let args' =
+                map (Core.Literal . Core.Var) args
+
+              appliedLetRec =
+                Core.Apply Core.FunctionRef name args'
 
               letRec =
                   Core.LetRec name args body'
@@ -53,7 +56,7 @@ generateExpr :: Opt.Expr -> State.State Int Core.Expr
 generateExpr expr =
   case expr of
     Opt.Literal lit ->
-      return $ Core.C (Const.literal lit)
+      return $ Core.C (Core.Literal (Const.literal lit))
 
     Opt.Var var ->
       return $ generateVar var
@@ -151,7 +154,7 @@ generateVar (Var.Canonical home name) =
   in
     case home of
       Var.Local ->
-        Core.C (Core.Var name)
+        Core.C (Core.Literal (Core.Var name))
 
       Var.Module moduleName ->
         reference moduleName
@@ -178,10 +181,10 @@ generateCall function args =
           flip (foldM (Subst.two applyVar)) args' =<< generateExpr function
 
 
-applyVar :: Core.Constant -> Core.Constant -> Core.Expr
+applyVar :: Core.Literal -> Core.Literal -> Core.Expr
 applyVar var argument =
   case var of
-    Core.Var name ->
+    Core.Literal (Core.Var name) ->
       Core.Apply Core.VarRef name [argument]
 
     _ ->

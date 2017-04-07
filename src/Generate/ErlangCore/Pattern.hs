@@ -40,9 +40,8 @@ toCorePattern (A _ pattern) =
       error
         "TODO: Pattern.Record"
 
-    Pattern.Alias _name _aliased ->
-      error
-        "TODO: Pattern.Alias"
+    Pattern.Alias name aliased ->
+      Core.Alias name <$> toCorePattern aliased
 
     Pattern.Var name ->
       lift (Core.Var name)

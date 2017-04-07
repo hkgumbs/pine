@@ -180,36 +180,13 @@ doWriteNewExpectedTest expectedOutputDir filePath =
 
 testMatchesExpected :: String -> String -> IO [Test]
 testMatchesExpected elmDir expectedOutputDir =
-  do  -- TODO: elmFiles <- getElms elmDir
+  do  elmFiles <- getElms elmDir
       envVar <- lookupEnv writeExpectedOutputEnvVarName
       if isJust envVar
         then
           traverse (doWriteNewExpectedTest expectedOutputDir) elmFiles
         else
           traverse (doMatchesExpectedTest expectedOutputDir) elmFiles
-  where
-      elmFiles = map ((</>) $ testsDir </> elmDir)
-          [ "Literals" </> "Numbers.elm"
-          , "Literals" </> "Negatives.elm"
-          , "Literals" </> "Characters.elm"
-          , "Literals" </> "Multiline.elm"
-          , "Literals" </> "QuotesAndComments.elm"
-          , "Literals" </> "Unicode.elm"
-          , "Lists" </> "EmptyList.elm"
-          , "Lists" </> "NonEmptyList.elm"
-          , "Cases" </> "CharCase.elm"
-          , "Cases" </> "ListZip.elm"
-          , "Cases" </> "ListPattern.elm"
-          , "Functions" </> "Simple.elm"
-          , "Functions" </> "AsArgument.elm"
-          , "Functions" </> "Native.elm"
-          , "Functions" </> "AliasPattern.elm"
-          , "Functions" </> "PatternAndLet.elm"
-          , "Functions" </> "TailCall.elm"
-          , "Declarations" </> "Types.elm"
-          , "CodeGenBugs" </> "CommentInterpretedAsInfix.elm"
-          , "Soundness" </> "Apply.elm"
-          ]
 
 
 

@@ -8,25 +8,25 @@
 	fun (_list1) ->
 		fun (_list2) ->
 			case {'_Tuple2', _list1, _list2} of
-				<{'_Tuple2', {'Nil'}, _6}> when 'true' ->
+				<{'_Tuple2', {'Nil'}, _1}> when 'true' ->
 					apply 'elm_lang@core@Main@Nil'/0 ()
-				<{'_Tuple2', _7, {'Nil'}}> when 'true' ->
+				<{'_Tuple2', _2, {'Nil'}}> when 'true' ->
 					apply 'elm_lang@core@Main@Nil'/0 ()
 				<{'_Tuple2', {'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
-					let <_4> =
-						let <_3> =
+					let <_6> =
+						let <_5> =
 							apply 'elm_lang@core@Main@Cons'/0 ()
 						in
-							apply _3 ({'_Tuple2', _x, _y})
+							apply _5 ({'_Tuple2', _x, _y})
 					in
-						let <_5> =
-							let <_2> =
-								let <_1> =
+						let <_7> =
+							let <_4> =
+								let <_3> =
 									apply 'elm_lang@core@Main@zip'/0 ()
 								in
-									apply _1 (_xs)
+									apply _3 (_xs)
 							in
-								apply _2 (_ys)
+								apply _4 (_ys)
 						in
-							apply _4 (_5)
+							apply _6 (_7)
 			end

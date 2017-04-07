@@ -16,44 +16,33 @@ import qualified Generate.ErlangCore.Constant as Const
 import qualified Generate.ErlangCore.Substitution as Subst
 
 
-match :: Pattern.Canonical -> Core.Expr -> State.State Int Core.Clause
-match pattern body =
-  do  pattern' <-
-        toCorePattern pattern
-
-      let noOpGuard =
-            Core.C (Core.Literal (Core.Atom "true"))
-
-      return $ Core.Clause pattern' noOpGuard body
-
-
-toCorePattern :: Pattern.Canonical -> State.State Int Core.Pattern
-toCorePattern (A _ pattern) =
+match :: Pattern.Canonical -> State.State Int Core.Pattern
+match (A _ pattern) =
   case pattern of
     Pattern.Ctor (Var.Canonical _ "[]") _ ->
       lift Core.Nil
 
     Pattern.Ctor (Var.Canonical _ "::") [first, rest] ->
       do  first' <-
-            toCorePattern first
+            match first
 
           rest' <-
-            toCorePattern rest
+            match rest
 
           lift (Core.Cons first' rest')
 
     Pattern.Ctor (Var.Canonical _ name) args ->
       do  args' <-
-            mapM toCorePattern args
+            mapM match args
 
-          lift . Core.Tuple . (:) (Core.Pattern (Core.Atom name)) $ args'
+          lift (Core.Tuple (Core.Pattern (Core.Atom name) : args'))
 
     Pattern.Record _fields ->
       error
         "TODO: Pattern.Record"
 
     Pattern.Alias name aliased ->
-      Core.Alias name <$> toCorePattern aliased
+      Core.Alias name <$> match aliased
 
     Pattern.Var name ->
       lift (Core.Var name)

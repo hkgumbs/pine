@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore (generate) where
 
-import Control.Monad (foldM, zipWithM)
+import Control.Monad (foldM, liftM2)
 import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
@@ -88,11 +88,11 @@ generateExpr expr =
         defs
 
     Opt.Case switch branches ->
-      do  bodies <-
-            mapM (generateExpr . snd) branches
+      do  let toCore (pattern, expr) =
+                liftM2 (,) (Pattern.match pattern) (generateExpr expr)
 
           branches' <-
-            zipWithM Pattern.match (map fst branches) bodies
+            mapM toCore branches
 
           Subst.one (flip Core.Case branches') =<< generateExpr switch
 
@@ -189,5 +189,5 @@ applyVar var argument =
 
     _ ->
       error
-        "This is an impossible apply \
-        \ - trying to call a tuple, list, or literal."
+        "This is an impossible situation \
+        \ - trying to call a number, list or something like that."

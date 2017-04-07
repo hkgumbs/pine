@@ -1,8 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.ErlangCore.Builder
-  ( Expr(..), Literal(..), Ref(..), Constant(..)
-  , Clause(..), Pattern(..)
+  ( Expr(..), Literal(..), Ref(..), Constant(..), Pattern(..)
   , Function(..)
   , encodeUtf8
   )
@@ -22,23 +21,32 @@ import qualified Data.Char as Char
 -- AST
 
 
+data Function
+  = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
+
+
 data Expr
   = C Literal
   | Apply Ref Text [Literal] -- apply 'f'/0 ()
   | Call Text Text [Literal] -- call 'module':'f' ()
-  | Case Literal [Clause] -- case <_cor0> of ...
+  | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
   | LetRec Text [Text] Expr Expr -- letrec 'foo'/0 = fun () -> ... in ...
   | Fun [Text] Expr -- fun () -> ...
+
+
+data Ref
+  = VarRef -- _f
+  | FunctionRef -- 'f'/1
 
 
 data Literal
   = Literal (Constant Literal)
 
 
-data Ref
-  = VarRef -- _f
-  | FunctionRef -- 'f'/1
+data Pattern
+  = Pattern (Constant Pattern)
+  | Alias Text Pattern
 
 
 data Constant context
@@ -52,23 +60,6 @@ data Constant context
   | Tuple [context]
   | Cons context context
   | Nil
-
-
-data Pattern
-  = Pattern (Constant Pattern)
-  | Alias Text Pattern
-
-
-data Clause
-  = Clause
-    { _pattern :: Pattern
-    , _guard :: Expr
-    , _body :: Expr
-    }
-
-
-data Function
-  = Function Text [Text] Expr -- 'f'/0 = fun () -> ...
 
 
 
@@ -86,6 +77,17 @@ fromFunction function =
     Function name args body ->
       fromFunctionName name args <> " = "
       <> fromFun args "" body <> "\n"
+
+
+fromFunctionName :: Text -> [a] -> Builder
+fromFunctionName name args =
+  quoted name <> "/" <> intDec (length args)
+
+
+fromFun :: [Text] -> Builder -> Expr -> Builder
+fromFun args indent body =
+  "fun (" <> commaSep safeVar args <> ") ->\n"
+  <> deeper indent <> fromExpr (deeper indent) body
 
 
 
@@ -113,9 +115,9 @@ fromExpr indent expression =
 
     Case switch clauses ->
       let
-        clause (Clause pattern guard body) =
+        clause (pattern, body) =
           "\n" <> deeper indent <> "<" <> fromPattern pattern
-          <> "> when " <> fromExpr indent guard <> " ->\n"
+          <> "> when 'true' ->\n"
           <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
         "case " <> fromLiteral switch <> " of"
@@ -189,17 +191,6 @@ fromConstant buildContext constant =
 
     Nil ->
       "[]"
-
-
-fromFunctionName :: Text -> [a] -> Builder
-fromFunctionName name args =
-  quoted name <> "/" <> intDec (length args)
-
-
-fromFun :: [Text] -> Builder -> Expr -> Builder
-fromFun args indent body =
-  "fun (" <> commaSep safeVar args <> ") ->\n"
-  <> deeper indent <> fromExpr (deeper indent) body
 
 
 

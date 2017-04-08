@@ -14,6 +14,7 @@ import qualified AST.Expression.Optimized as Opt
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.ErlangCore.Builder as Core
+import qualified Generate.ErlangCore.BIF as BIF
 import qualified Generate.ErlangCore.Constant as Const
 import qualified Generate.ErlangCore.Substitution as Subst
 import qualified Generate.ErlangCore.Pattern as Pattern
@@ -115,14 +116,7 @@ generateExpr expr =
       Pattern.ctorAccess index =<< generateExpr expr
 
     Opt.Access record field ->
-      let
-        key =
-          Core.Literal (Core.Atom field)
-
-        callWithMap m =
-          Core.Call "maps" "get" [key, m]
-      in
-        Subst.one callWithMap =<< generateExpr record
+      Subst.one (BIF.get field) =<< generateExpr record
 
     Opt.Update _record _fields ->
       error
@@ -158,7 +152,8 @@ generateExpr expr =
 
     Opt.GLShader _ _ _ ->
       error
-        "TODO: Opt.GLShader to Core.Expr"
+        "Shaders can't be used with the BEAM compiler!"
+        -- we should likely remove this from the AST
 
     Opt.Crash _moduleName _region _maybeExpr ->
       error

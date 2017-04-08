@@ -12,6 +12,7 @@ import qualified AST.Pattern as Pattern
 import Reporting.Annotation (Annotated(A))
 
 import qualified Generate.ErlangCore.Builder as Core
+import qualified Generate.ErlangCore.BIF as BIF
 import qualified Generate.ErlangCore.Constant as Const
 import qualified Generate.ErlangCore.Substitution as Subst
 
@@ -72,8 +73,7 @@ ctor name =
 
 ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
 ctorAccess index =
-  Subst.one $ \tup ->
-    Core.Call "erlang" "element" [Core.Literal (Core.Int (index + 2)), tup]
+  Subst.one (BIF.element (index + 2))
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr

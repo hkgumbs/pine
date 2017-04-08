@@ -64,6 +64,7 @@ Executable elm-beam
         Elm.Package,
         Elm.Utils,
         Generate.ErlangCore,
+        Generate.ErlangCore.BIF,
         Generate.ErlangCore.Builder,
         Generate.ErlangCore.Constant,
         Generate.ErlangCore.Pattern,
@@ -184,6 +185,7 @@ Test-Suite compiler-tests
         Elm.Package
         Elm.Utils
         Generate.ErlangCore
+        Generate.ErlangCore.BIF
         Generate.ErlangCore.Builder
         Generate.ErlangCore.Constant
         Generate.ErlangCore.Pattern

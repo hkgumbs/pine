@@ -1,0 +1,13 @@
+'elm_lang@core@Main@bindFields'/0 = fun () ->
+	fun (_thing) ->
+		let <_y> =
+			call 'maps':'get' ('y', _thing)
+		in
+			let <_x> =
+				call 'maps':'get' ('x', _thing)
+			in
+				_thing
+'elm_lang@core@Main@Thing'/0 = fun () ->
+	fun (_v1) ->
+		fun (_v2) ->
+			~{'x' => _v1, 'y' => _v2}~

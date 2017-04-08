@@ -1,0 +1,49 @@
+'elm_lang@core@Main@apply'/0 = fun () ->
+	fun (_f) ->
+		fun (_x) ->
+			apply _f (_x)
+'elm_lang@core@Main@point'/0 = fun () ->
+	~{'x' => 3, 'y' => 4}~
+'elm_lang@core@Main@x1'/0 = fun () ->
+	let <_1> =
+		apply 'elm_lang@core@Main@point'/0 ()
+	in
+		call 'maps':'get' ('x', _1)
+'elm_lang@core@Main@x2'/0 = fun () ->
+	let <_1> =
+		fun (_r) ->
+			call 'maps':'get' ('x', _r)
+	in
+		let <_2> =
+			apply 'elm_lang@core@Main@point'/0 ()
+		in
+			apply _1 (_2)
+'elm_lang@core@Main@x3'/0 = fun () ->
+	let <_1> =
+		apply 'elm_lang@core@Main@point'/0 ()
+	in
+		call 'maps':'get' ('x', _1)
+'elm_lang@core@Main@x4'/0 = fun () ->
+	let <_1> =
+		fun (_r) ->
+			call 'maps':'get' ('x', _r)
+	in
+		let <_2> =
+			apply 'elm_lang@core@Main@point'/0 ()
+		in
+			apply _1 (_2)
+'elm_lang@core@Main@x5'/0 = fun () ->
+	let <_3> =
+		let <_1> =
+			apply 'elm_lang@core@Main@apply'/0 ()
+		in
+			let <_2> =
+				fun (_r) ->
+					call 'maps':'get' ('x', _r)
+			in
+				apply _1 (_2)
+	in
+		let <_4> =
+			apply 'elm_lang@core@Main@point'/0 ()
+		in
+			apply _3 (_4)

@@ -114,17 +114,28 @@ generateExpr expr =
     Opt.CtorAccess expr index ->
       Pattern.ctorAccess index =<< generateExpr expr
 
-    Opt.Access _record _field ->
-      error
-        "TODO: Opt.Access to Core.Expr"
+    Opt.Access record field ->
+      let
+        key =
+          Core.Literal (Core.Atom field)
+
+        callWithMap m =
+          Core.Call "maps" "get" [key, m]
+      in
+        Subst.one callWithMap =<< generateExpr record
 
     Opt.Update _record _fields ->
       error
         "TODO: Opt.Update to Core.Expr"
 
-    Opt.Record _fields ->
-      error
-        "TODO: Opt.Record to Core.Expr"
+    Opt.Record fields ->
+      do  let keys =
+                map (Core.Literal . Core.Atom . fst) fields
+
+          values <-
+            mapM (generateExpr . snd) fields
+
+          Subst.many (Core.Map . zipWith (,) keys) values
 
     Opt.Cmd _moduleName ->
       error

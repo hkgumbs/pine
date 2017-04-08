@@ -27,6 +27,7 @@ data Function
 
 data Expr
   = C Literal
+  | Map [(Literal, Literal)]
   | Apply Ref Text [Literal] -- apply 'f'/0 ()
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
@@ -100,6 +101,13 @@ fromExpr indent expression =
     C literal ->
       fromLiteral literal
 
+    Map pairs ->
+      let
+        fromPair (key, value) =
+          fromLiteral key <> " => " <> fromLiteral value
+      in
+        "~{" <> commaSep fromPair pairs <> "}~"
+
     Apply VarRef name args ->
       "apply " <> safeVar name
       <> " (" <> commaSep fromLiteral args <> ")"
@@ -115,13 +123,13 @@ fromExpr indent expression =
 
     Case switch clauses ->
       let
-        clause (pattern, body) =
+        fromClause (pattern, body) =
           "\n" <> deeper indent <> "<" <> fromPattern pattern
           <> "> when 'true' ->\n"
           <> deeper (deeper indent) <> fromExpr (deeper (deeper indent)) body
       in
         "case " <> fromLiteral switch <> " of"
-        <> mconcat (map clause clauses)
+        <> mconcat (map fromClause clauses)
         <> "\n" <> indent <> "end"
 
     Let var binding body ->

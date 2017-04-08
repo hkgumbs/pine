@@ -77,9 +77,21 @@ generateExpr expr =
     Opt.TailCall name _ args ->
       Subst.many (Core.Apply Core.FunctionRef name) =<< mapM generateExpr args
 
-    Opt.If _branches _else ->
-      error
-        "TODO: Opt.If to Core.Expr"
+    Opt.If branches finally ->
+      let
+        toBranch bool expr =
+          (Core.Pattern (Core.Atom bool), expr)
+
+        toCase (condition, ifTrue) ifFalse =
+          do  checks <-
+                sequence
+                  [ toBranch "true" <$> generateExpr ifTrue
+                  , toBranch "false" <$> ifFalse
+                  ]
+
+              Subst.one (flip Core.Case checks) =<< generateExpr condition
+      in
+        foldr toCase (generateExpr finally) branches
 
     Opt.Let defs body ->
       foldr

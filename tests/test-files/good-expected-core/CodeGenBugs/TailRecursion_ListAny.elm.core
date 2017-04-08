@@ -1,0 +1,21 @@
+'elm_lang@core@Main@any'/0 = fun () ->
+	letrec 'any'/2 =
+		fun (_isOk, _list) ->
+			case _list of
+				<[_first|_rest]> when 'true' ->
+					let <_1> =
+						apply _isOk (_first)
+					in
+						case _1 of
+							<'true'> when 'true' ->
+								'true'
+							<'false'> when 'true' ->
+								apply 'any'/2 (_isOk, _rest)
+						end
+				<_2> when 'true' ->
+					'false'
+			end
+	in
+		fun (_isOk) ->
+			fun (_list) ->
+				apply 'any'/2 (_isOk, _list)

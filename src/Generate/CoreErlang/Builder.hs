@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore.Builder
+module Generate.CoreErlang.Builder
   ( Expr(..), Literal(..), Ref(..), Constant(..), Pattern(..)
   , Function(..)
   , encodeUtf8

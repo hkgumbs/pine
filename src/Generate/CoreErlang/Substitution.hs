@@ -1,4 +1,4 @@
-module Generate.ErlangCore.Substitution
+module Generate.CoreErlang.Substitution
   ( one, two, many
   , fresh
   ) where
@@ -8,7 +8,7 @@ import qualified Control.Monad.State as State
 import qualified Data.Text as Text
 import Data.Text (Text)
 
-import qualified Generate.ErlangCore.Builder as Core
+import qualified Generate.CoreErlang.Builder as Core
 
 
 

@@ -63,12 +63,12 @@ Executable elm-beam
         Elm.Docs,
         Elm.Package,
         Elm.Utils,
-        Generate.ErlangCore,
-        Generate.ErlangCore.BIF,
-        Generate.ErlangCore.Builder,
-        Generate.ErlangCore.Constant,
-        Generate.ErlangCore.Pattern,
-        Generate.ErlangCore.Substitution,
+        Generate.CoreErlang,
+        Generate.CoreErlang.BIF,
+        Generate.CoreErlang.Builder,
+        Generate.CoreErlang.Constant,
+        Generate.CoreErlang.Pattern,
+        Generate.CoreErlang.Substitution,
         Nitpick.Pattern,
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
@@ -184,12 +184,12 @@ Test-Suite compiler-tests
         Elm.Docs
         Elm.Package
         Elm.Utils
-        Generate.ErlangCore
-        Generate.ErlangCore.BIF
-        Generate.ErlangCore.Builder
-        Generate.ErlangCore.Constant
-        Generate.ErlangCore.Pattern
-        Generate.ErlangCore.Substitution
+        Generate.CoreErlang
+        Generate.CoreErlang.BIF
+        Generate.CoreErlang.Builder
+        Generate.CoreErlang.Constant
+        Generate.CoreErlang.Pattern
+        Generate.CoreErlang.Substitution
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes

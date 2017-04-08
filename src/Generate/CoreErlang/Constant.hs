@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore.Constant
+module Generate.CoreErlang.Constant
   ( literal
   ) where
 
@@ -10,7 +10,7 @@ import qualified Data.Char as Char
 import qualified Numeric
 
 import qualified AST.Literal as Literal
-import qualified Generate.ErlangCore.Builder as Core
+import qualified Generate.CoreErlang.Builder as Core
 
 
 literal :: Literal.Literal -> Core.Constant a

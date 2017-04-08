@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore.Pattern
+module Generate.CoreErlang.Pattern
   ( match
   , ctor, ctorAccess, list
   ) where
@@ -11,10 +11,10 @@ import qualified AST.Variable as Var
 import qualified AST.Pattern as Pattern
 import Reporting.Annotation (Annotated(A))
 
-import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.BIF as BIF
-import qualified Generate.ErlangCore.Constant as Const
-import qualified Generate.ErlangCore.Substitution as Subst
+import qualified Generate.CoreErlang.Builder as Core
+import qualified Generate.CoreErlang.BIF as BIF
+import qualified Generate.CoreErlang.Constant as Const
+import qualified Generate.CoreErlang.Substitution as Subst
 
 
 match :: Pattern.Canonical -> State.State Int Core.Pattern

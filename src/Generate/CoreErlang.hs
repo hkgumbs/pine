@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore (generate) where
+module Generate.CoreErlang (generate) where
 
 import Control.Monad (foldM, liftM2)
 import qualified Control.Monad.State as State
@@ -13,11 +13,11 @@ import qualified AST.Variable as Var
 import qualified AST.Expression.Optimized as Opt
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
-import qualified Generate.ErlangCore.Builder as Core
-import qualified Generate.ErlangCore.BIF as BIF
-import qualified Generate.ErlangCore.Constant as Const
-import qualified Generate.ErlangCore.Substitution as Subst
-import qualified Generate.ErlangCore.Pattern as Pattern
+import qualified Generate.CoreErlang.Builder as Core
+import qualified Generate.CoreErlang.BIF as BIF
+import qualified Generate.CoreErlang.Constant as Const
+import qualified Generate.CoreErlang.Substitution as Subst
+import qualified Generate.CoreErlang.Pattern as Pattern
 
 
 generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder

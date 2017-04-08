@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.ErlangCore.BIF
+module Generate.CoreErlang.BIF
   ( get, element
   ) where
 
 import Data.Text as Text
 
-import Generate.ErlangCore.Builder as Core
+import Generate.CoreErlang.Builder as Core
 
 
 -- The generate step depends on some built-in Erlang functions.

@@ -24,7 +24,7 @@ import qualified Elm.Compiler.Module as PublicModule
 import qualified Elm.Compiler.Version
 import qualified Elm.Docs as Docs
 import qualified Elm.Package as Package
-import qualified Generate.ErlangCore as Core
+import qualified Generate.CoreErlang as Core
 import qualified Parse.Helpers as Parse (run)
 import qualified Parse.Module as Parse (header)
 import qualified Reporting.Annotation as A

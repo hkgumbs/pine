@@ -38,9 +38,9 @@ match (A _ pattern) =
 
           lift (Core.Tuple (Core.Pattern (Core.Atom name) : args'))
 
-    Pattern.Record _fields ->
-      error
-        "TODO: Pattern.Record"
+    Pattern.Record fields ->
+      return $ Core.Map
+        (map (\name -> (Core.Atom name, Core.Var name)) fields)
 
     Pattern.Alias name aliased ->
       Core.Alias name <$> match aliased

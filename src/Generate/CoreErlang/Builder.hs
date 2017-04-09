@@ -27,7 +27,7 @@ data Function
 
 data Expr
   = C Literal
-  | Map [(Literal, Literal)]
+  | NewMap [(Literal, Literal)] -- ~{ 'a' => 1, ... }~
   | Apply Ref Text [Literal] -- apply 'f'/0 ()
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
@@ -48,6 +48,7 @@ data Literal
 data Pattern
   = Pattern (Constant Pattern)
   | Alias Text Pattern
+  | Map [(Constant Pattern, Constant Pattern)]
 
 
 data Constant context
@@ -101,7 +102,7 @@ fromExpr indent expression =
     C literal ->
       fromLiteral literal
 
-    Map pairs ->
+    NewMap pairs ->
       let
         fromPair (key, value) =
           fromLiteral key <> " => " <> fromLiteral value
@@ -161,6 +162,14 @@ fromPattern pattern =
 
     Alias name p ->
       safeVar name <> " = " <> fromPattern p
+
+    Map pairs ->
+      let
+        fromPair (key, value) =
+          fromConstant fromPattern key
+          <> " := " <> fromConstant fromPattern value
+      in
+      "~{" <> commaSep fromPair pairs <> "}~"
 
 
 fromConstant :: (a -> Builder) -> Constant a -> Builder

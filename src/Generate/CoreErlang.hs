@@ -129,7 +129,7 @@ generateExpr expr =
           values <-
             mapM (generateExpr . snd) fields
 
-          Subst.many (Core.Map . zipWith (,) keys) values
+          Subst.many (Core.NewMap . zipWith (,) keys) values
 
     Opt.Cmd _moduleName ->
       error

@@ -135,7 +135,7 @@ Executable elm-beam
 
 Test-Suite compiler-tests
     ghc-options:
-        -O0 -W -Werror
+        -O0 -Wall -Werror
 
     Type:
         exitcode-stdio-1.0

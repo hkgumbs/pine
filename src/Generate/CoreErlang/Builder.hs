@@ -27,7 +27,8 @@ data Function
 
 data Expr
   = C Literal
-  | NewMap [(Literal, Literal)] -- ~{ 'a' => 1, ... }~
+  | MapCreate [(Literal, Literal)] -- ~{ 'a' => 1 }~
+  | MapUpdate [(Literal, Literal)] Literal -- ~{ 'a' := 1 | _map }~
   | Apply Ref Text [Literal] -- apply 'f'/0 ()
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
@@ -102,12 +103,19 @@ fromExpr indent expression =
     C literal ->
       fromLiteral literal
 
-    NewMap pairs ->
+    MapCreate pairs ->
       let
         fromPair (key, value) =
           fromLiteral key <> " => " <> fromLiteral value
       in
         "~{" <> commaSep fromPair pairs <> "}~"
+
+    MapUpdate pairs var ->
+      let
+        fromPair (key, value) =
+          fromLiteral key <> " := " <> fromLiteral value
+      in
+        "~{" <> commaSep fromPair pairs <> " | " <> fromLiteral var <> "}~"
 
     Apply VarRef name args ->
       "apply " <> safeVar name

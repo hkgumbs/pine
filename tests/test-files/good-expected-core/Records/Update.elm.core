@@ -1,0 +1,3 @@
+'elm_lang@core@Main@udpate'/0 = fun () ->
+	fun (_r) ->
+		~{'one' := 1, 'two' := 50 | _r}~

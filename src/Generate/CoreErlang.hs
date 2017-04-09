@@ -40,22 +40,18 @@ generateDef gen def =
       do  body' <-
             generateExpr body
 
-          let args' =
-                map (Core.Literal . Core.Var) args
-
-              appliedLetRec =
-                Core.Apply Core.FunctionRef name args'
-
-              letRec =
-                  Core.LetRec name args body'
-                    (foldr (\a -> Core.Fun [a]) appliedLetRec args)
+          let letRec =
+                Core.LetRec name args body'
+                  $ makeFun args
+                  $ Core.Apply Core.FunctionRef name
+                  $ map (Core.Literal . Core.Var) args
 
           return (gen name letRec)
 
 
 generateExpr :: Opt.Expr -> State.State Int Core.Expr
-generateExpr expr =
-  case expr of
+generateExpr opt =
+  case opt of
     Opt.Literal lit ->
       return $ Core.C (Core.Literal (Const.literal lit))
 
@@ -69,8 +65,7 @@ generateExpr expr =
       generateCall (Opt.Var var) [lhs, rhs]
 
     Opt.Function args body ->
-      do  body' <- generateExpr body
-          return $ foldr (\a -> Core.Fun [a]) body' args
+      makeFun args <$> generateExpr body
 
     Opt.Call function args ->
       generateCall function args
@@ -118,18 +113,18 @@ generateExpr expr =
     Opt.Access record field ->
       Subst.one (BIF.get field) =<< generateExpr record
 
-    Opt.Update _record _fields ->
-      error
-        "TODO: Opt.Update to Core.Expr"
+    Opt.Update record fields ->
+      let
+        zipper literals =
+          Core.MapUpdate (zip (keys fields) (tail literals)) (head literals)
+      in
+        Subst.many zipper =<< mapM generateExpr (record : map snd fields)
 
     Opt.Record fields ->
-      do  let keys =
-                map (Core.Literal . Core.Atom . fst) fields
-
-          values <-
+      do  values <-
             mapM (generateExpr . snd) fields
 
-          Subst.many (Core.NewMap . zipWith (,) keys) values
+          Subst.many (Core.MapCreate . zip (keys fields)) values
 
     Opt.Cmd _moduleName ->
       error
@@ -209,3 +204,17 @@ applyVar var argument =
       error
         "This is an impossible situation \
         \ - trying to call a number, list or something like that."
+
+
+makeFun :: [Text.Text] -> Core.Expr -> Core.Expr
+makeFun args body =
+  foldr (\a -> Core.Fun [a]) body args
+
+
+
+-- RECORDS
+
+
+keys :: [(Text.Text, a)] -> [Core.Literal]
+keys =
+  map (Core.Literal . Core.Atom . fst)

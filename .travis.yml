@@ -21,3 +21,6 @@ install:
 
 script:
 - stack --no-terminal test --ghc-options -fsimpl-tick-factor=130
+
+notifications:
+  email: false

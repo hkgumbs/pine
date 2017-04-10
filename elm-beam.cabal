@@ -64,9 +64,9 @@ Executable elm-beam
         Elm.Package,
         Elm.Utils,
         Generate.CoreErlang,
-        Generate.CoreErlang.BIF,
+        Generate.CoreErlang.BuiltIn,
         Generate.CoreErlang.Builder,
-        Generate.CoreErlang.Constant,
+        Generate.CoreErlang.Literal,
         Generate.CoreErlang.Pattern,
         Generate.CoreErlang.Substitution,
         Nitpick.Pattern,
@@ -185,9 +185,9 @@ Test-Suite compiler-tests
         Elm.Package
         Elm.Utils
         Generate.CoreErlang
-        Generate.CoreErlang.BIF
+        Generate.CoreErlang.BuiltIn
         Generate.CoreErlang.Builder
-        Generate.CoreErlang.Constant
+        Generate.CoreErlang.Literal
         Generate.CoreErlang.Pattern
         Generate.CoreErlang.Substitution
         Nitpick.Pattern

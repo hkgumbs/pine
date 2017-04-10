@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang.Builder
-  ( Expr(..), Literal(..), Ref(..), Constant(..), Pattern(..)
-  , Function(..)
+  ( Function(..)
+  , Expr(..), Literal(..), Pattern(..)
+  , Term(..)
   , encodeUtf8
   )
   where
@@ -26,10 +27,10 @@ data Function
 
 
 data Expr
-  = C Literal
-  | MapCreate [(Literal, Literal)] -- ~{ 'a' => 1 }~
-  | MapUpdate [(Literal, Literal)] Literal -- ~{ 'a' := 1 | _map }~
-  | Apply Ref Text [Literal] -- apply 'f'/0 ()
+  = Lit Literal
+  | Map [(Literal, Literal)] -- ~{ 'a' => 1 }~
+  | Update [(Literal, Literal)] Literal -- ~{ 'a' := 1 | _map }~
+  | Apply Literal [Literal] -- apply _f ()
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
@@ -37,22 +38,22 @@ data Expr
   | Fun [Text] Expr -- fun () -> ...
 
 
-data Ref
-  = VarRef -- _f
-  | FunctionRef -- 'f'/1
-
-
 data Literal
-  = Literal (Constant Literal)
+  = LTerm Term
+  | LTuple [Literal]
+  | LCons Literal Literal
+  | LFunction Text Int
 
 
 data Pattern
-  = Pattern (Constant Pattern)
-  | Alias Text Pattern
-  | Map [(Constant Pattern, Constant Pattern)]
+  = PTerm Term
+  | PAlias Text Pattern
+  | PMap [(Pattern, Pattern)]
+  | PTuple [Pattern]
+  | PCons Pattern Pattern
 
 
-data Constant context
+data Term
   = Int Int
   | Char Char
   | Float Double
@@ -60,8 +61,6 @@ data Constant context
   | Var Text
   | Anything
   | BitString ByteString
-  | Tuple [context]
-  | Cons context context
   | Nil
 
 
@@ -100,29 +99,25 @@ fromFun args indent body =
 fromExpr :: Builder -> Expr -> Builder
 fromExpr indent expression =
   case expression of
-    C literal ->
+    Lit literal ->
       fromLiteral literal
 
-    MapCreate pairs ->
+    Map pairs ->
       let
         fromPair (key, value) =
           fromLiteral key <> " => " <> fromLiteral value
       in
         "~{" <> commaSep fromPair pairs <> "}~"
 
-    MapUpdate pairs var ->
+    Update pairs var ->
       let
         fromPair (key, value) =
           fromLiteral key <> " := " <> fromLiteral value
       in
         "~{" <> commaSep fromPair pairs <> " | " <> fromLiteral var <> "}~"
 
-    Apply VarRef name args ->
-      "apply " <> safeVar name
-      <> " (" <> commaSep fromLiteral args <> ")"
-
-    Apply FunctionRef name args ->
-      "apply " <> fromFunctionName name args
+    Apply name args ->
+      "apply " <> fromLiteral name
       <> " (" <> commaSep fromLiteral args <> ")"
 
     Call moduleName functionName args ->
@@ -158,30 +153,46 @@ fromExpr indent expression =
 
 
 fromLiteral :: Literal -> Builder
-fromLiteral (Literal constant) =
-  fromConstant fromLiteral constant
+fromLiteral literal =
+  case literal of
+    LTerm term ->
+      fromTerm term
+
+    LTuple values ->
+      "{" <> commaSep fromLiteral values <> "}"
+
+    LCons first rest ->
+      "[" <> fromLiteral first <> "|" <> fromLiteral rest <> "]"
+
+    LFunction name airity ->
+      fromFunctionName name (replicate airity ())
 
 
 fromPattern :: Pattern -> Builder
 fromPattern pattern =
   case pattern of
-    Pattern constant ->
-      fromConstant fromPattern constant
+    PTerm constant ->
+      fromTerm constant
 
-    Alias name p ->
+    PAlias name p ->
       safeVar name <> " = " <> fromPattern p
 
-    Map pairs ->
+    PMap pairs ->
       let
         fromPair (key, value) =
-          fromConstant fromPattern key
-          <> " := " <> fromConstant fromPattern value
+          fromPattern key <> " := " <> fromPattern value
       in
       "~{" <> commaSep fromPair pairs <> "}~"
 
+    PTuple values ->
+      "{" <> commaSep fromPattern values <> "}"
 
-fromConstant :: (a -> Builder) -> Constant a -> Builder
-fromConstant buildContext constant =
+    PCons first rest ->
+      "[" <> fromPattern first <> "|" <> fromPattern rest <> "]"
+
+
+fromTerm :: Term -> Builder
+fromTerm constant =
   case constant of
     Int n ->
       intDec n
@@ -207,12 +218,6 @@ fromConstant buildContext constant =
           "#<" <> word8Dec w <> ">(8,1,'integer',['unsigned'|['big']])" : rest
       in
         "#{" <> commaSep id (ByteString.foldr collectWord [] str) <> "}#"
-
-    Tuple inners ->
-      "{" <> commaSep buildContext inners <> "}"
-
-    Cons first rest ->
-      "[" <> buildContext first <> "|" <> buildContext rest <> "]"
 
     Nil ->
       "[]"

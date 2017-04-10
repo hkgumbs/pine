@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.CoreErlang.BIF
+module Generate.CoreErlang.BuiltIn
   ( get, element
   ) where
 
@@ -14,9 +14,9 @@ import Generate.CoreErlang.Builder as Core
 
 get :: Text.Text -> Core.Literal -> Core.Expr
 get key coreMap =
-  Core.Call "maps" "get" [Core.Literal (Core.Atom key), coreMap]
+  Core.Call "maps" "get" [Core.LTerm (Core.Atom key), coreMap]
 
 
 element :: Int -> Core.Literal -> Core.Expr
-element index tuple =
-  Core.Call "erlang" "element" [Core.Literal (Core.Int index), tuple]
+element i tuple =
+  Core.Call "erlang" "element" [Core.LTerm (Core.Int i), tuple]

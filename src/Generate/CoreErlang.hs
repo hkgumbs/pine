@@ -14,8 +14,8 @@ import qualified AST.Expression.Optimized as Opt
 import Elm.Compiler.Module (moduleToText, qualifiedVar)
 
 import qualified Generate.CoreErlang.Builder as Core
-import qualified Generate.CoreErlang.BIF as BIF
-import qualified Generate.CoreErlang.Constant as Const
+import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
 import qualified Generate.CoreErlang.Pattern as Pattern
 
@@ -43,8 +43,8 @@ generateDef gen def =
           let letRec =
                 Core.LetRec name args body'
                   $ makeFun args
-                  $ Core.Apply Core.FunctionRef name
-                  $ map (Core.Literal . Core.Var) args
+                  $ Core.Apply (Core.LFunction name (length args))
+                  $ map (Core.LTerm . Core.Var) args
 
           return (gen name letRec)
 
@@ -53,7 +53,7 @@ generateExpr :: Opt.Expr -> State.State Int Core.Expr
 generateExpr opt =
   case opt of
     Opt.Literal lit ->
-      return $ Core.C (Core.Literal (Const.literal lit))
+      return $ Core.Lit (Core.LTerm (Literal.term lit))
 
     Opt.Var var ->
       return $ generateVar var
@@ -71,12 +71,16 @@ generateExpr opt =
       generateCall function args
 
     Opt.TailCall name _ args ->
-      Subst.many (Core.Apply Core.FunctionRef name) =<< mapM generateExpr args
+      let
+        function =
+          Core.LFunction name (length args)
+      in
+        Subst.many (Core.Apply function) =<< mapM generateExpr args
 
     Opt.If branches finally ->
       let
         toBranch bool expr =
-          (Core.Pattern (Core.Atom bool), expr)
+          (Core.PTerm (Core.Atom bool), expr)
 
         toCase (condition, ifTrue) ifFalse =
           do  checks <-
@@ -111,12 +115,12 @@ generateExpr opt =
       Pattern.ctorAccess index =<< generateExpr expr
 
     Opt.Access record field ->
-      Subst.one (BIF.get field) =<< generateExpr record
+      Subst.one (BuiltIn.get field) =<< generateExpr record
 
     Opt.Update record fields ->
       let
         zipper literals =
-          Core.MapUpdate (zip (keys fields) (tail literals)) (head literals)
+          Core.Update (zip (keys fields) (tail literals)) (head literals)
       in
         Subst.many zipper =<< mapM generateExpr (record : map snd fields)
 
@@ -124,7 +128,7 @@ generateExpr opt =
       do  values <-
             mapM (generateExpr . snd) fields
 
-          Subst.many (Core.MapCreate . zip (keys fields)) values
+          Subst.many (Core.Map . zip (keys fields)) values
 
     Opt.Cmd _moduleName ->
       error
@@ -163,11 +167,11 @@ generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
   let
     reference moduleName =
-      Core.Apply Core.FunctionRef (qualifiedVar moduleName name) []
+      Core.Apply (Core.LFunction (qualifiedVar moduleName name) 0) []
   in
     case home of
       Var.Local ->
-        Core.C (Core.Literal (Core.Var name))
+        Core.Lit (Core.LTerm (Core.Var name))
 
       Var.Module moduleName ->
         reference moduleName
@@ -191,19 +195,12 @@ generateCall function args =
           Subst.many (Core.Call (moduleToText moduleName) name) args'
 
         _ ->
-          flip (foldM (Subst.two applyVar)) args' =<< generateExpr function
+          flip (foldM (Subst.two makeApply)) args' =<< generateExpr function
 
 
-applyVar :: Core.Literal -> Core.Literal -> Core.Expr
-applyVar var argument =
-  case var of
-    Core.Literal (Core.Var name) ->
-      Core.Apply Core.VarRef name [argument]
-
-    _ ->
-      error
-        "This is an impossible situation \
-        \ - trying to call a number, list or something like that."
+makeApply :: Core.Literal -> Core.Literal -> Core.Expr
+makeApply var argument =
+  Core.Apply var [argument]
 
 
 makeFun :: [Text.Text] -> Core.Expr -> Core.Expr
@@ -217,4 +214,4 @@ makeFun args body =
 
 keys :: [(Text.Text, a)] -> [Core.Literal]
 keys =
-  map (Core.Literal . Core.Atom . fst)
+  map (Core.LTerm . Core.Atom . fst)

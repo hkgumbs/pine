@@ -12,8 +12,8 @@ import qualified AST.Pattern as Pattern
 import Reporting.Annotation (Annotated(A))
 
 import qualified Generate.CoreErlang.Builder as Core
-import qualified Generate.CoreErlang.BIF as BIF
-import qualified Generate.CoreErlang.Constant as Const
+import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
 
 
@@ -21,7 +21,7 @@ match :: Pattern.Canonical -> State.State Int Core.Pattern
 match (A _ pattern) =
   case pattern of
     Pattern.Ctor (Var.Canonical _ "[]") _ ->
-      lift Core.Nil
+      return $ Core.PTerm Core.Nil
 
     Pattern.Ctor (Var.Canonical _ "::") [first, rest] ->
       do  first' <-
@@ -30,33 +30,32 @@ match (A _ pattern) =
           rest' <-
             match rest
 
-          lift (Core.Cons first' rest')
+          return (Core.PCons first' rest')
 
     Pattern.Ctor (Var.Canonical _ name) args ->
       do  args' <-
             mapM match args
 
-          lift (Core.Tuple (Core.Pattern (Core.Atom name) : args'))
+          return $ Core.PTuple (Core.PTerm (Core.Atom name) : args')
 
     Pattern.Record fields ->
-      return $ Core.Map
-        (map (\name -> (Core.Atom name, Core.Var name)) fields)
+      let
+        toPair name =
+          (Core.PTerm (Core.Atom name), Core.PTerm (Core.Var name))
+      in
+        return $ Core.PMap (map toPair fields)
 
     Pattern.Alias name aliased ->
-      Core.Alias name <$> match aliased
+      Core.PAlias name <$> match aliased
 
     Pattern.Var name ->
-      lift (Core.Var name)
+      return $ Core.PTerm (Core.Var name)
 
     Pattern.Anything ->
-      lift =<< Core.Var <$> Subst.fresh
+      Core.PTerm <$> Core.Var <$> Subst.fresh
 
     Pattern.Literal lit ->
-      lift (Const.literal lit)
-
-  where
-    lift =
-      return . Core.Pattern
+      return $ Core.PTerm (Literal.term lit)
 
 
 
@@ -68,16 +67,16 @@ match (A _ pattern) =
 ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
 ctor name =
   Subst.many $
-    Core.C . Core.Literal . Core.Tuple . (:) (Core.Literal (Core.Atom name))
+    Core.Lit . Core.LTuple . (:) (Core.LTerm (Core.Atom name))
 
 
 ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
 ctorAccess index =
-  Subst.one (BIF.element (index + 2))
+  Subst.one (BuiltIn.element (index + 2))
 
 
 list :: [Core.Expr] -> State.State Int Core.Expr
 list =
-  Subst.many $ Core.C . foldr
-    (\first rest -> Core.Literal (Core.Cons first rest))
-    (Core.Literal Core.Nil)
+  Subst.many $ Core.Lit . foldr
+    (\first rest -> Core.LCons first rest)
+    (Core.LTerm Core.Nil)

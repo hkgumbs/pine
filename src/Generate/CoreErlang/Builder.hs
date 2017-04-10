@@ -77,13 +77,13 @@ fromFunction :: Function -> Builder
 fromFunction function =
   case function of
     Function name args body ->
-      fromFunctionName name args <> " = "
+      fromFunctionName name (length args) <> " = "
       <> fromFun args "" body <> "\n"
 
 
-fromFunctionName :: Text -> [a] -> Builder
-fromFunctionName name args =
-  quoted name <> "/" <> intDec (length args)
+fromFunctionName :: Text -> Int -> Builder
+fromFunctionName name airity =
+  quoted name <> "/" <> intDec airity
 
 
 fromFun :: [Text] -> Builder -> Expr -> Builder
@@ -143,7 +143,7 @@ fromExpr indent expression =
       <> deeper indent <> fromExpr (deeper indent) body
 
     LetRec name args binding body ->
-      "letrec " <> fromFunctionName name args <> " =\n"
+      "letrec " <> fromFunctionName name (length args) <> " =\n"
       <> deeper indent <> fromFun args (deeper indent) binding <> "\n"
       <> indent <> "in\n"
       <> deeper indent <> fromExpr (deeper indent) body
@@ -165,7 +165,7 @@ fromLiteral literal =
       "[" <> fromLiteral first <> "|" <> fromLiteral rest <> "]"
 
     LFunction name airity ->
-      fromFunctionName name (replicate airity ())
+      fromFunctionName name airity
 
 
 fromPattern :: Pattern -> Builder

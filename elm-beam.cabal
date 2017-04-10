@@ -20,7 +20,7 @@ source-repository head
 
 Executable elm-beam
     ghc-options:
-        -threaded -O2 -W
+        -O2 -W -fsimpl-tick-factor=130
 
     Main-is:
         Main.hs
@@ -135,7 +135,7 @@ Executable elm-beam
 
 Test-Suite compiler-tests
     ghc-options:
-        -O0 -W -Werror
+        -O0 -W -Werror -fsimpl-tick-factor=130
 
     Type:
         exitcode-stdio-1.0

@@ -147,12 +147,13 @@ generateExpr opt =
         "TODO: Opt.IncomingPort to Core.Expr"
 
     Opt.Program _type expr ->
+      -- TODO: use the type to decode argument
       generateExpr expr
 
     Opt.GLShader _ _ _ ->
+      -- TODO: should likely remove this from the AST
       error
         "Shaders can't be used with the BEAM compiler!"
-        -- we should likely remove this from the AST
 
     Opt.Crash _moduleName _region _maybeExpr ->
       error

@@ -12,24 +12,13 @@ import qualified Generate.CoreErlang.Builder as Core
 
 
 
--- COLLECTOR
-
-{-| Keeps track of the variables that we want to bind with `let`.
- -  This lets us think in terms of just the thing we're accumulating,
- -  and bind all of the values afterwards.
- -}
-
-type Collector a
-  = State.State Int (Core.Expr -> Core.Expr, a)
+-- Turn expressions into variable literals using `let`
 
 
-(|>) :: Collector a -> (a -> Core.Expr) -> State.State Int Core.Expr
-(|>) state toExpr =
-  do  (use, a) <- state
-      return (use (toExpr a))
-
-
-substitute :: Core.Expr -> (Core.Literal -> a) -> Collector a
+substitute
+  :: Core.Expr
+  -> (Core.Literal -> a)
+  -> State.State Int (Core.Expr -> Core.Expr, a)
 substitute value use =
   case value of
     Core.Lit literal ->
@@ -46,7 +35,10 @@ substitute value use =
 
 one :: (Core.Literal -> Core.Expr) -> Core.Expr -> State.State Int Core.Expr
 one use expr =
-  substitute expr use |> id
+  do  (newUse, expr) <-
+        substitute expr use
+
+      return $ newUse expr
 
 
 two
@@ -55,13 +47,13 @@ two
   -> Core.Expr
   -> State.State Int Core.Expr
 two use first second =
-  do  (firstUse, firstC) <-
+  do  (firstUse, firstLit) <-
         substitute first id
 
-      (secondUse, secondC) <-
+      (secondUse, secondLit) <-
         substitute second id
 
-      return $ firstUse (secondUse (use firstC secondC))
+      return $ firstUse (secondUse (use firstLit secondLit))
 
 
 many
@@ -69,17 +61,19 @@ many
   -> [Core.Expr]
   -> State.State Int Core.Expr
 many use exprs =
-  let
-    combine next acc =
-      do  (outerUse, oldValue) <-
-            acc
+  do  let combine next acc =
+            do  (outerUse, oldValue) <-
+                  acc
 
-          (innerUse, value) <-
-            substitute next (: oldValue)
+                (innerUse, value) <-
+                  substitute next (: oldValue)
 
-          return (innerUse . outerUse, value)
-  in
-    foldr combine (return (id, [])) exprs |> use
+                return (innerUse . outerUse, value)
+
+      (finalUse, literals) <-
+        foldr combine (return (id, [])) exprs
+
+      return $ finalUse (use literals)
 
 
 

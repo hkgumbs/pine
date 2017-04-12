@@ -28,7 +28,7 @@ source-repository head
     type:     git
     location: git://github.com/elm-lang/elm-make.git
 
-Executable elm-make
+Executable elm-beam
 
     ghc-options:
         -threaded -O2 -W
@@ -40,6 +40,7 @@ Executable elm-make
         Main.hs
 
     other-modules:
+        BuildManager,
         Flags,
         Path,
         Paths_elm_make,

@@ -1,5 +1,5 @@
 
-Name: elm-beam
+Name: elm-compiler
 Version: 0.18
 
 License: BSD3
@@ -17,16 +17,20 @@ source-repository head
     location: git://github.com/hkgumbs/elm-beam.git
 
 
-
-Executable elm-beam
+Library
     ghc-options:
-        -O2 -W -fsimpl-tick-factor=130
-
-    Main-is:
-        Main.hs
+        -O2 -fsimpl-tick-factor=130
 
     Hs-Source-Dirs:
         src
+
+    exposed-modules:
+        Elm.Compiler,
+        Elm.Compiler.Module,
+        Elm.Compiler.Type,
+        Elm.Docs,
+        Elm.Package,
+        Elm.Utils
 
     other-modules:
         AST.Declaration,
@@ -54,15 +58,9 @@ Executable elm-beam
         Docs.AST,
         Docs.Centralize,
         Docs.Check,
-        Elm.Compiler,
         Elm.Compiler.Imports,
-        Elm.Compiler.Module,
-        Elm.Compiler.Type,
         Elm.Compiler.Type.Extract,
         Elm.Compiler.Version,
-        Elm.Docs,
-        Elm.Package,
-        Elm.Utils,
         Generate.CoreErlang,
         Generate.CoreErlang.BuiltIn,
         Generate.CoreErlang.Builder,
@@ -110,7 +108,7 @@ Executable elm-beam
         Type.Type,
         Type.Unify,
         Validate,
-        Paths_elm_beam
+        Paths_elm_compiler
 
     Build-depends:
         aeson >= 0.11,

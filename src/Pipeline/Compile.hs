@@ -1,6 +1,7 @@
 module Pipeline.Compile where
 
 import Control.Concurrent (forkIO)
+import System.IO (openFile, IOMode(WriteMode))
 import qualified Control.Concurrent.Chan as Chan
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -8,7 +9,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
-import qualified Data.Text.Lazy.IO as LazyTextIO
+import qualified Data.ByteString.Builder as BS
 import qualified Elm.Compiler as Compiler
 import qualified Elm.Compiler.Module as Module
 import qualified Elm.Docs as Docs
@@ -158,7 +159,8 @@ buildManager env state =
             do  -- Write build artifacts to disk
                 let cache = cachePath env
                 File.writeBinary (Path.toInterface cache modul) interface
-                LazyTextIO.writeFile (Path.toObjectFile cache modul) js
+                objectFileHandle <- openFile (Path.toObjectFile cache modul) WriteMode
+                BS.hPutBuilder objectFileHandle js
 
                 -- Report results to user
                 Chan.writeChan (reportChan env) (Report.Complete modul localizer path source warnings)

@@ -1,0 +1,18 @@
+flags: {}
+
+packages:
+- location: '.'
+- location:
+    git: https://github.com/hkgumbs/elm-beam.git
+    commit: 0ded291e695555800c906fb01a8932eb7839e8bc
+  extra-dep: true
+- location:
+    git: https://github.com/elm-lang/elm-package.git
+    commit: 1a364bccd08f2859f8572d63c2ad5029b6c70ffe
+  extra-dep: true
+
+extra-deps:
+- Cabal-1.24.2.0
+- http-types-0.8.6
+
+resolver: lts-6.28

@@ -11,10 +11,11 @@ import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
 import qualified AST.Expression.Optimized as Opt
-import Elm.Compiler.Module (moduleToText, qualifiedVar)
+import Elm.Compiler.Module (moduleToText)
 
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Function as Function
 import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
 import qualified Generate.CoreErlang.Pattern as Pattern
@@ -22,12 +23,10 @@ import qualified Generate.CoreErlang.Pattern as Pattern
 
 generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
 generate (Module.Module moduleName _path info) =
-  let
-    function name =
-      Core.Function (qualifiedVar moduleName name) []
-  in
-    Core.encodeUtf8 $
-      map (flip State.evalState 1 . generateDef function) (Module.program info)
+  Core.encodeUtf8 $
+    map
+      (flip State.evalState 1 . generateDef (Function.topLevel moduleName))
+      (Module.program info)
 
 
 generateDef :: (Text.Text -> Core.Expr -> a) -> Opt.Def -> State.State Int a
@@ -42,7 +41,7 @@ generateDef gen def =
 
           let letRec =
                 Core.LetRec name args body'
-                  $ makeFun args
+                  $ Function.anonymous args
                   $ Core.Apply (Core.LFunction name (length args))
                   $ map (Core.LTerm . Core.Var) args
 
@@ -65,7 +64,7 @@ generateExpr opt =
       generateCall (Opt.Var var) [lhs, rhs]
 
     Opt.Function args body ->
-      makeFun args <$> generateExpr body
+      Function.anonymous args <$> generateExpr body
 
     Opt.Call function args ->
       generateCall function args
@@ -166,47 +165,39 @@ generateExpr opt =
 
 generateVar :: Var.Canonical -> Core.Expr
 generateVar (Var.Canonical home name) =
-  let
-    reference moduleName =
-      Core.Apply (Core.LFunction (qualifiedVar moduleName name) 0) []
-  in
-    case home of
-      Var.Local ->
-        Core.Lit (Core.LTerm (Core.Var name))
+  case home of
+    Var.Local ->
+      Core.Lit (Core.LTerm (Core.Var name))
 
-      Var.Module moduleName ->
-        reference moduleName
+    Var.Module moduleName ->
+      Function.reference moduleName name
 
-      Var.TopLevel moduleName ->
-        reference moduleName
+    Var.TopLevel moduleName ->
+      Function.reference moduleName name
 
-      Var.BuiltIn ->
-        error
-          "Will go away when merged with upstream dev."
+    Var.BuiltIn ->
+      error
+        "Will go away when merged with upstream dev."
 
 
 generateCall :: Opt.Expr -> [Opt.Expr] -> State.State Int Core.Expr
 generateCall function args =
-  do  args' <-
-        mapM generateExpr args
+  case function of
+    Opt.Var (Var.Canonical (Var.Module moduleName) name)
+      | ModuleName.canonicalIsNative moduleName ->
+      do  args' <-
+            mapM generateExpr args
 
-      case function of
-        Opt.Var (Var.Canonical (Var.Module moduleName) name)
-          | ModuleName.canonicalIsNative moduleName ->
           Subst.many (Core.Call (moduleToText moduleName) name) args'
 
-        _ ->
-          flip (foldM (Subst.two makeApply)) args' =<< generateExpr function
+    _ ->
+      do  function' <-
+            generateExpr function
 
+          args' <-
+            mapM generateExpr args
 
-makeApply :: Core.Literal -> Core.Literal -> Core.Expr
-makeApply var argument =
-  Core.Apply var [argument]
-
-
-makeFun :: [Text.Text] -> Core.Expr -> Core.Expr
-makeFun args body =
-  foldr (\a -> Core.Fun [a]) body args
+          foldM (Subst.two Function.apply) function' args'
 
 
 

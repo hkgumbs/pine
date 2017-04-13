@@ -67,6 +67,7 @@ Library
         Generate.CoreErlang.Literal,
         Generate.CoreErlang.Pattern,
         Generate.CoreErlang.Substitution,
+        Generate.CoreErlang.Function,
         Nitpick.Pattern,
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
@@ -188,6 +189,7 @@ Test-Suite compiler-tests
         Generate.CoreErlang.Literal
         Generate.CoreErlang.Pattern
         Generate.CoreErlang.Substitution
+        Generate.CoreErlang.Function
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes

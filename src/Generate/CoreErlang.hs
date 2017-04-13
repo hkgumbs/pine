@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang (generate) where
 
-import Control.Monad (foldM, liftM2)
+import Control.Monad (liftM2)
 import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
@@ -118,7 +118,9 @@ generateExpr opt =
     Opt.Update record fields ->
       let
         zipper literals =
-          Core.Update (zip (keys fields) (tail literals)) (head literals)
+          Core.Update
+            (zip (generateKeys fields) (tail literals))
+            (head literals)
       in
         Subst.many zipper =<< mapM generateExpr (record : map snd fields)
 
@@ -126,7 +128,7 @@ generateExpr opt =
       do  values <-
             mapM (generateExpr . snd) fields
 
-          Subst.many (Core.Map . zip (keys fields)) values
+          Subst.many (Core.Map . zip (generateKeys fields)) values
 
     Opt.Cmd _moduleName ->
       error
@@ -184,13 +186,7 @@ generateCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
       | ModuleName.canonicalIsNative moduleName ->
-      do  args' <-
-            mapM generateExpr args
-
-          let native =
-                Text.drop 7 (ModuleName.canonicalToText moduleName)
-
-          Subst.many (Core.Call native name) args'
+      Function.nativeCall moduleName name =<< mapM generateExpr args
 
     _ ->
       do  function' <-
@@ -199,13 +195,13 @@ generateCall function args =
           args' <-
             mapM generateExpr args
 
-          foldM (Subst.two Function.apply) function' args'
+          Function.apply function' args'
 
 
 
 -- RECORDS
 
 
-keys :: [(Text.Text, a)] -> [Core.Literal]
-keys =
+generateKeys :: [(Text.Text, a)] -> [Core.Literal]
+generateKeys =
   map (Core.LTerm . Core.Atom . fst)

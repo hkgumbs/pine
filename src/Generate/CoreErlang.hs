@@ -130,13 +130,11 @@ generateExpr opt =
 
           Subst.many (Core.Map . zip (generateKeys fields)) values
 
-    Opt.Cmd _moduleName ->
-      error
-        "TODO: Opt.Cmd to Core.Expr"
+    Opt.Cmd moduleName ->
+      return $ BuiltIn.effect moduleName
 
-    Opt.Sub _moduleName ->
-      error
-        "TODO: Opt.Sub to Core.Expr"
+    Opt.Sub moduleName ->
+      return $ BuiltIn.effect moduleName
 
     Opt.OutgoingPort _name _type ->
       error

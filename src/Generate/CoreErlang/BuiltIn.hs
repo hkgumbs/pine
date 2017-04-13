@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang.BuiltIn
-  ( get, element
+  ( get, element, effect
   ) where
 
 import Data.Text as Text
 
+import qualified AST.Module.Name as ModuleName
 import Generate.CoreErlang.Builder as Core
 
 
--- The generate step depends on some built-in Erlang functions.
--- All of those can be found in this module.
+-- These should all move to Native.Utils once it is ready
 
 
 get :: Text.Text -> Core.Literal -> Core.Expr
@@ -20,3 +20,14 @@ get key coreMap =
 element :: Int -> Core.Literal -> Core.Expr
 element i tuple =
   Core.Call "erlang" "element" [Core.LTerm (Core.Int i), tuple]
+
+
+effect :: ModuleName.Canonical -> Core.Expr
+effect moduleName =
+  Core.Fun ["value"]
+    $ Core.Lit
+    $ Core.LTuple
+        [ Core.LTerm (Core.Atom "leaf")
+        , Core.LTerm (Core.Atom (ModuleName.canonicalToText moduleName))
+        , Core.LTerm (Core.Var "value")
+        ]

@@ -11,7 +11,6 @@ import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
 import qualified AST.Expression.Optimized as Opt
-import Elm.Compiler.Module (moduleToText)
 
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
@@ -188,7 +187,10 @@ generateCall function args =
       do  args' <-
             mapM generateExpr args
 
-          Subst.many (Core.Call (moduleToText moduleName) name) args'
+          let native =
+                Text.drop 7 (ModuleName.canonicalToText moduleName)
+
+          Subst.many (Core.Call native name) args'
 
     _ ->
       do  function' <-

@@ -1,3 +1,4 @@
 import Native.Module
 
-f = Native.Module.f 5 6 7
+f : Int -> Int -> String
+f = Native.Module.f

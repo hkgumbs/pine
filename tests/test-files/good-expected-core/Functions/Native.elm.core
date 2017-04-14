@@ -1,2 +1,4 @@
 'elm_lang@core@Main@f'/0 = fun () ->
-	call 'Module':'f' (5, 6, 7)
+	fun (__p0) ->
+		fun (__p1) ->
+			call 'Module':'f' (__p0, __p1)

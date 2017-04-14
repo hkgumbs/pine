@@ -4,12 +4,16 @@ module Optimize (optimize) where
 
 import qualified Control.Monad as M
 import qualified Data.Traversable as T
+import qualified Data.Maybe as Maybe
 import Data.Text (Text)
+import Data.Map ((!))
 
 import qualified AST.Expression.Canonical as Can
 import qualified AST.Expression.Optimized as Opt
+import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Pattern as P
+import qualified AST.Type as Type
 import qualified AST.Variable as Var
 import qualified Optimize.DecisionTree as DT
 import qualified Optimize.Environment as Env
@@ -21,30 +25,31 @@ import qualified Reporting.Region as R
 -- OPTIMIZE
 
 
-optimize :: DT.VariantDict -> ModuleName.Canonical -> [Can.Def] -> [Opt.Def]
-optimize variantDict home defs =
-  Env.run variantDict home (concat <$> mapM (optimizeDef True) defs)
+optimize :: DT.VariantDict -> ModuleName.Canonical -> Module.Types -> [Can.Def] -> [Opt.Def]
+optimize variantDict home types defs =
+  Env.run variantDict home (concat <$> mapM (optimizeDef (Just types)) defs)
 
 
 
 -- CONVERT DEFINITIONS
 
 
-optimizeDef :: Bool -> Can.Def -> Env.Optimizer [Opt.Def]
-optimizeDef isRoot (Can.Def _ pattern expression _) =
+optimizeDef :: Maybe Module.Types -> Can.Def -> Env.Optimizer [Opt.Def]
+optimizeDef rootTypes (Can.Def _ pattern expression _) =
   let
     (args, canBody) =
       Can.collectLambdas expression
 
     maybeGetHome =
-      if isRoot then
+      if Maybe.isJust rootTypes then
         Just <$> Env.getHome
 
       else
         return Nothing
   in
     do  home <- maybeGetHome
-        optimizeDefHelp home pattern args canBody
+        defs <- optimizeDefHelp home pattern args canBody
+        maybe (return defs) (\types -> mapM (saturate types) defs) rootTypes
 
 
 optimizeDefHelp
@@ -92,6 +97,64 @@ optimizeDefHelp home pattern@(A.A _ ptrn) rawArgs rawBody =
 
     _ ->
         error "there should never be a function where the name is not a P.Var"
+
+
+
+-- TURN UNSATURATED FUNCTIONS INTO CALLS
+
+
+saturate :: Module.Types -> Opt.Def -> Env.Optimizer Opt.Def
+saturate types def =
+  case def of
+    Opt.Def facts name (Opt.Function args body) ->
+      do  additional <- extraArgs types name args
+          return
+            $ Opt.Def facts name
+            $ Opt.Function (args ++ additional)
+            $ Opt.Call body (map toLocalVar additional)
+
+    Opt.Def facts name body ->
+      do  args <- extraArgs types name []
+          return
+            $ Opt.Def facts name
+            $ Opt.Function args
+            $ Opt.Call body (map toLocalVar args)
+
+    Opt.TailDef _ _ _ _ ->
+      return def
+
+  where
+    toLocalVar =
+      Opt.Var . Var.Canonical Var.Local
+
+
+extraArgs :: Module.Types -> Text -> [Text] -> Env.Optimizer [Text]
+extraArgs types name args =
+  let
+    argsNeeded =
+      canonicalArity types name - length args
+  in
+    sequence (replicate argsNeeded Env.freshName)
+
+
+canonicalArity :: Module.Types -> Text -> Int
+canonicalArity types name =
+  count (0 :: Int) (types ! name)
+
+  where
+    count acc tipe =
+      case tipe of
+        Type.Lambda _ more ->
+          count (1 + acc) more
+
+        Type.Aliased _ _ (Type.Holey aliased) ->
+          count acc aliased
+
+        Type.Aliased _ _ (Type.Filled aliased) ->
+          count acc aliased
+
+        _ ->
+          acc
 
 
 
@@ -242,7 +305,7 @@ optimizeExpr context annExpr@(A.A region expression) =
               <*> keepLooking finally
 
     Can.Let defs body ->
-        do  optDefs <- concat <$> T.traverse (optimizeDef False) defs
+        do  optDefs <- concat <$> T.traverse (optimizeDef Nothing) defs
             Opt.Let optDefs <$> keepLooking body
 
     Can.Case expr branches ->

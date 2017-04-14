@@ -1,7 +1,11 @@
 'elm_lang@core@Main@apply'/0 = fun () ->
 	fun (_f) ->
-		let <_g> =
-			fun (_x) ->
-				apply _f (_x)
-		in
-			_g
+		fun (__p0) ->
+			let <_1> =
+				let <_g> =
+					fun (_x) ->
+						apply _f (_x)
+				in
+					_g
+			in
+				apply _1 (__p0)

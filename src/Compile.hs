@@ -67,7 +67,7 @@ compile packageName canonicalImports interfaces source =
       -- Do some basic optimizations
       let optimisedDefs =
             {-# SCC elm_compiler_optimization #-}
-            Optimize.optimize tagDict (Module.name canonicalModule) canonicalDefs
+            Optimize.optimize tagDict (Module.name canonicalModule) types canonicalDefs
 
       -- Add the real list of types
       let info =

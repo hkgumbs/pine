@@ -1,79 +1,29 @@
-'elm_lang@core@Main@-'/0 = fun () ->
-	fun (_x) ->
-		fun (_y) ->
-			_x
+'elm_lang@core@Main@-'/2 = fun (_x, _y) ->
+	_x
 'elm_lang@core@Main@minus'/0 = fun () ->
+	apply 'elm_lang@core@Main@-'/2 (3, 4)
+'elm_lang@core@Main@minusNegative'/0 = fun () ->
+	let <_1> =
+		apply 'elm_lang@core@Main@-'/2 (0, 4)
+	in
+		apply 'elm_lang@core@Main@-'/2 (3, _1)
+'elm_lang@core@Main@negativeMinusNegative'/0 = fun () ->
+	let <_2> =
+		apply 'elm_lang@core@Main@-'/2 (0, 3)
+	in
+		let <_1> =
+			apply 'elm_lang@core@Main@-'/2 (0, 4)
+		in
+			apply 'elm_lang@core@Main@-'/2 (_2, _1)
+'elm_lang@core@Main@negativeInParens'/0 = fun () ->
+	apply 'elm_lang@core@Main@-'/2 (0, 2)
+'elm_lang@core@Main@funcMinus'/0 = fun () ->
 	let <_2> =
 		let <_1> =
-			apply 'elm_lang@core@Main@-'/0 ()
+			fun (_x) ->
+				fun (_y) ->
+					apply 'elm_lang@core@Main@-'/2 (_x, _y)
 		in
 			apply _1 (3)
 	in
 		apply _2 (4)
-'elm_lang@core@Main@minusNegative'/0 = fun () ->
-	let <_4> =
-		let <_3> =
-			apply 'elm_lang@core@Main@-'/0 ()
-		in
-			apply _3 (3)
-	in
-		let <_5> =
-			let <_2> =
-				let <_1> =
-					apply 'elm_lang@core@Main@-'/0 ()
-				in
-					apply _1 (0)
-			in
-				apply _2 (4)
-		in
-			apply _4 (_5)
-'elm_lang@core@Main@negativeMinusNegative'/0 = fun () ->
-	let <_7> =
-		let <_5> =
-			apply 'elm_lang@core@Main@-'/0 ()
-		in
-			let <_6> =
-				let <_2> =
-					let <_1> =
-						apply 'elm_lang@core@Main@-'/0 ()
-					in
-						apply _1 (0)
-				in
-					apply _2 (3)
-			in
-				apply _5 (_6)
-	in
-		let <_8> =
-			let <_4> =
-				let <_3> =
-					apply 'elm_lang@core@Main@-'/0 ()
-				in
-					apply _3 (0)
-			in
-				apply _4 (4)
-		in
-			apply _7 (_8)
-'elm_lang@core@Main@negativeInParens'/0 = fun () ->
-	let <_2> =
-		let <_1> =
-			apply 'elm_lang@core@Main@-'/0 ()
-		in
-			apply _1 (0)
-	in
-		apply _2 (2)
-'elm_lang@core@Main@funcMinus'/0 = fun () ->
-	let <_4> =
-		let <_3> =
-			fun (_x) ->
-				fun (_y) ->
-					let <_2> =
-						let <_1> =
-							apply 'elm_lang@core@Main@-'/0 ()
-						in
-							apply _1 (_x)
-					in
-						apply _2 (_y)
-		in
-			apply _3 (3)
-	in
-		apply _4 (4)

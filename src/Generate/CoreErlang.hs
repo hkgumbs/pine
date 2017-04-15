@@ -5,7 +5,7 @@ import Control.Monad (liftM2)
 import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
-import qualified Data.Text as Text
+import Data.Text (Text)
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
@@ -28,11 +28,17 @@ generate (Module.Module moduleName _path info) =
       (Module.program info)
 
 
-generateDef :: (Text.Text -> Core.Expr -> a) -> Opt.Def -> State.State Int a
+generateDef
+  :: (Text -> [Text] -> Core.Expr -> a)
+  -> Opt.Def
+  -> State.State Int a
 generateDef gen def =
   case def of
+    Opt.Def _ name (Opt.Function args body) ->
+      gen name args <$> generateExpr body
+
     Opt.Def _ name body ->
-      gen name <$> generateExpr body
+      gen name [] <$> generateExpr body
 
     Opt.TailDef _ name args body ->
       do  body' <-
@@ -40,11 +46,10 @@ generateDef gen def =
 
           let letRec =
                 Core.LetRec name args body'
-                  $ Function.anonymous args
                   $ Core.Apply (Core.LFunction name (length args))
                   $ map (Core.LTerm . Core.Var) args
 
-          return (gen name letRec)
+          return (gen name args letRec)
 
 
 generateExpr :: Opt.Expr -> State.State Int Core.Expr
@@ -60,13 +65,13 @@ generateExpr opt =
       Pattern.list =<< mapM generateExpr exprs
 
     Opt.Binop var lhs rhs ->
-      generateCall (Opt.Var var) [lhs, rhs]
+      Function.binop var =<< mapM generateExpr [lhs, rhs]
 
     Opt.Function args body ->
       Function.anonymous args <$> generateExpr body
 
     Opt.Call function args ->
-      generateCall function args
+      generateCall function =<< mapM generateExpr args
 
     Opt.TailCall name _ args ->
       let
@@ -91,11 +96,15 @@ generateExpr opt =
       in
         foldr toCase (generateExpr finally) branches
 
-    Opt.Let defs body ->
-      foldr
-        (\def state -> generateDef Core.Let def <*> state)
-        (generateExpr body)
-        defs
+    Opt.Let defs expr ->
+      let
+        toLet name args body =
+          Core.Let name (Function.anonymous args body)
+      in
+        foldr
+          (\def state -> generateDef toLet def <*> state)
+          (generateExpr expr)
+          defs
 
     Opt.Case switch branches ->
       do  let toCore (pattern, expr) =
@@ -159,7 +168,7 @@ generateExpr opt =
 
 
 
--- VARIABLES
+--- VARIABLES
 
 
 generateVar :: Var.Canonical -> Core.Expr
@@ -179,27 +188,24 @@ generateVar (Var.Canonical home name) =
         "Will go away when merged with upstream dev."
 
 
-generateCall :: Opt.Expr -> [Opt.Expr] -> State.State Int Core.Expr
+generateCall :: Opt.Expr -> [Core.Expr] -> State.State Int Core.Expr
 generateCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
       | ModuleName.canonicalIsNative moduleName ->
-      Function.nativeCall moduleName name =<< mapM generateExpr args
+      Function.nativeCall moduleName name args
 
     _ ->
       do  function' <-
             generateExpr function
 
-          args' <-
-            mapM generateExpr args
-
-          Function.apply function' args'
+          Function.apply function' args
 
 
 
 -- RECORDS
 
 
-generateKeys :: [(Text.Text, a)] -> [Core.Literal]
+generateKeys :: [(Text, a)] -> [Core.Literal]
 generateKeys =
   map (Core.LTerm . Core.Atom . fst)

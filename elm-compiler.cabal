@@ -7,8 +7,6 @@ License-file: LICENSE
 
 Category: Compiler, Language
 
-Extra-source-files: changelog.md
-
 Cabal-version: >=1.9
 Build-type: Simple
 

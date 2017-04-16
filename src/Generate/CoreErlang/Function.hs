@@ -1,26 +1,24 @@
 module Generate.CoreErlang.Function
-  ( topLevel, reference, anonymous
-  , apply, binop, nativeCall
+  ( topLevel, anonymous
+  , apply, binop, reference
   ) where
 
 import Control.Monad (foldM)
 import qualified Control.Monad.State as State
 
 import Data.Text (Text)
-import qualified Data.Text as Text
 
 import qualified AST.Variable as Var
 import qualified AST.Helpers as Help
-import qualified AST.Module.Name as ModuleName
+import qualified Elm.Compiler.Module as Module
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.Substitution as Subst
-import Elm.Compiler.Module (qualifiedVar)
 
 
 -- CONTRUCTING
 
 
-topLevel :: ModuleName.Canonical -> Text -> [Text] -> Core.Expr -> Core.Function
+topLevel :: Module.Canonical -> Text -> [Text] -> Core.Expr -> Core.Function
 topLevel moduleName name args body =
   if Help.isOp name then
     function args body
@@ -30,17 +28,7 @@ topLevel moduleName name args body =
 
   where
     function =
-      Core.Function (qualifiedVar moduleName name)
-
-
-reference :: ModuleName.Canonical -> Text -> Core.Expr
-reference moduleName name =
-  if ModuleName.canonicalIsNative moduleName then
-    -- Since we short-circuit Call's, these are no-arg functions
-    nativeCall moduleName name []
-
-  else
-    Core.Apply (Core.LFunction (qualifiedVar moduleName name) 0) []
+      Core.Function (Module.qualifiedVar moduleName name)
 
 
 anonymous :: [Text] -> Core.Expr -> Core.Expr
@@ -65,15 +53,11 @@ binop (Var.Canonical home name) =
     qualified =
       case home of
         Var.Local -> error "Will go away when merged with upstream dev"
-        Var.Module moduleName -> qualifiedVar moduleName name
-        Var.TopLevel moduleName -> qualifiedVar moduleName name
+        Var.Module moduleName -> Module.qualifiedVar moduleName name
+        Var.TopLevel moduleName -> Module.qualifiedVar moduleName name
         Var.BuiltIn -> error "Will go away when merged with upstream dev"
 
 
-nativeCall
-  :: ModuleName.Canonical
-  -> Text
-  -> [Core.Expr]
-  -> State.State Int Core.Expr
-nativeCall (ModuleName.Canonical _ rawModule) name =
-  Subst.many (Core.Call (Text.drop 7 rawModule) name)
+reference :: Module.Canonical -> Text -> Core.Expr
+reference moduleName name =
+  Core.Apply (Core.LFunction (Module.qualifiedVar moduleName name) 0) []

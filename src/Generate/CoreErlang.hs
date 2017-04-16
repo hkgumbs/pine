@@ -5,6 +5,7 @@ import Control.Monad (liftM2)
 import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
+import qualified Data.Text as Text
 import Data.Text (Text)
 
 import qualified AST.Module as Module
@@ -21,7 +22,7 @@ import qualified Generate.CoreErlang.Pattern as Pattern
 
 
 generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
-generate (Module.Module moduleName _path info) =
+generate (Module.Module moduleName _ info) =
   Core.encodeUtf8 $
     map
       (flip State.evalState 1 . generateDef (Function.topLevel moduleName))
@@ -59,7 +60,7 @@ generateExpr opt =
       return $ Core.Lit (Core.LTerm (Literal.term lit))
 
     Opt.Var var ->
-      return $ generateVar var
+      generateVar var
 
     Opt.List exprs ->
       Pattern.list =<< mapM generateExpr exprs
@@ -171,17 +172,17 @@ generateExpr opt =
 --- VARIABLES
 
 
-generateVar :: Var.Canonical -> Core.Expr
+generateVar :: Var.Canonical -> State.State Int Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
-      Core.Lit (Core.LTerm (Core.Var name))
+      return $ Core.Lit (Core.LTerm (Core.Var name))
 
     Var.Module moduleName ->
-      Function.reference moduleName name
+      generateRef moduleName name
 
     Var.TopLevel moduleName ->
-      Function.reference moduleName name
+      generateRef moduleName name
 
     Var.BuiltIn ->
       error
@@ -193,13 +194,33 @@ generateCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
       | ModuleName.canonicalIsNative moduleName ->
-      Function.nativeCall moduleName name args
+      -- call natives out-right
+      generateNative moduleName name args
 
     _ ->
       do  function' <-
             generateExpr function
 
           Function.apply function' args
+
+
+generateRef :: ModuleName.Canonical -> Text -> State.State Int Core.Expr
+generateRef moduleName name =
+  if ModuleName.canonicalIsNative moduleName then
+    -- since we short-circuit Call's, these are no-arg functions
+    generateNative moduleName name []
+
+  else
+    return $ Function.reference moduleName name
+
+
+generateNative
+  :: ModuleName.Canonical
+  -> Text
+  -> [Core.Expr]
+  -> State.State Int Core.Expr
+generateNative (ModuleName.Canonical _ rawModule) name =
+  Subst.many (Core.Call (Text.drop 7 rawModule) name)
 
 
 

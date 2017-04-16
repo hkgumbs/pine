@@ -1,5 +1,5 @@
 module Generate.CoreErlang.Substitution
-  ( one, two, many, many1
+  ( one, many, many1
   ) where
 
 import qualified Generate.CoreErlang.Builder as Core
@@ -33,21 +33,6 @@ one use expr =
         substitute expr use
 
       return $ newUse expr
-
-
-two
-  :: (Core.Literal -> Core.Literal -> Core.Expr)
-  -> Core.Expr
-  -> Core.Expr
-  -> Env.Gen Core.Expr
-two use first second =
-  do  (firstUse, firstLit) <-
-        substitute first id
-
-      (secondUse, secondLit) <-
-        substitute second id
-
-      return $ firstUse (secondUse (use firstLit secondLit))
 
 
 many

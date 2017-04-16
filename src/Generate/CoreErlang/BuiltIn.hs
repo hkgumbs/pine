@@ -24,13 +24,8 @@ element i tuple =
 
 effect :: ModuleName.Canonical -> Core.Expr
 effect moduleName =
-  Core.Fun ["value"]
-    $ Core.Lit
-    $ Core.LTuple
-        [ Core.LTerm (Core.Atom "leaf")
-        , Core.LTerm (Core.Atom (ModuleName.canonicalToText moduleName))
-        , Core.LTerm (Core.Var "value")
-        ]
+  Core.Call "Platform" "leaf"
+    [Core.LTerm (Core.Atom (ModuleName.canonicalToText moduleName))]
 
 
 apply :: Core.Literal -> [Core.Literal] -> Core.Expr

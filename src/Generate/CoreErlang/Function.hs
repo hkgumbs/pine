@@ -3,7 +3,6 @@ module Generate.CoreErlang.Function
   , apply, binop, reference
   ) where
 
-import Control.Monad (foldM)
 import qualified Control.Monad.State as State
 
 import Data.Text (Text)
@@ -12,10 +11,11 @@ import qualified AST.Variable as Var
 import qualified AST.Helpers as Help
 import qualified Elm.Compiler.Module as Module
 import qualified Generate.CoreErlang.Builder as Core
+import qualified Generate.CoreErlang.BuiltIn as BuiltIn
 import qualified Generate.CoreErlang.Substitution as Subst
 
 
--- CONTRUCTING
+-- CREATING
 
 
 topLevel :: Module.Canonical -> Text -> [Text] -> Core.Expr -> Core.Function
@@ -33,7 +33,11 @@ topLevel moduleName name args body =
 
 anonymous :: [Text] -> Core.Expr -> Core.Expr
 anonymous args body =
-  foldr (\a -> Core.Fun [a]) body args
+  if null args then
+    body
+
+  else
+    Core.Fun args body
 
 
 
@@ -41,8 +45,12 @@ anonymous args body =
 
 
 apply :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
-apply =
-  foldM $ Subst.two (\f a -> Core.Apply f [a])
+apply function args =
+  if null args then
+    return function
+
+  else
+    Subst.many1 BuiltIn.apply function args
 
 
 binop :: Var.Canonical -> [Core.Expr] -> State.State Int Core.Expr

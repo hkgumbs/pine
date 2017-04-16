@@ -8,6 +8,5 @@
 			in
 				_thing
 'elm_lang@core@Main@Thing'/0 = fun () ->
-	fun (_v1) ->
-		fun (_v2) ->
-			~{'x' => _v1, 'y' => _v2}~
+	fun (_v1, _v2) ->
+		~{'x' => _v1, 'y' => _v2}~

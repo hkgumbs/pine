@@ -18,12 +18,8 @@
 'elm_lang@core@Main@negativeInParens'/0 = fun () ->
 	apply 'elm_lang@core@Main@-'/2 (0, 2)
 'elm_lang@core@Main@funcMinus'/0 = fun () ->
-	let <_2> =
-		let <_1> =
-			fun (_x) ->
-				fun (_y) ->
-					apply 'elm_lang@core@Main@-'/2 (_x, _y)
-		in
-			apply _1 (3)
+	let <_1> =
+		fun (_x, _y) ->
+			apply 'elm_lang@core@Main@-'/2 (_x, _y)
 	in
-		apply _2 (4)
+		call 'Runtime':'apply' (_1, 3, 4)

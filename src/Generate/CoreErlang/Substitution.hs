@@ -1,5 +1,5 @@
 module Generate.CoreErlang.Substitution
-  ( one, two, many
+  ( one, two, many, many1
   , fresh
   ) where
 
@@ -74,6 +74,18 @@ many use exprs =
         foldr combine (return (id, [])) exprs
 
       return $ finalUse (use literals)
+
+
+many1
+  :: (Core.Literal -> [Core.Literal] -> Core.Expr)
+  -> Core.Expr
+  -> [Core.Expr]
+  -> State.State Int Core.Expr
+many1 use first rest =
+  do  (newUse, withFirst) <-
+        substitute first use
+
+      newUse <$> many withFirst rest
 
 
 

@@ -126,13 +126,13 @@ generateExpr opt =
       Subst.one (BuiltIn.get field) =<< generateExpr record
 
     Opt.Update record fields ->
-      let
-        zipper literals =
-          Core.Update
-            (zip (generateKeys fields) (tail literals))
-            (head literals)
-      in
-        Subst.many zipper =<< mapM generateExpr (record : map snd fields)
+      do  let zipper m entries =
+                Core.Update (zip (generateKeys fields) entries) m
+
+          record' <-
+            generateExpr record
+
+          Subst.many1 zipper record' =<< mapM (generateExpr . snd) fields
 
     Opt.Record fields ->
       do  values <-

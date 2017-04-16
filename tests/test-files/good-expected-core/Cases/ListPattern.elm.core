@@ -1,12 +1,11 @@
 'elm_lang@core@Main@firstWithDefault'/0 = fun () ->
-	fun (_list) ->
-		fun (_default) ->
-			case _list of
-				<[]> when 'true' ->
-					_default
-				<[_a|_1]> when 'true' ->
-					_a
-			end
+	fun (_list, _default) ->
+		case _list of
+			<[]> when 'true' ->
+				_default
+			<[_a|_1]> when 'true' ->
+				_a
+		end
 'elm_lang@core@Main@length'/0 = fun () ->
 	fun (_list) ->
 		case _list of

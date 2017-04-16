@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang.BuiltIn
-  ( get, element, effect
+  ( get, element, effect, apply
   ) where
 
 import Data.Text as Text
@@ -31,3 +31,8 @@ effect moduleName =
         , Core.LTerm (Core.Atom (ModuleName.canonicalToText moduleName))
         , Core.LTerm (Core.Var "value")
         ]
+
+
+apply :: Core.Literal -> [Core.Literal] -> Core.Expr
+apply function args =
+  Core.Call "Runtime" "apply" (function : args)

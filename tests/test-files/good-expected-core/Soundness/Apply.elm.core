@@ -1,11 +1,10 @@
 'elm_lang@core@Main@apply'/0 = fun () ->
-	fun (_f) ->
-		fun (__p0) ->
-			let <_1> =
-				let <_g> =
-					fun (_x) ->
-						apply _f (_x)
-				in
-					_g
+	fun (_f, __p0) ->
+		let <_1> =
+			let <_g> =
+				fun (_x) ->
+					call 'Runtime':'apply' (_f, _x)
 			in
-				apply _1 (__p0)
+				_g
+		in
+			call 'Runtime':'apply' (_1, __p0)

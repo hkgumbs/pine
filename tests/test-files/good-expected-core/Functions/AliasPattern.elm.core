@@ -5,15 +5,14 @@
 				'true'
 		end
 'elm_lang@core@Main@unpackParams'/0 = fun () ->
-	fun (__p2) ->
-		fun (__p1) ->
-			case __p2 of
-				<{'A', _bool1}> when 'true' ->
-					case __p1 of
-						<{'A', _bool2}> when 'true' ->
-							'false'
-					end
-			end
+	fun (__p2, __p1) ->
+		case __p2 of
+			<{'A', _bool1}> when 'true' ->
+				case __p1 of
+					<{'A', _bool2}> when 'true' ->
+						'false'
+				end
+		end
 'elm_lang@core@Main@A'/0 = fun () ->
 	fun (_v1) ->
 		{'A', _v1}

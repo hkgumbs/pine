@@ -1,15 +1,9 @@
 module Generate.CoreErlang.Substitution
   ( one, two, many, many1
-  , fresh
   ) where
 
-
-import qualified Control.Monad.State as State
-import qualified Data.Text as Text
-import Data.Text (Text)
-
 import qualified Generate.CoreErlang.Builder as Core
-
+import qualified Generate.CoreErlang.Environment as Env
 
 
 -- Turn expressions into variable literals using `let`
@@ -18,14 +12,14 @@ import qualified Generate.CoreErlang.Builder as Core
 substitute
   :: Core.Expr
   -> (Core.Literal -> a)
-  -> State.State Int (Core.Expr -> Core.Expr, a)
+  -> Env.Gen (Core.Expr -> Core.Expr, a)
 substitute value use =
   case value of
     Core.Lit literal ->
       return (id, use literal)
 
     _ ->
-      do  name <- fresh
+      do  name <- Env.freshName
           return (Core.Let name value, use (Core.LTerm (Core.Var name)))
 
 
@@ -33,7 +27,7 @@ substitute value use =
 -- PUBLIC
 
 
-one :: (Core.Literal -> Core.Expr) -> Core.Expr -> State.State Int Core.Expr
+one :: (Core.Literal -> Core.Expr) -> Core.Expr -> Env.Gen Core.Expr
 one use expr =
   do  (newUse, expr) <-
         substitute expr use
@@ -45,7 +39,7 @@ two
   :: (Core.Literal -> Core.Literal -> Core.Expr)
   -> Core.Expr
   -> Core.Expr
-  -> State.State Int Core.Expr
+  -> Env.Gen Core.Expr
 two use first second =
   do  (firstUse, firstLit) <-
         substitute first id
@@ -59,7 +53,7 @@ two use first second =
 many
   :: ([Core.Literal] -> Core.Expr)
   -> [Core.Expr]
-  -> State.State Int Core.Expr
+  -> Env.Gen Core.Expr
 many use exprs =
   do  let combine next acc =
             do  (outerUse, oldValue) <-
@@ -80,20 +74,9 @@ many1
   :: (Core.Literal -> [Core.Literal] -> Core.Expr)
   -> Core.Expr
   -> [Core.Expr]
-  -> State.State Int Core.Expr
+  -> Env.Gen Core.Expr
 many1 use first rest =
   do  (newUse, withFirst) <-
         substitute first use
 
       newUse <$> many withFirst rest
-
-
-
--- VARIABLE HELPERS
-
-
-fresh :: State.State Int Text
-fresh =
-  do  n <- State.get
-      State.modify (+1)
-      return (Text.pack (show n))

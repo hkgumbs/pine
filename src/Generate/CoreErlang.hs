@@ -2,7 +2,6 @@
 module Generate.CoreErlang (generate) where
 
 import Control.Monad (liftM2)
-import qualified Control.Monad.State as State
 
 import qualified Data.ByteString.Builder as BS
 import qualified Data.Text as Text
@@ -15,6 +14,7 @@ import qualified AST.Expression.Optimized as Opt
 
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Environment as Env
 import qualified Generate.CoreErlang.Function as Function
 import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
@@ -25,14 +25,11 @@ generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
 generate (Module.Module moduleName _ info) =
   Core.encodeUtf8 $
     map
-      (flip State.evalState 1 . generateDef (Function.topLevel moduleName))
+      (Env.run . generateDef (Function.topLevel moduleName))
       (Module.program info)
 
 
-generateDef
-  :: (Text -> [Text] -> Core.Expr -> a)
-  -> Opt.Def
-  -> State.State Int a
+generateDef :: (Text -> [Text] -> Core.Expr -> a) -> Opt.Def -> Env.Gen a
 generateDef gen def =
   case def of
     Opt.Def _ name (Opt.Function args body) ->
@@ -53,7 +50,7 @@ generateDef gen def =
           return (gen name args letRec)
 
 
-generateExpr :: Opt.Expr -> State.State Int Core.Expr
+generateExpr :: Opt.Expr -> Env.Gen Core.Expr
 generateExpr opt =
   case opt of
     Opt.Literal lit ->
@@ -172,7 +169,7 @@ generateExpr opt =
 --- VARIABLES
 
 
-generateVar :: Var.Canonical -> State.State Int Core.Expr
+generateVar :: Var.Canonical -> Env.Gen Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
@@ -189,7 +186,7 @@ generateVar (Var.Canonical home name) =
         "Will go away when merged with upstream dev."
 
 
-generateCall :: Opt.Expr -> [Core.Expr] -> State.State Int Core.Expr
+generateCall :: Opt.Expr -> [Core.Expr] -> Env.Gen Core.Expr
 generateCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
@@ -204,7 +201,7 @@ generateCall function args =
           Function.apply function' args
 
 
-generateRef :: ModuleName.Canonical -> Text -> State.State Int Core.Expr
+generateRef :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
 generateRef moduleName name =
   if ModuleName.canonicalIsNative moduleName then
     -- since we short-circuit Call's, these are no-arg functions
@@ -218,7 +215,7 @@ generateNative
   :: ModuleName.Canonical
   -> Text
   -> [Core.Expr]
-  -> State.State Int Core.Expr
+  -> Env.Gen Core.Expr
 generateNative (ModuleName.Canonical _ rawModule) name =
   Subst.many (Core.Call (Text.drop 7 rawModule) name)
 

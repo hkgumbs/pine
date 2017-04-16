@@ -3,8 +3,6 @@ module Generate.CoreErlang.Function
   , apply, binop, reference
   ) where
 
-import qualified Control.Monad.State as State
-
 import Data.Text (Text)
 
 import qualified AST.Variable as Var
@@ -12,6 +10,7 @@ import qualified AST.Helpers as Help
 import qualified Elm.Compiler.Module as Module
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Environment as Env
 import qualified Generate.CoreErlang.Substitution as Subst
 
 
@@ -44,7 +43,7 @@ anonymous args body =
 -- USING
 
 
-apply :: Core.Expr -> [Core.Expr] -> State.State Int Core.Expr
+apply :: Core.Expr -> [Core.Expr] -> Env.Gen Core.Expr
 apply function args =
   if null args then
     return function
@@ -53,7 +52,7 @@ apply function args =
     Subst.many1 BuiltIn.apply function args
 
 
-binop :: Var.Canonical -> [Core.Expr] -> State.State Int Core.Expr
+binop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr
 binop (Var.Canonical home name) =
   Subst.many (Core.Apply (Core.LFunction qualified 2))
 

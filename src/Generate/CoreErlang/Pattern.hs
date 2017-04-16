@@ -4,7 +4,6 @@ module Generate.CoreErlang.Pattern
   , ctor, ctorAccess, list
   ) where
 
-import qualified Control.Monad.State as State
 import Data.Text (Text)
 
 import qualified AST.Variable as Var
@@ -13,11 +12,12 @@ import Reporting.Annotation (Annotated(A))
 
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
+import qualified Generate.CoreErlang.Environment as Env
 import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
 
 
-match :: Pattern.Canonical -> State.State Int Core.Pattern
+match :: Pattern.Canonical -> Env.Gen Core.Pattern
 match (A _ pattern) =
   case pattern of
     Pattern.Ctor (Var.Canonical _ "[]") _ ->
@@ -52,7 +52,7 @@ match (A _ pattern) =
       return $ Core.PTerm (Core.Var name)
 
     Pattern.Anything ->
-      Core.PTerm <$> Core.Var <$> Subst.fresh
+      Core.PTerm <$> Core.Var <$> Env.freshName
 
     Pattern.Literal lit ->
       return $ Core.PTerm (Literal.term lit)
@@ -64,18 +64,18 @@ match (A _ pattern) =
 -- Must use the same data structures!
 
 
-ctor :: Text -> [Core.Expr] -> State.State Int Core.Expr
+ctor :: Text -> [Core.Expr] -> Env.Gen Core.Expr
 ctor name =
   Subst.many $
     Core.Lit . Core.LTuple . (:) (Core.LTerm (Core.Atom name))
 
 
-ctorAccess :: Int -> Core.Expr -> State.State Int Core.Expr
+ctorAccess :: Int -> Core.Expr -> Env.Gen Core.Expr
 ctorAccess index =
   Subst.one (BuiltIn.element (index + 2))
 
 
-list :: [Core.Expr] -> State.State Int Core.Expr
+list :: [Core.Expr] -> Env.Gen Core.Expr
 list =
   Subst.many $ Core.Lit . foldr
     (\first rest -> Core.LCons first rest)

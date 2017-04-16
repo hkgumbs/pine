@@ -62,10 +62,11 @@ Library
         Generate.CoreErlang,
         Generate.CoreErlang.BuiltIn,
         Generate.CoreErlang.Builder,
+        Generate.CoreErlang.Environment,
+        Generate.CoreErlang.Function,
         Generate.CoreErlang.Literal,
         Generate.CoreErlang.Pattern,
         Generate.CoreErlang.Substitution,
-        Generate.CoreErlang.Function,
         Nitpick.Pattern,
         Nitpick.PatternMatches,
         Nitpick.TopLevelTypes,
@@ -184,10 +185,11 @@ Test-Suite compiler-tests
         Generate.CoreErlang
         Generate.CoreErlang.BuiltIn
         Generate.CoreErlang.Builder
+        Generate.CoreErlang.Environment
+        Generate.CoreErlang.Function
         Generate.CoreErlang.Literal
         Generate.CoreErlang.Pattern
         Generate.CoreErlang.Substitution
-        Generate.CoreErlang.Function
         Nitpick.Pattern
         Nitpick.PatternMatches
         Nitpick.TopLevelTypes

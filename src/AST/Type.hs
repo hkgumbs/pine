@@ -6,6 +6,7 @@ module AST.Type
     , deepDealias, iteratedDealias, dealias
     , collectLambdas
     , tuple, cmd, sub
+    , arity
     )
     where
 
@@ -167,6 +168,26 @@ collectLambdas tipe =
 
     _ ->
       [tipe]
+
+
+
+-- ARITY
+
+
+arity :: Canonical -> Int
+arity tipe =
+  case tipe of
+    Lambda _ more ->
+      1 + arity more
+
+    Aliased _ _ (Holey aliased) ->
+      arity aliased
+
+    Aliased _ _ (Filled aliased) ->
+      arity aliased
+
+    _ ->
+      0
 
 
 

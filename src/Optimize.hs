@@ -106,55 +106,46 @@ optimizeDefHelp home pattern@(A.A _ ptrn) rawArgs rawBody =
 saturate :: Module.Types -> Opt.Def -> Env.Optimizer Opt.Def
 saturate types def =
   case def of
-    Opt.Def facts name (Opt.Function args body) ->
-      do  additional <- extraArgs types name args
-          return
-            $ Opt.Def facts name
-            $ Opt.Function (args ++ additional)
-            $ Opt.Call body (map toLocalVar additional)
+    Opt.Def facts name expr
+      | canonicalArity name > expressedArity expr ->
+      do  let argsNeeded =
+                canonicalArity name - expressedArity expr
 
-    Opt.Def facts name body ->
-      do  args <- extraArgs types name []
-          return
-            $ Opt.Def facts name
-            $ Opt.Function args
-            $ Opt.Call body (map toLocalVar args)
+          additional <-
+            sequence (replicate argsNeeded Env.freshName)
 
-    Opt.TailDef _ _ _ _ ->
+          return $ Opt.Def facts name (insertArguments additional expr)
+
+    _ ->
       return def
 
   where
-    toLocalVar =
-      Opt.Var . Var.Canonical Var.Local
+    canonicalArity name =
+      Type.arity (types ! name)
 
 
-extraArgs :: Module.Types -> Text -> [Text] -> Env.Optimizer [Text]
-extraArgs types name args =
-  let
-    argsNeeded =
-      canonicalArity types name - length args
-  in
-    sequence (replicate argsNeeded Env.freshName)
+insertArguments :: [Text] -> Opt.Expr -> Opt.Expr
+insertArguments args expr =
+  case expr of
+    Opt.Function oldArgs oldBody ->
+      Opt.Function (oldArgs ++ args) (call oldBody)
 
-
-canonicalArity :: Module.Types -> Text -> Int
-canonicalArity types name =
-  count (0 :: Int) (types ! name)
+    _ ->
+      Opt.Function args (call expr)
 
   where
-    count acc tipe =
-      case tipe of
-        Type.Lambda _ more ->
-          count (1 + acc) more
+    call body =
+      Opt.Call body (map (Opt.Var . Var.Canonical Var.Local) args)
 
-        Type.Aliased _ _ (Type.Holey aliased) ->
-          count acc aliased
 
-        Type.Aliased _ _ (Type.Filled aliased) ->
-          count acc aliased
+expressedArity :: Opt.Expr -> Int
+expressedArity expr =
+  case expr of
+    Opt.Function args _ ->
+      length args
 
-        _ ->
-          acc
+    _ ->
+      0
 
 
 

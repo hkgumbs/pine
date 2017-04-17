@@ -1,10 +1,9 @@
-'elm_lang@core@Main@apply'/0 = fun () ->
-	fun (_f, __p0) ->
-		let <_1> =
-			let <_g> =
-				fun (_x) ->
-					call 'Runtime':'apply' (_f, _x)
-			in
-				_g
+'elm_lang@core@Main@apply'/2 = fun (_f, __p0) ->
+	let <_1> =
+		letrec 'g'/1 =
+			fun (_x) ->
+				call 'Runtime':'apply' (_f, _x)
 		in
-			call 'Runtime':'apply' (_1, __p0)
+			_g
+	in
+		call 'Runtime':'apply' (_1, __p0)

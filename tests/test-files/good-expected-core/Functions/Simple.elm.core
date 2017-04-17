@@ -1,9 +1,7 @@
-'elm_lang@core@Main@always'/0 = fun () ->
-	fun (_a, _b) ->
-		_a
-'elm_lang@core@Main@id'/0 = fun () ->
-	fun (_a) ->
-		_a
+'elm_lang@core@Main@always'/2 = fun (_a, _b) ->
+	_a
+'elm_lang@core@Main@id'/1 = fun (_a) ->
+	_a
 'elm_lang@core@Main@first'/0 = fun () ->
 	11
 'elm_lang@core@Main@second'/0 = fun () ->

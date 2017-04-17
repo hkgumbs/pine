@@ -11,43 +11,48 @@ import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Variable as Var
 import qualified AST.Expression.Optimized as Opt
+import Elm.Compiler.Module (qualifiedVar)
 
 import qualified Generate.CoreErlang.Builder as Core
 import qualified Generate.CoreErlang.BuiltIn as BuiltIn
 import qualified Generate.CoreErlang.Environment as Env
-import qualified Generate.CoreErlang.Function as Function
 import qualified Generate.CoreErlang.Literal as Literal
 import qualified Generate.CoreErlang.Substitution as Subst
 import qualified Generate.CoreErlang.Pattern as Pattern
 
 
-generate :: Module.Module (Module.Info [Opt.Def]) -> BS.Builder
-generate (Module.Module moduleName _ info) =
+generate
+  :: Module.Interfaces
+  -> Module.Module (Module.Info [Opt.Def])
+  -> BS.Builder
+generate interfaces (Module.Module moduleName _ info) =
   Core.encodeUtf8 $
-    map
-      (Env.run . generateDef (Function.topLevel moduleName))
-      (Module.program info)
+    map (Env.run interfaces . generateDef moduleName) (Module.program info)
 
 
-generateDef :: (Text -> [Text] -> Core.Expr -> a) -> Opt.Def -> Env.Gen a
-generateDef gen def =
-  case def of
-    Opt.Def _ name (Opt.Function args body) ->
-      gen name args <$> generateExpr body
+generateDef :: ModuleName.Canonical -> Opt.Def -> Env.Gen Core.Function
+generateDef moduleName def =
+  let
+    function name =
+      Core.Function (qualifiedVar moduleName name)
+  in
+    case def of
+      Opt.Def _ name (Opt.Function args body) ->
+        function name args <$> generateExpr body
 
-    Opt.Def _ name body ->
-      gen name [] <$> generateExpr body
+      Opt.Def _ name body ->
+        function name [] <$> generateExpr body
 
-    Opt.TailDef _ name args body ->
-      do  body' <-
-            generateExpr body
+      Opt.TailDef _ name args body ->
+        do  body' <-
+              generateExpr body
 
-          let letRec =
-                Core.LetRec name args body'
-                  $ Core.Apply (Core.LFunction name (length args))
-                  $ map (Core.LTerm . Core.Var) args
+            let letRec =
+                  Core.LetRec name args body'
+                    $ Core.Apply (Core.LFunction name (length args))
+                    $ map (Core.LTerm . Core.Var) args
 
-          return (gen name args letRec)
+            return $ function name args letRec
 
 
 generateExpr :: Opt.Expr -> Env.Gen Core.Expr
@@ -63,10 +68,10 @@ generateExpr opt =
       Pattern.list =<< mapM generateExpr exprs
 
     Opt.Binop var lhs rhs ->
-      Function.binop var =<< mapM generateExpr [lhs, rhs]
+      generateBinop var =<< mapM generateExpr [lhs, rhs]
 
     Opt.Function args body ->
-      Function.anonymous args <$> generateExpr body
+      Core.Fun args <$> generateExpr body
 
     Opt.Call function args ->
       generateCall function =<< mapM generateExpr args
@@ -95,14 +100,7 @@ generateExpr opt =
         foldr toCase (generateExpr finally) branches
 
     Opt.Let defs expr ->
-      let
-        toLet name args body =
-          Core.Let name (Function.anonymous args body)
-      in
-        foldr
-          (\def state -> generateDef toLet def <*> state)
-          (generateExpr expr)
-          defs
+      generateLet defs (generateExpr expr)
 
     Opt.Case switch branches ->
       do  let toCore (pattern, expr) =
@@ -191,24 +189,30 @@ generateCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
       | ModuleName.canonicalIsNative moduleName ->
-      -- call natives out-right
       generateNative moduleName name args
 
     _ ->
       do  function' <-
             generateExpr function
 
-          Function.apply function' args
+          Subst.many1 BuiltIn.apply function' args
 
 
 generateRef :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
 generateRef moduleName name =
   if ModuleName.canonicalIsNative moduleName then
-    -- since we short-circuit Call's, these are no-arg functions
     generateNative moduleName name []
 
   else
-    return $ Function.reference moduleName name
+    do  arity <-
+          Env.getArity moduleName name
+
+        let function =
+              Core.LFunction (qualifiedVar moduleName name) arity
+
+        if arity == 0
+          then return $ Core.Apply function []
+          else return $ Core.Lit function
 
 
 generateNative
@@ -218,6 +222,39 @@ generateNative
   -> Env.Gen Core.Expr
 generateNative (ModuleName.Canonical _ rawModule) name =
   Subst.many (Core.Call (Text.drop 7 rawModule) name)
+
+
+generateLet :: [Opt.Def] -> Env.Gen Core.Expr -> Env.Gen Core.Expr
+generateLet defs body =
+  foldr collectLets body defs
+
+  where
+    collectLets def state =
+      defToLet def <*> state
+
+    defToLet def =
+      case def of
+        Opt.TailDef _ name args body ->
+          Core.LetRec name args <$> generateExpr body
+
+        Opt.Def _ name (Opt.Function args body) ->
+          Core.LetRec name args <$> generateExpr body
+
+        Opt.Def _ name body ->
+          Core.Let name <$> generateExpr body
+
+
+generateBinop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr
+generateBinop (Var.Canonical home name) =
+  Subst.many (Core.Apply (Core.LFunction qualified 2))
+
+  where
+    qualified =
+      case home of
+        Var.Local -> error "Will go away when merged with upstream dev"
+        Var.Module moduleName -> qualifiedVar moduleName name
+        Var.TopLevel moduleName -> qualifiedVar moduleName name
+        Var.BuiltIn -> error "Will go away when merged with upstream dev"
 
 
 

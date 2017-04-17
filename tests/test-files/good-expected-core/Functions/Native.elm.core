@@ -1,3 +1,2 @@
-'elm_lang@core@Main@f'/0 = fun () ->
-	fun (__p0, __p1) ->
-		call 'Module':'f' (__p0, __p1)
+'elm_lang@core@Main@f'/2 = fun (__p0, __p1) ->
+	call 'Module':'f' (__p0, __p1)

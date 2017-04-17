@@ -1,8 +1,7 @@
-'elm_lang@core@Main@foo'/0 = fun () ->
-	fun (_x) ->
-		case _x of
-			<65> when 'true' ->
-				#{#<104>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']])}#
-			<_1> when 'true' ->
-				#{#<108>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<114>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<119>(8,1,'integer',['unsigned'|['big']]), #<97>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']])}#
-		end
+'elm_lang@core@Main@foo'/1 = fun (_x) ->
+	case _x of
+		<65> when 'true' ->
+			#{#<104>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<108>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']])}#
+		<_1> when 'true' ->
+			#{#<108>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<114>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<65>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<119>(8,1,'integer',['unsigned'|['big']]), #<97>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<115>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<110>(8,1,'integer',['unsigned'|['big']])}#
+	end

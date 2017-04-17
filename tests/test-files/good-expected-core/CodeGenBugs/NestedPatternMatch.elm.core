@@ -1,6 +1,5 @@
-'elm_lang@core@Main@foo'/0 = fun () ->
-	fun (__p0) ->
-		case __p0 of
-			<_r2 = _r1 = ~{'f1' := _f1}~> when 'true' ->
-				_r1
-		end
+'elm_lang@core@Main@foo'/1 = fun (__p0) ->
+	case __p0 of
+		<_r2 = _r1 = ~{'f1' := _f1}~> when 'true' ->
+			_r1
+	end

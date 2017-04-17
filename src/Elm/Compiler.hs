@@ -99,7 +99,8 @@ compile context source interfaces =
           docs <- Result.format id (docsGen isExposed modul)
 
           let interface = Module.toInterface packageName modul
-          let javascript = {-# SCC elm_compiler_generate #-} Core.generate modul
+          let allInterfaces = Map.insert (Module.name modul) interface interfaces
+          let javascript = {-# SCC elm_compiler_generate #-} Core.generate allInterfaces modul
 
           return (Result docs interface javascript)
   in

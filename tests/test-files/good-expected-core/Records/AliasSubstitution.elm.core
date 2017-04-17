@@ -1,9 +1,8 @@
-'elm_lang@core@Main@extractVec'/0 = fun () ->
-	fun (_v) ->
-		let <_2> =
-			call 'maps':'get' ('x', _v)
+'elm_lang@core@Main@extractVec'/1 = fun (_v) ->
+	let <_2> =
+		call 'maps':'get' ('x', _v)
+	in
+		let <_1> =
+			call 'maps':'get' ('y', _v)
 		in
-			let <_1> =
-				call 'maps':'get' ('y', _v)
-			in
-				~{'x' => _2, 'y' => _1}~
+			~{'x' => _2, 'y' => _1}~

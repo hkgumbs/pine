@@ -1,15 +1,14 @@
-'elm_lang@core@Main@nestedFirst'/0 = fun () ->
-	fun (__p0) ->
-		case __p0 of
-			<{'_Tuple2', _a, _b}> when 'true' ->
-				let <__p1> =
-					_a
+'elm_lang@core@Main@nestedFirst'/1 = fun (__p0) ->
+	case __p0 of
+		<{'_Tuple2', _a, _b}> when 'true' ->
+			let <__p1> =
+				_a
+			in
+				let <_c> =
+					call 'erlang':'element' (2, __p1)
 				in
-					let <_c> =
-						call 'erlang':'element' (2, __p1)
+					let <_d> =
+						call 'erlang':'element' (3, __p1)
 					in
-						let <_d> =
-							call 'erlang':'element' (3, __p1)
-						in
-							_c
-		end
+						_c
+	end

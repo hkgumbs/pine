@@ -1,24 +1,16 @@
-'elm_lang@core@Main@Cons'/0 = fun () ->
-	fun (_v1, _v2) ->
-		{'Cons', _v1, _v2}
+'elm_lang@core@Main@Cons'/2 = fun (_v1, _v2) ->
+	{'Cons', _v1, _v2}
 'elm_lang@core@Main@Nil'/0 = fun () ->
 	{'Nil'}
-'elm_lang@core@Main@zip'/0 = fun () ->
-	fun (_list1, _list2) ->
-		case {'_Tuple2', _list1, _list2} of
-			<{'_Tuple2', {'Nil'}, _1}> when 'true' ->
-				apply 'elm_lang@core@Main@Nil'/0 ()
-			<{'_Tuple2', _2, {'Nil'}}> when 'true' ->
-				apply 'elm_lang@core@Main@Nil'/0 ()
-			<{'_Tuple2', {'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
-				let <_4> =
-					apply 'elm_lang@core@Main@Cons'/0 ()
-				in
-					let <_5> =
-						let <_3> =
-							apply 'elm_lang@core@Main@zip'/0 ()
-						in
-							call 'Runtime':'apply' (_3, _xs, _ys)
-					in
-						call 'Runtime':'apply' (_4, {'_Tuple2', _x, _y}, _5)
-		end
+'elm_lang@core@Main@zip'/2 = fun (_list1, _list2) ->
+	case {'_Tuple2', _list1, _list2} of
+		<{'_Tuple2', {'Nil'}, _1}> when 'true' ->
+			apply 'elm_lang@core@Main@Nil'/0 ()
+		<{'_Tuple2', _2, {'Nil'}}> when 'true' ->
+			apply 'elm_lang@core@Main@Nil'/0 ()
+		<{'_Tuple2', {'Cons', _x, _xs}, {'Cons', _y, _ys}}> when 'true' ->
+			let <_3> =
+				call 'Runtime':'apply' ('elm_lang@core@Main@zip'/2, _xs, _ys)
+			in
+				call 'Runtime':'apply' ('elm_lang@core@Main@Cons'/2, {'_Tuple2', _x, _y}, _3)
+	end

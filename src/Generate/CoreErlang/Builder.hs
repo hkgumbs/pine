@@ -82,8 +82,8 @@ fromFunction function =
 
 
 fromFunctionName :: Text -> Int -> Builder
-fromFunctionName name airity =
-  quoted name <> "/" <> intDec airity
+fromFunctionName name arity =
+  quoted name <> "/" <> intDec arity
 
 
 fromFun :: [Text] -> Builder -> Expr -> Builder
@@ -164,8 +164,8 @@ fromLiteral literal =
     LCons first rest ->
       "[" <> fromLiteral first <> "|" <> fromLiteral rest <> "]"
 
-    LFunction name airity ->
-      fromFunctionName name airity
+    LFunction name arity ->
+      fromFunctionName name arity
 
 
 fromPattern :: Pattern -> Builder

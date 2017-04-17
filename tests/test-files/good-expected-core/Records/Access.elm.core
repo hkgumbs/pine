@@ -38,4 +38,4 @@
 		let <_1> =
 			apply 'elm_lang@core@Main@point'/0 ()
 		in
-			call 'Runtime':'apply' ('elm_lang@core@Main@apply'/2, _2, _1)
+			apply 'elm_lang@core@Main@apply'/2 (_2, _1)

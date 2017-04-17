@@ -195,7 +195,13 @@ generateCall function args =
       do  function' <-
             generateExpr function
 
-          Subst.many1 BuiltIn.apply function' args
+          case function' of
+            Core.Lit f@(Core.LFunction _ arity)
+              | arity == length args ->
+              Subst.many (Core.Apply f) args
+
+            _ ->
+              Subst.many1 BuiltIn.apply function' args
 
 
 generateRef :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr

@@ -1,0 +1,41 @@
+'elm_lang@core@Main@withLetCurried'/0 = fun () ->
+	letrec 'infiniteCountDown'/1 =
+		fun (_number) ->
+			case _number of
+				<0> when 'true' ->
+					fun (__p0) ->
+						0
+				<_1> when 'true' ->
+					fun (__p1) ->
+						call 'Runtime':'apply' ('infiniteCountDown'/1, _number, {'_Tuple0'})
+			end
+	in
+		call 'Runtime':'apply' (_infiniteCountDown, 1, {'_Tuple0'})
+'elm_lang@core@Main@withLet'/0 = fun () ->
+	letrec 'infiniteCountDown'/1 =
+		fun (_number) ->
+			case _number of
+				<0> when 'true' ->
+					0
+				<_1> when 'true' ->
+					apply 'infiniteCountDown'/1 (_number)
+			end
+	in
+		call 'Runtime':'apply' (_infiniteCountDown, 1)
+'elm_lang@core@Main@infiniteCountDown'/2 = fun (_number, _noOp) ->
+	letrec 'infiniteCountDown'/2 =
+		fun (_number, _noOp) ->
+			case _number of
+				<0> when 'true' ->
+					0
+				<1> when 'true' ->
+					let <_1> =
+						fun (__p2) ->
+							apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
+					in
+						call 'Runtime':'apply' (_1, _noOp)
+				<_2> when 'true' ->
+					apply 'infiniteCountDown'/2 (_number, _noOp)
+			end
+	in
+		apply 'infiniteCountDown'/2 (_number, _noOp)

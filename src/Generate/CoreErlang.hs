@@ -154,7 +154,7 @@ generateExpr opt =
       generateExpr expr
 
     Opt.GLShader _ _ _ ->
-      -- TODO: should likely remove this from the AST
+      -- TODO: remove this from the AST
       error
         "Shaders can't be used with the BEAM compiler!"
 
@@ -171,7 +171,10 @@ generateVar :: Var.Canonical -> Env.Gen Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
-      return $ Core.Lit (Core.LTerm (Core.Var name))
+      maybe
+        (Core.Lit (Core.LTerm (Core.Var name)))
+        (Core.Lit . Core.LFunction name)
+        <$> Env.getLocalArity name
 
     Var.Module moduleName ->
       generateRef moduleName name
@@ -211,7 +214,7 @@ generateRef moduleName name =
 
   else
     do  arity <-
-          Env.getArity moduleName name
+          Env.getGlobalArity moduleName name
 
         let function =
               Core.LFunction (qualifiedVar moduleName name) arity
@@ -241,10 +244,12 @@ generateLet defs body =
     defToLet def =
       case def of
         Opt.TailDef _ name args body ->
-          Core.LetRec name args <$> generateExpr body
+          Env.withLocalArity name (length args)
+            $ Core.LetRec name args <$> generateExpr body
 
         Opt.Def _ name (Opt.Function args body) ->
-          Core.LetRec name args <$> generateExpr body
+          Env.withLocalArity name (length args)
+            $ Core.LetRec name args <$> generateExpr body
 
         Opt.Def _ name body ->
           Core.Let name <$> generateExpr body

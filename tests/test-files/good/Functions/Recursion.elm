@@ -24,3 +24,16 @@ withLetCurried =
         _ -> \_ -> infiniteCountDown number ()
   in
     infiniteCountDown 1 ()
+
+
+mutualLets number =
+  let
+    firstCallingSecond number =
+      case number of
+        0 -> 0
+        _ -> secondCallingFirst 1
+
+    secondCallingFirst =
+      firstCallingSecond
+  in
+    secondCallingFirst 2

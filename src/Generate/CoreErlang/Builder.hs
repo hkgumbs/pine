@@ -34,8 +34,8 @@ data Expr
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
   | Let Text Expr Expr -- let <_cor0> = 23 in ...
-  | LetRec Text [Text] Expr Expr -- letrec 'foo'/0 = fun () -> ... in ...
   | Fun [Text] Expr -- fun () -> ...
+  | LetRec [Function] Expr -- letrec 'foo'/0 = fun () -> ... in ...
 
 
 data Literal
@@ -70,15 +70,15 @@ data Term
 
 encodeUtf8 :: [Function] -> Builder
 encodeUtf8 functions =
-  mconcat (map fromFunction functions)
+  mconcat (map (fromFunction "") functions)
 
 
-fromFunction :: Function -> Builder
-fromFunction function =
+fromFunction :: Builder -> Function -> Builder
+fromFunction indent function =
   case function of
     Function name args body ->
-      fromFunctionName name (length args) <> " = "
-      <> fromFun args "" body <> "\n"
+      indent <> fromFunctionName name (length args) <> " = "
+      <> fromFun args indent body <> "\n"
 
 
 fromFunctionName :: Text -> Int -> Builder
@@ -142,14 +142,13 @@ fromExpr indent expression =
       <> indent <> "in\n"
       <> deeper indent <> fromExpr (deeper indent) body
 
-    LetRec name args binding body ->
-      "letrec " <> fromFunctionName name (length args) <> " =\n"
-      <> deeper indent <> fromFun args (deeper indent) binding <> "\n"
-      <> indent <> "in\n"
-      <> deeper indent <> fromExpr (deeper indent) body
-
     Fun args body ->
       fromFun args indent body
+
+    LetRec functions context ->
+      "letrec\n" <> mconcat (map (fromFunction (deeper indent)) functions)
+      <> indent <> "in\n"
+      <> deeper indent <> fromExpr (deeper indent) context
 
 
 fromLiteral :: Literal -> Builder

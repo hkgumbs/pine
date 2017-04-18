@@ -1,9 +1,11 @@
 'elm_lang@core@Main@bindFields'/1 = fun (_thing) ->
-	let <_y> =
-		call 'maps':'get' ('y', _thing)
+	letrec
+		'y'/0 = fun () ->
+			call 'maps':'get' ('y', _thing)
 	in
-		let <_x> =
-			call 'maps':'get' ('x', _thing)
+		letrec
+			'x'/0 = fun () ->
+				call 'maps':'get' ('x', _thing)
 		in
 			_thing
 'elm_lang@core@Main@Thing'/2 = fun (_v1, _v2) ->

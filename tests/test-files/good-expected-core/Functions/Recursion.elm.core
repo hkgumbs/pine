@@ -1,6 +1,25 @@
+'elm_lang@core@Main@mutualLets'/1 = fun (_number) ->
+	letrec
+		'firstCallingSecond'/1 = fun (_number) ->
+			case _number of
+				<0> when 'true' ->
+					0
+				<_2> when 'true' ->
+					let <_3> =
+						apply 'secondCallingFirst'/0 ()
+					in
+						call 'Runtime':'apply' (_3, 1)
+			end
+		'secondCallingFirst'/0 = fun () ->
+			'firstCallingSecond'/1
+	in
+		let <_1> =
+			apply 'secondCallingFirst'/0 ()
+		in
+			call 'Runtime':'apply' (_1, 2)
 'elm_lang@core@Main@withLetCurried'/0 = fun () ->
-	letrec 'infiniteCountDown'/1 =
-		fun (_number) ->
+	letrec
+		'infiniteCountDown'/1 = fun (_number) ->
 			case _number of
 				<0> when 'true' ->
 					fun (__p0) ->
@@ -10,32 +29,28 @@
 						call 'Runtime':'apply' ('infiniteCountDown'/1, _number, {'_Tuple0'})
 			end
 	in
-		call 'Runtime':'apply' (_infiniteCountDown, 1, {'_Tuple0'})
+		call 'Runtime':'apply' ('infiniteCountDown'/1, 1, {'_Tuple0'})
 'elm_lang@core@Main@withLet'/0 = fun () ->
-	letrec 'infiniteCountDown'/1 =
-		fun (_number) ->
+	letrec
+		'infiniteCountDown'/1 = fun (_number) ->
 			case _number of
 				<0> when 'true' ->
 					0
 				<_1> when 'true' ->
-					apply 'infiniteCountDown'/1 (_number)
+					apply 'elm_lang@core@Main@infiniteCountDown'/1 (_number)
 			end
 	in
-		call 'Runtime':'apply' (_infiniteCountDown, 1)
+		apply 'infiniteCountDown'/1 (1)
 'elm_lang@core@Main@infiniteCountDown'/2 = fun (_number, _noOp) ->
-	letrec 'infiniteCountDown'/2 =
-		fun (_number, _noOp) ->
-			case _number of
-				<0> when 'true' ->
-					0
-				<1> when 'true' ->
-					let <_1> =
-						fun (__p2) ->
-							apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
-					in
-						call 'Runtime':'apply' (_1, _noOp)
-				<_2> when 'true' ->
-					apply 'infiniteCountDown'/2 (_number, _noOp)
-			end
-	in
-		apply 'infiniteCountDown'/2 (_number, _noOp)
+	case _number of
+		<0> when 'true' ->
+			0
+		<1> when 'true' ->
+			let <_1> =
+				fun (__p2) ->
+					apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
+			in
+				call 'Runtime':'apply' (_1, _noOp)
+		<_2> when 'true' ->
+			apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
+	end

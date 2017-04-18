@@ -26,33 +26,26 @@ generate
   -> Module.Module (Module.Info [Opt.Def])
   -> BS.Builder
 generate interfaces (Module.Module moduleName _ info) =
-  Core.encodeUtf8 $
-    map (Env.run interfaces . generateDef moduleName) (Module.program info)
-
-
-generateDef :: ModuleName.Canonical -> Opt.Def -> Env.Gen Core.Function
-generateDef moduleName def =
   let
-    function name =
-      Core.Function (qualifiedVar moduleName name)
+    topLevel name args body =
+      Core.Function (qualifiedVar moduleName name) args <$> generateExpr body
   in
+    Core.encodeUtf8 $ map
+      (Env.run moduleName interfaces . generateDef topLevel)
+      (Module.program info)
+
+
+generateDef :: (Text -> [Text] -> Opt.Expr -> a) -> Opt.Def -> a
+generateDef gen def =
     case def of
       Opt.Def _ name (Opt.Function args body) ->
-        function name args <$> generateExpr body
+        gen name args body
 
       Opt.Def _ name body ->
-        function name [] <$> generateExpr body
+        gen name [] body
 
       Opt.TailDef _ name args body ->
-        do  body' <-
-              generateExpr body
-
-            let letRec =
-                  Core.LetRec name args body'
-                    $ Core.Apply (Core.LFunction name (length args))
-                    $ map (Core.LTerm . Core.Var) args
-
-            return $ function name args letRec
+        gen name args body
 
 
 generateExpr :: Opt.Expr -> Env.Gen Core.Expr
@@ -77,11 +70,13 @@ generateExpr opt =
       generateCall function =<< mapM generateExpr args
 
     Opt.TailCall name _ args ->
-      let
-        function =
-          Core.LFunction name (length args)
-      in
-        Subst.many (Core.Apply function) =<< mapM generateExpr args
+      do  moduleName <-
+            Env.getModuleName
+
+          let function =
+                Core.LFunction (qualifiedVar moduleName name) (length args)
+
+          Subst.many (Core.Apply function) =<< mapM generateExpr args
 
     Opt.If branches finally ->
       let
@@ -100,7 +95,7 @@ generateExpr opt =
         foldr toCase (generateExpr finally) branches
 
     Opt.Let defs expr ->
-      generateLet defs (generateExpr expr)
+      generateLet defs expr
 
     Opt.Case switch branches ->
       do  let toCore (pattern, expr) =
@@ -171,10 +166,13 @@ generateVar :: Var.Canonical -> Env.Gen Core.Expr
 generateVar (Var.Canonical home name) =
   case home of
     Var.Local ->
-      maybe
-        (Core.Lit (Core.LTerm (Core.Var name)))
-        (Core.Lit . Core.LFunction name)
-        <$> Env.getLocalArity name
+      do  arity <-
+            Env.getLocalArity name
+
+          return $ maybe
+            (Core.Lit (Core.LTerm (Core.Var name)))
+            (generateFunction name)
+            arity
 
     Var.Module moduleName ->
       generateRef moduleName name
@@ -216,12 +214,16 @@ generateRef moduleName name =
     do  arity <-
           Env.getGlobalArity moduleName name
 
-        let function =
-              Core.LFunction (qualifiedVar moduleName name) arity
+        return $ generateFunction (qualifiedVar moduleName name) arity
 
-        if arity == 0
-          then return $ Core.Apply function []
-          else return $ Core.Lit function
+
+generateFunction :: Text -> Int -> Core.Expr
+generateFunction name arity =
+  if arity == 0 then
+    Core.Apply (Core.LFunction name arity) []
+
+  else
+    Core.Lit (Core.LFunction name arity)
 
 
 generateNative
@@ -233,26 +235,20 @@ generateNative (ModuleName.Canonical _ rawModule) name =
   Subst.many (Core.Call (Text.drop 7 rawModule) name)
 
 
-generateLet :: [Opt.Def] -> Env.Gen Core.Expr -> Env.Gen Core.Expr
-generateLet defs body =
-  foldr collectLets body defs
+generateLet :: [Opt.Def] -> Opt.Expr -> Env.Gen Core.Expr
+generateLet defs expr =
+  do  let pieces = map (generateDef (,,)) defs
+      mapM_ putArity pieces
+      context <- generateExpr expr
+      functions <- mapM pieceToFunction pieces
+      return $ Core.LetRec functions context
 
   where
-    collectLets def state =
-      defToLet def <*> state
+    putArity (name, args, _) =
+      Env.putLocalArity name (length args)
 
-    defToLet def =
-      case def of
-        Opt.TailDef _ name args body ->
-          Env.withLocalArity name (length args)
-            $ Core.LetRec name args <$> generateExpr body
-
-        Opt.Def _ name (Opt.Function args body) ->
-          Env.withLocalArity name (length args)
-            $ Core.LetRec name args <$> generateExpr body
-
-        Opt.Def _ name body ->
-          Core.Let name <$> generateExpr body
+    pieceToFunction (name, args, body) =
+      Core.Function name args <$> generateExpr body
 
 
 generateBinop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr

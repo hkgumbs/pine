@@ -1,6 +1,7 @@
 module Generate.CoreErlang.Environment
   ( Gen, run
-  , getGlobalArity, getLocalArity, withLocalArity
+  , getModuleName
+  , getGlobalArity, getLocalArity, putLocalArity
   , freshName
   ) where
 
@@ -21,14 +22,20 @@ type Gen a
 
 data Env = Env
   { _uid :: Int
+  , _moduleName :: ModuleName.Canonical
   , _interfaces :: Module.Interfaces
   , _locals :: Map.Map Text.Text Int
   }
 
 
-run :: Module.Interfaces -> Gen a -> a
-run interfaces state =
-  State.evalState state (Env 1 interfaces Map.empty)
+run :: ModuleName.Canonical -> Module.Interfaces -> Gen a -> a
+run moduleName interfaces state =
+  State.evalState state (Env 1 moduleName interfaces Map.empty)
+
+
+getModuleName :: Gen ModuleName.Canonical
+getModuleName =
+  _moduleName <$> State.get
 
 
 getGlobalArity :: ModuleName.Canonical -> Text.Text -> Gen Int
@@ -50,17 +57,15 @@ getLocalArity name =
       return (Map.lookup name locals)
 
 
-withLocalArity :: Text.Text -> Int -> Gen a -> Gen a
-withLocalArity name arity use =
-  do  (Env uid context locals) <- State.get
-      State.put (Env uid context (Map.insert name arity locals))
-      result <- use
-      State.put (Env uid context locals)
-      return result
+putLocalArity :: Text.Text -> Int -> Gen ()
+putLocalArity name arity =
+  do  (Env uid moduleName context locals) <- State.get
+      State.put (Env uid moduleName context (Map.insert name arity locals))
+      return ()
 
 
 freshName :: Gen Text.Text
 freshName =
-  do  (Env uid context locals) <- State.get
-      State.put (Env (uid + 1) context locals)
+  do  (Env uid moduleName context locals) <- State.get
+      State.put (Env (uid + 1) moduleName context locals)
       return (Text.pack (show uid))

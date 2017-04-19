@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang.Pattern
   ( match
+  , names
   , ctor, ctorAccess, list
   ) where
 
@@ -56,6 +57,28 @@ match (A _ pattern) =
 
     Pattern.Literal lit ->
       return $ Core.PTerm (Literal.term lit)
+
+
+names :: Pattern.Canonical -> [Text]
+names (A _ pattern) =
+  case pattern of
+    Pattern.Ctor _ args ->
+      concatMap names args
+
+    Pattern.Record fields ->
+      fields
+
+    Pattern.Alias name aliased ->
+      name : names aliased
+
+    Pattern.Var name ->
+      [name]
+
+    Pattern.Anything ->
+      []
+
+    Pattern.Literal _ ->
+      []
 
 
 

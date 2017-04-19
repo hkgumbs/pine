@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang (generate) where
 
-import Control.Monad (liftM2)
-
 import qualified Data.ByteString.Builder as BS
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -27,8 +25,8 @@ generate
   -> BS.Builder
 generate interfaces (Module.Module moduleName _ info) =
   let
-    topLevel name args body =
-      Core.Function (qualifiedVar moduleName name) args <$> generateExpr body
+    topLevel =
+      generateFunction . qualifiedVar moduleName
   in
     Core.encodeUtf8 $ map
       (Env.run moduleName interfaces . generateDef topLevel)
@@ -64,7 +62,8 @@ generateExpr opt =
       generateBinop var =<< mapM generateExpr [lhs, rhs]
 
     Opt.Function args body ->
-      Core.Fun args <$> generateExpr body
+      Env.withLocalScope (generateLocals args) $
+        Core.Fun args <$> generateExpr body
 
     Opt.Call function args ->
       generateCall function =<< mapM generateExpr args
@@ -98,13 +97,20 @@ generateExpr opt =
       generateLet defs expr
 
     Opt.Case switch branches ->
-      do  let toCore (pattern, expr) =
-                liftM2 (,) (Pattern.match pattern) (generateExpr expr)
+      let
+        toCore (pattern, expr) =
+          do  p <- Pattern.match pattern
+              e <- generateExpr expr
+              return (p, e)
 
-          branches' <-
-            mapM toCore branches
+        toLocals =
+          generateLocals . concatMap (Pattern.names . fst)
+      in
+        Env.withLocalScope (toLocals branches) $
+          do  branches' <-
+                mapM toCore branches
 
-          Subst.one (flip Core.Case branches') =<< generateExpr switch
+              Subst.one (flip Core.Case branches') =<< generateExpr switch
 
     Opt.Ctor name exprs ->
       Pattern.ctor name =<< mapM generateExpr exprs
@@ -149,9 +155,8 @@ generateExpr opt =
       generateExpr expr
 
     Opt.GLShader _ _ _ ->
-      -- TODO: remove this from the AST
       error
-        "Shaders can't be used with the BEAM compiler!"
+        "TODO: remove shaders from AST"
 
     Opt.Crash _moduleName _region _maybeExpr ->
       error
@@ -171,18 +176,24 @@ generateVar (Var.Canonical home name) =
 
           return $ maybe
             (Core.Lit (Core.LTerm (Core.Var name)))
-            (generateFunction name)
+            (generateRef name)
             arity
 
     Var.Module moduleName ->
-      generateRef moduleName name
+      generateGlobal moduleName name
 
     Var.TopLevel moduleName ->
-      generateRef moduleName name
+      generateGlobal moduleName name
 
     Var.BuiltIn ->
       error
         "Will go away when merged with upstream dev."
+
+
+generateFunction :: Text -> [Text] -> Opt.Expr -> Env.Gen Core.Function
+generateFunction name args body =
+  Env.withLocalScope (generateLocals args) $
+    Core.Function name args <$> generateExpr body
 
 
 generateCall :: Opt.Expr -> [Core.Expr] -> Env.Gen Core.Expr
@@ -205,8 +216,8 @@ generateCall function args =
               Subst.many1 BuiltIn.apply function' args
 
 
-generateRef :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
-generateRef moduleName name =
+generateGlobal :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
+generateGlobal moduleName name =
   if ModuleName.canonicalIsNative moduleName then
     generateNative moduleName name []
 
@@ -214,11 +225,11 @@ generateRef moduleName name =
     do  arity <-
           Env.getGlobalArity moduleName name
 
-        return $ generateFunction (qualifiedVar moduleName name) arity
+        return $ generateRef (qualifiedVar moduleName name) arity
 
 
-generateFunction :: Text -> Int -> Core.Expr
-generateFunction name arity =
+generateRef :: Text -> Int -> Core.Expr
+generateRef name arity =
   if arity == 0 then
     Core.Apply (Core.LFunction name arity) []
 
@@ -237,18 +248,18 @@ generateNative (ModuleName.Canonical _ rawModule) name =
 
 generateLet :: [Opt.Def] -> Opt.Expr -> Env.Gen Core.Expr
 generateLet defs expr =
-  do  let pieces = map (generateDef (,,)) defs
-      mapM_ putArity pieces
-      context <- generateExpr expr
-      functions <- mapM pieceToFunction pieces
-      return $ Core.LetRec functions context
+  let
+    toLocal name args _ =
+      (name, Env.Arity (length args))
+  in
+    Env.withLocalScope (map (generateDef toLocal) defs) $
+      do  context <-
+            generateExpr expr
 
-  where
-    putArity (name, args, _) =
-      Env.putLocalArity name (length args)
+          functions <-
+            mapM (generateDef generateFunction) defs
 
-    pieceToFunction (name, args, body) =
-      Core.Function name args <$> generateExpr body
+          return $ Core.LetRec functions context
 
 
 generateBinop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr
@@ -262,6 +273,11 @@ generateBinop (Var.Canonical home name) =
         Var.Module moduleName -> qualifiedVar moduleName name
         Var.TopLevel moduleName -> qualifiedVar moduleName name
         Var.BuiltIn -> error "Will go away when merged with upstream dev"
+
+
+generateLocals :: [Text] -> [(Text, Env.Local)]
+generateLocals =
+  map (\name -> (name, Env.Var))
 
 
 

@@ -1,56 +1,18 @@
-'elm_lang@core@Main@mutualLets'/1 = fun (_number) ->
+'elm_lang@core@Main@count'/2 = fun (_n, _x) ->
 	letrec
-		'firstCallingSecond'/1 = fun (_number) ->
-			case _number of
-				<0> when 'true' ->
-					0
-				<_2> when 'true' ->
-					let <_3> =
-						apply 'secondCallingFirst'/0 ()
-					in
-						call 'Runtime':'apply' (_3, 1)
-			end
-		'secondCallingFirst'/0 = fun () ->
-			'firstCallingSecond'/1
+		'recursive'/1 = fun (_shadow) ->
+			call 'Runtime':'apply' ('elm_lang@core@Main@count'/2, _shadow)
 	in
-		let <_1> =
-			apply 'secondCallingFirst'/0 ()
+		letrec
+			'shadow'/0 = fun () ->
+				apply 'recursive'/1 (0)
 		in
-			call 'Runtime':'apply' (_1, 2)
-'elm_lang@core@Main@withLetCurried'/0 = fun () ->
-	letrec
-		'infiniteCountDown'/1 = fun (_number) ->
-			case _number of
+			case _n of
 				<0> when 'true' ->
-					fun (__p0) ->
-						0
-				<_1> when 'true' ->
-					fun (__p1) ->
-						call 'Runtime':'apply' ('infiniteCountDown'/1, _number, {'_Tuple0'})
+					let <_1> =
+						apply 'shadow'/0 ()
+					in
+						call 'Runtime':'apply' (_1, _x)
+				<_2> when 'true' ->
+					apply 'elm_lang@core@Main@count'/2 (_n, _x)
 			end
-	in
-		call 'Runtime':'apply' ('infiniteCountDown'/1, 1, {'_Tuple0'})
-'elm_lang@core@Main@withLet'/0 = fun () ->
-	letrec
-		'infiniteCountDown'/1 = fun (_number) ->
-			case _number of
-				<0> when 'true' ->
-					0
-				<_1> when 'true' ->
-					apply 'elm_lang@core@Main@infiniteCountDown'/1 (_number)
-			end
-	in
-		apply 'infiniteCountDown'/1 (1)
-'elm_lang@core@Main@infiniteCountDown'/2 = fun (_number, _noOp) ->
-	case _number of
-		<0> when 'true' ->
-			0
-		<1> when 'true' ->
-			let <_1> =
-				fun (__p2) ->
-					apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
-			in
-				call 'Runtime':'apply' (_1, _noOp)
-		<_2> when 'true' ->
-			apply 'elm_lang@core@Main@infiniteCountDown'/2 (_number, _noOp)
-	end

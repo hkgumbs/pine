@@ -10,10 +10,10 @@
 					in
 						call 'erlang':'element' (2, _1)
 				'd'/0 = fun () ->
-					let <_2> =
+					let <_1> =
 						apply '_p1'/0 ()
 					in
-						call 'erlang':'element' (3, _2)
+						call 'erlang':'element' (3, _1)
 			in
 				apply 'c'/0 ()
 	end

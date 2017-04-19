@@ -1,7 +1,8 @@
 module Generate.CoreErlang.Environment
   ( Gen, run
   , getModuleName
-  , getGlobalArity, getLocalArity, putLocalArity
+  , getGlobalArity
+  , Local(..), getLocalArity, withLocalScope
   , freshName
   ) where
 
@@ -13,8 +14,7 @@ import Data.Map ((!))
 
 import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
-import qualified AST.Type as Type
-
+import qualified AST.Type as Type 
 
 type Gen a
   = State.State Env a
@@ -24,7 +24,7 @@ data Env = Env
   { _uid :: Int
   , _moduleName :: ModuleName.Canonical
   , _interfaces :: Module.Interfaces
-  , _locals :: Map.Map Text.Text Int
+  , _locals :: Map.Map Text.Text Local
   }
 
 
@@ -35,13 +35,13 @@ run moduleName interfaces state =
 
 getModuleName :: Gen ModuleName.Canonical
 getModuleName =
-  _moduleName <$> State.get
+  State.gets _moduleName
 
 
 getGlobalArity :: ModuleName.Canonical -> Text.Text -> Gen Int
 getGlobalArity moduleName name =
   do  interfaces <-
-        _interfaces <$> State.get
+        State.gets _interfaces
 
       let tipe =
             Module.iTypes (interfaces ! moduleName) ! name
@@ -49,23 +49,49 @@ getGlobalArity moduleName name =
       return (Type.arity tipe)
 
 
+
+-- SCOPING RULES
+
+
+data Local
+  = Var
+  | Arity Int
+
+
 getLocalArity :: Text.Text -> Gen (Maybe Int)
 getLocalArity name =
   do  locals <-
-        _locals <$> State.get
+        State.gets _locals
 
-      return (Map.lookup name locals)
+      case locals ! name of
+        Var ->
+          return Nothing
+
+        Arity i ->
+          return (Just i)
 
 
-putLocalArity :: Text.Text -> Int -> Gen ()
-putLocalArity name arity =
-  do  (Env uid moduleName context locals) <- State.get
-      State.put (Env uid moduleName context (Map.insert name arity locals))
-      return ()
+withLocalScope :: [(Text.Text, Local)] -> Gen a -> Gen a
+withLocalScope locals use =
+  do  old <-
+        State.get
+
+      State.put $ old
+        { _locals = Map.union (Map.fromList locals) (_locals old)
+        }
+
+      result <-
+        use
+
+      State.put old >> return result
 
 
 freshName :: Gen Text.Text
 freshName =
-  do  (Env uid moduleName context locals) <- State.get
-      State.put (Env (uid + 1) moduleName context locals)
-      return (Text.pack (show uid))
+  do  uid <-
+        State.gets _uid
+
+      State.modify $ \env ->
+        env { _uid = uid + 1 }
+
+      return $ Text.pack (show uid)

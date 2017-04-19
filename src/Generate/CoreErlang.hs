@@ -62,7 +62,7 @@ generateExpr opt =
       generateBinop var =<< mapM generateExpr [lhs, rhs]
 
     Opt.Function args body ->
-      Env.withLocalScope (generateLocals args) $
+      Env.withLocals (generateLocals args) $
         Core.Fun args <$> generateExpr body
 
     Opt.Call function args ->
@@ -106,7 +106,7 @@ generateExpr opt =
         toLocals =
           generateLocals . concatMap (Pattern.names . fst)
       in
-        Env.withLocalScope (toLocals branches) $
+        Env.withLocals (toLocals branches) $
           do  branches' <-
                 mapM toCore branches
 
@@ -192,7 +192,7 @@ generateVar (Var.Canonical home name) =
 
 generateFunction :: Text -> [Text] -> Opt.Expr -> Env.Gen Core.Function
 generateFunction name args body =
-  Env.withLocalScope (generateLocals args) $
+  Env.withLocals (generateLocals args) $
     Core.Function name args <$> generateExpr body
 
 
@@ -250,9 +250,9 @@ generateLet :: [Opt.Def] -> Opt.Expr -> Env.Gen Core.Expr
 generateLet defs expr =
   let
     toLocal name args _ =
-      (name, Env.Arity (length args))
+      (name, Just (length args))
   in
-    Env.withLocalScope (map (generateDef toLocal) defs) $
+    Env.withLocals (map (generateDef toLocal) defs) $
       do  context <-
             generateExpr expr
 
@@ -275,9 +275,9 @@ generateBinop (Var.Canonical home name) =
         Var.BuiltIn -> error "Will go away when merged with upstream dev"
 
 
-generateLocals :: [Text] -> [(Text, Env.Local)]
+generateLocals :: [Text] -> [(Text, Maybe Int)]
 generateLocals =
-  map (\name -> (name, Env.Var))
+  map (\name -> (name, Nothing))
 
 
 

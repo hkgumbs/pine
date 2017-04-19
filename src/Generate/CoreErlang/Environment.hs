@@ -2,7 +2,7 @@ module Generate.CoreErlang.Environment
   ( Gen, run
   , getModuleName
   , getGlobalArity
-  , Local(..), getLocalArity, withLocalScope
+  , getLocalArity, withLocals
   , freshName
   ) where
 
@@ -24,7 +24,7 @@ data Env = Env
   { _uid :: Int
   , _moduleName :: ModuleName.Canonical
   , _interfaces :: Module.Interfaces
-  , _locals :: Map.Map Text.Text Local
+  , _locals :: Map.Map Text.Text Arity
   }
 
 
@@ -52,27 +52,21 @@ getGlobalArity moduleName name =
 
 -- SCOPING RULES
 
+{-| The Core Erlang AST technically has two types of variables:
+    those with explicit arities (aka functions) and those without.
+-}
 
-data Local
-  = Var
-  | Arity Int
+
+type Arity = Maybe Int
 
 
-getLocalArity :: Text.Text -> Gen (Maybe Int)
+getLocalArity :: Text.Text -> Gen Arity
 getLocalArity name =
-  do  locals <-
-        State.gets _locals
-
-      case locals ! name of
-        Var ->
-          return Nothing
-
-        Arity i ->
-          return (Just i)
+  (! name) <$> State.gets _locals
 
 
-withLocalScope :: [(Text.Text, Local)] -> Gen a -> Gen a
-withLocalScope locals use =
+withLocals :: [(Text.Text, Arity)] -> Gen a -> Gen a
+withLocals locals use =
   do  old <-
         State.get
 

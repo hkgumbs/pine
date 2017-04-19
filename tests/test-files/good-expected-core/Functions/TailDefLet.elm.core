@@ -1,0 +1,13 @@
+'elm_lang@core@Main@count'/1 = fun (_x) ->
+	letrec
+		'help'/1 = fun (_n) ->
+			case _n of
+				<0> when 'true' ->
+					0
+				<_1> when 'true' ->
+					apply 'help'/1 (_n)
+			end
+	in
+		apply 'help'/1 (_x)
+'elm_lang@core@Main@help'/0 = fun () ->
+	#{#<110>(8,1,'integer',['unsigned'|['big']]), #<111>(8,1,'integer',['unsigned'|['big']]), #<116>(8,1,'integer',['unsigned'|['big']]), #<32>(8,1,'integer',['unsigned'|['big']]), #<109>(8,1,'integer',['unsigned'|['big']]), #<101>(8,1,'integer',['unsigned'|['big']]), #<33>(8,1,'integer',['unsigned'|['big']])}#

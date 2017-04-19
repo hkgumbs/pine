@@ -1,8 +1,8 @@
 module Generate.CoreErlang.Environment
   ( Gen, run
-  , getModuleName
   , getGlobalArity
   , getLocalArity, withLocals
+  , findNearest
   , freshName
   ) where
 
@@ -31,11 +31,6 @@ data Env = Env
 run :: ModuleName.Canonical -> Module.Interfaces -> Gen a -> a
 run moduleName interfaces state =
   State.evalState state (Env 1 moduleName interfaces Map.empty)
-
-
-getModuleName :: Gen ModuleName.Canonical
-getModuleName =
-  State.gets _moduleName
 
 
 getGlobalArity :: ModuleName.Canonical -> Text.Text -> Gen Int
@@ -78,6 +73,18 @@ withLocals locals use =
         use
 
       State.put old >> return result
+
+
+{-| Is the nearest variable with that name a global? -}
+
+findNearest :: Text.Text -> Gen (Maybe ModuleName.Canonical)
+findNearest name =
+  do  locals <-
+        State.gets _locals
+
+      if Map.member name locals
+        then return Nothing
+        else State.gets (Just . _moduleName)
 
 
 freshName :: Gen Text.Text

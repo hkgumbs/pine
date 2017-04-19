@@ -69,13 +69,13 @@ generateExpr opt =
       generateCall function =<< mapM generateExpr args
 
     Opt.TailCall name _ args ->
-      do  moduleName <-
-            Env.getModuleName
+      do  qualified <-
+            maybe name (flip qualifiedVar name) <$> Env.findNearest name
 
-          let function =
-                Core.LFunction (qualifiedVar moduleName name) (length args)
+          let apply =
+                Core.Apply (Core.LFunction qualified (length args))
 
-          Subst.many (Core.Apply function) =<< mapM generateExpr args
+          Subst.many apply =<< mapM generateExpr args
 
     Opt.If branches finally ->
       let

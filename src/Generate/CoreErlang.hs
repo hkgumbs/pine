@@ -122,19 +122,16 @@ generateExpr opt =
       Subst.one (BuiltIn.get field) =<< generateExpr record
 
     Opt.Update record fields ->
-      do  let zipper m entries =
-                Core.Update (zip (generateKeys fields) entries) m
-
-          record' <-
+      do  old <-
             generateExpr record
 
-          Subst.many1 zipper record' =<< mapM (generateExpr . snd) fields
+          new <-
+            generateRecord fields
+
+          Subst.many BuiltIn.update [new, old]
 
     Opt.Record fields ->
-      do  values <-
-            mapM (generateExpr . snd) fields
-
-          Subst.many (Core.Map . zip (generateKeys fields)) values
+      generateRecord fields
 
     Opt.Cmd moduleName ->
       return $ BuiltIn.effect moduleName
@@ -284,6 +281,12 @@ generateLocals =
 -- RECORDS
 
 
-generateKeys :: [(Text, a)] -> [Core.Literal]
-generateKeys =
-  map (Core.LTerm . Core.Atom . fst)
+generateRecord :: [(Text, Opt.Expr)] -> Env.Gen Core.Expr
+generateRecord fields =
+  do  let keys =
+            map (Core.LTerm . Core.Atom . fst) fields
+
+      values <-
+        mapM (generateExpr . snd) fields
+
+      Subst.many (Core.Map . zip keys) values

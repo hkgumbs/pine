@@ -29,7 +29,6 @@ data Function
 data Expr
   = Lit Literal
   | Map [(Literal, Literal)] -- ~{ 'a' => 1 }~
-  | Update [(Literal, Literal)] Literal -- ~{ 'a' := 1 | _map }~
   | Apply Literal [Literal] -- apply _f ()
   | Call Text Text [Literal] -- call 'module':'f' ()
   | Case Literal [(Pattern, Expr)] -- case <_cor0> of ...
@@ -108,13 +107,6 @@ fromExpr indent expression =
           fromLiteral key <> " => " <> fromLiteral value
       in
         "~{" <> commaSep fromPair pairs <> "}~"
-
-    Update pairs var ->
-      let
-        fromPair (key, value) =
-          fromLiteral key <> " := " <> fromLiteral value
-      in
-        "~{" <> commaSep fromPair pairs <> " | " <> fromLiteral var <> "}~"
 
     Apply name args ->
       "apply " <> fromLiteral name

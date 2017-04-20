@@ -1,2 +1,5 @@
 'elm_lang@core@Main@udpate'/1 = fun (_r) ->
-	~{'one' := 1, 'two' := 50 | _r}~
+	let <_1> =
+		~{'one' => 1, 'two' => 50}~
+	in
+		call 'maps':'merge' (_1, _r)

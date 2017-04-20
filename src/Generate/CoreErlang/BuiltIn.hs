@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generate.CoreErlang.BuiltIn
-  ( get, element, effect, apply
+  ( get, update, element, effect, apply
   ) where
 
 import Data.Text as Text
@@ -15,6 +15,11 @@ import Generate.CoreErlang.Builder as Core
 get :: Text.Text -> Core.Literal -> Core.Expr
 get key coreMap =
   Core.Call "maps" "get" [Core.LTerm (Core.Atom key), coreMap]
+
+
+update :: [Core.Literal] -> Core.Expr
+update =
+  Core.Call "maps" "merge"
 
 
 element :: Int -> Core.Literal -> Core.Expr

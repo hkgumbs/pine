@@ -1,7 +1,7 @@
 module Pipeline.Compile where
 
 import Control.Concurrent (forkIO)
-import System.IO (openFile, IOMode(WriteMode))
+import System.IO (withFile, IOMode(WriteMode))
 import qualified Control.Concurrent.Chan as Chan
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -159,8 +159,7 @@ buildManager env state =
             do  -- Write build artifacts to disk
                 let cache = cachePath env
                 File.writeBinary (Path.toInterface cache modul) interface
-                objectFileHandle <- openFile (Path.toObjectFile cache modul) WriteMode
-                BS.hPutBuilder objectFileHandle js
+                withFile (Path.toObjectFile cache modul) WriteMode (flip BS.hPutBuilder js)
 
                 -- Report results to user
                 Chan.writeChan (reportChan env) (Report.Complete modul localizer path source warnings)

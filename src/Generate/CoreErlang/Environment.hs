@@ -16,15 +16,16 @@ import qualified AST.Module as Module
 import qualified AST.Module.Name as ModuleName
 import qualified AST.Type as Type 
 
+
 type Gen a
   = State.State Env a
 
 
 data Env = Env
-  { _uid :: Int
-  , _moduleName :: ModuleName.Canonical
-  , _interfaces :: Module.Interfaces
-  , _locals :: Map.Map Text.Text Arity
+  { uid :: Int
+  , moduleName :: ModuleName.Canonical
+  , interfaces :: Module.Interfaces
+  , locals :: Map.Map Text.Text Arity
   }
 
 
@@ -35,11 +36,11 @@ run moduleName interfaces state =
 
 getGlobalArity :: ModuleName.Canonical -> Text.Text -> Gen Int
 getGlobalArity moduleName name =
-  do  interfaces <-
-        State.gets _interfaces
+  do  globals <-
+        State.gets interfaces
 
       let tipe =
-            Module.iTypes (interfaces ! moduleName) ! name
+            Module.iTypes (globals ! moduleName) ! name
 
       return (Type.arity tipe)
 
@@ -57,16 +58,16 @@ type Arity = Maybe Int
 
 getLocalArity :: Text.Text -> Gen Arity
 getLocalArity name =
-  (! name) <$> State.gets _locals
+  (! name) <$> State.gets locals
 
 
 withLocals :: [(Text.Text, Arity)] -> Gen a -> Gen a
-withLocals locals use =
+withLocals new use =
   do  old <-
         State.get
 
       State.put $ old
-        { _locals = Map.union (Map.fromList locals) (_locals old)
+        { locals = Map.union (Map.fromList new) (locals old)
         }
 
       result <-
@@ -79,20 +80,24 @@ withLocals locals use =
 
 findNearest :: Text.Text -> Gen (Maybe ModuleName.Canonical)
 findNearest name =
-  do  locals <-
-        State.gets _locals
+  do  inScope <-
+        State.gets locals
 
-      if Map.member name locals
+      if Map.member name inScope
         then return Nothing
-        else State.gets (Just . _moduleName)
+        else State.gets (Just . moduleName)
+
+
+
+-- VARIABLES
 
 
 freshName :: Gen Text.Text
 freshName =
-  do  uid <-
-        State.gets _uid
+  do  old <-
+        State.gets uid
 
       State.modify $ \env ->
-        env { _uid = uid + 1 }
+        env { uid = old + 1 }
 
-      return $ Text.pack (show uid)
+      return $ Text.pack (show old)

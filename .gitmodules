@@ -2,3 +2,7 @@
 	path = cli
 	url = https://github.com/hkgumbs/elm-beam.git
 	branch = cli
+[submodule "stdlib"]
+	path = stdlib
+	url = https://github.com/hkgumbs/elm-beam.git
+	branch = stdlib

@@ -26,15 +26,15 @@ generate
 generate interfaces (Module.Module moduleName _ info) =
   let
     topLevel =
-      generateFunction . qualifiedVar moduleName
+      genFunction . qualifiedVar moduleName
   in
     Core.encodeUtf8 $ map
-      (Env.run moduleName interfaces . generateDef topLevel)
+      (Env.run moduleName interfaces . genDef topLevel)
       (Module.program info)
 
 
-generateDef :: (Text -> [Text] -> Opt.Expr -> a) -> Opt.Def -> a
-generateDef gen def =
+genDef :: (Text -> [Text] -> Opt.Expr -> a) -> Opt.Def -> a
+genDef gen def =
     case def of
       Opt.Def _ name (Opt.Function args body) ->
         gen name args body
@@ -46,27 +46,27 @@ generateDef gen def =
         gen name args body
 
 
-generateExpr :: Opt.Expr -> Env.Gen Core.Expr
-generateExpr opt =
+genExpr :: Opt.Expr -> Env.Gen Core.Expr
+genExpr opt =
   case opt of
     Opt.Literal lit ->
       return $ Core.Lit (Core.LTerm (Literal.term lit))
 
     Opt.Var var ->
-      generateVar var
+      genVar var
 
     Opt.List exprs ->
-      Pattern.list =<< mapM generateExpr exprs
+      Pattern.list =<< mapM genExpr exprs
 
     Opt.Binop var lhs rhs ->
-      generateBinop var =<< mapM generateExpr [lhs, rhs]
+      genBinop var =<< mapM genExpr [lhs, rhs]
 
     Opt.Function args body ->
-      Env.withLocals (generateLocals args) $
-        Core.Fun args <$> generateExpr body
+      Env.withLocals (genLocals args) $
+        Core.Fun args <$> genExpr body
 
     Opt.Call function args ->
-      generateCall function =<< mapM generateExpr args
+      genCall function =<< mapM genExpr args
 
     Opt.TailCall name _ args ->
       do  qualified <-
@@ -75,7 +75,7 @@ generateExpr opt =
           let apply =
                 Core.Apply (Core.LFunction qualified (length args))
 
-          Subst.many apply =<< mapM generateExpr args
+          Subst.many apply =<< mapM genExpr args
 
     Opt.If branches finally ->
       let
@@ -85,53 +85,57 @@ generateExpr opt =
         toCase (condition, ifTrue) ifFalse =
           do  checks <-
                 sequence
-                  [ toBranch "true" <$> generateExpr ifTrue
+                  [ toBranch "true" <$> genExpr ifTrue
                   , toBranch "false" <$> ifFalse
                   ]
 
-              Subst.one (flip Core.Case checks) =<< generateExpr condition
+              Subst.one (flip Core.Case checks) =<< genExpr condition
       in
-        foldr toCase (generateExpr finally) branches
+        foldr toCase (genExpr finally) branches
 
     Opt.Let defs expr ->
-      generateLet defs expr
+      genLet defs expr
 
     Opt.Case switch branches ->
       let
         toCore (pattern, expr) =
-          do  p <- Pattern.match pattern
-              e <- generateExpr expr
-              return (p, e)
+          do  pattern' <-
+                Pattern.match pattern
+
+              expr' <-
+                genExpr expr
+
+              return (pattern', expr')
 
         toLocals =
-          generateLocals . concatMap (Pattern.names . fst)
+          genLocals . concatMap (Pattern.names . fst)
       in
         Env.withLocals (toLocals branches) $
           do  branches' <-
                 mapM toCore branches
 
-              Subst.one (flip Core.Case branches') =<< generateExpr switch
+              Subst.one (flip Core.Case branches') =<< genExpr switch
 
     Opt.Ctor name exprs ->
-      Pattern.ctor name =<< mapM generateExpr exprs
+      Pattern.ctor name =<< mapM genExpr exprs
 
     Opt.CtorAccess expr index ->
-      Pattern.ctorAccess index =<< generateExpr expr
+      Pattern.ctorAccess index =<< genExpr expr
 
     Opt.Access record field ->
-      Subst.one (BuiltIn.get field) =<< generateExpr record
+      Subst.one (BuiltIn.get field) =<< genExpr record
 
     Opt.Update record fields ->
       do  old <-
-            generateExpr record
+            genExpr record
 
           new <-
-            generateRecord fields
+            genRecord fields
 
           Subst.many BuiltIn.update [new, old]
 
     Opt.Record fields ->
-      generateRecord fields
+      genRecord fields
 
     Opt.Cmd moduleName ->
       return $ BuiltIn.effect moduleName
@@ -149,7 +153,7 @@ generateExpr opt =
 
     Opt.Program _type expr ->
       -- TODO: use the type to decode argument
-      generateExpr expr
+      genExpr expr
 
     Opt.GLShader _ _ _ ->
       error
@@ -164,8 +168,8 @@ generateExpr opt =
 --- VARIABLES
 
 
-generateVar :: Var.Canonical -> Env.Gen Core.Expr
-generateVar (Var.Canonical home name) =
+genVar :: Var.Canonical -> Env.Gen Core.Expr
+genVar (Var.Canonical home name) =
   case home of
     Var.Local ->
       do  arity <-
@@ -173,36 +177,36 @@ generateVar (Var.Canonical home name) =
 
           return $ maybe
             (Core.Lit (Core.LTerm (Core.Var name)))
-            (generateRef name)
+            (genRef name)
             arity
 
     Var.Module moduleName ->
-      generateGlobal moduleName name
+      genGlobal moduleName name
 
     Var.TopLevel moduleName ->
-      generateGlobal moduleName name
+      genGlobal moduleName name
 
     Var.BuiltIn ->
       error
         "Will go away when merged with upstream dev."
 
 
-generateFunction :: Text -> [Text] -> Opt.Expr -> Env.Gen Core.Function
-generateFunction name args body =
-  Env.withLocals (generateLocals args) $
-    Core.Function name args <$> generateExpr body
+genFunction :: Text -> [Text] -> Opt.Expr -> Env.Gen Core.Function
+genFunction name args body =
+  Env.withLocals (genLocals args) $
+    Core.Function name args <$> genExpr body
 
 
-generateCall :: Opt.Expr -> [Core.Expr] -> Env.Gen Core.Expr
-generateCall function args =
+genCall :: Opt.Expr -> [Core.Expr] -> Env.Gen Core.Expr
+genCall function args =
   case function of
     Opt.Var (Var.Canonical (Var.Module moduleName) name)
       | ModuleName.canonicalIsNative moduleName ->
-      generateNative moduleName name args
+      genNative moduleName name args
 
     _ ->
       do  function' <-
-            generateExpr function
+            genExpr function
 
           case function' of
             Core.Lit f@(Core.LFunction _ arity)
@@ -213,20 +217,20 @@ generateCall function args =
               Subst.many1 BuiltIn.apply function' args
 
 
-generateGlobal :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
-generateGlobal moduleName name =
+genGlobal :: ModuleName.Canonical -> Text -> Env.Gen Core.Expr
+genGlobal moduleName name =
   if ModuleName.canonicalIsNative moduleName then
-    generateNative moduleName name []
+    genNative moduleName name []
 
   else
     do  arity <-
           Env.getGlobalArity moduleName name
 
-        return $ generateRef (qualifiedVar moduleName name) arity
+        return $ genRef (qualifiedVar moduleName name) arity
 
 
-generateRef :: Text -> Int -> Core.Expr
-generateRef name arity =
+genRef :: Text -> Int -> Core.Expr
+genRef name arity =
   if arity == 0 then
     Core.Apply (Core.LFunction name arity) []
 
@@ -234,33 +238,33 @@ generateRef name arity =
     Core.Lit (Core.LFunction name arity)
 
 
-generateNative
+genNative
   :: ModuleName.Canonical
   -> Text
   -> [Core.Expr]
   -> Env.Gen Core.Expr
-generateNative (ModuleName.Canonical _ rawModule) name =
+genNative (ModuleName.Canonical _ rawModule) name =
   Subst.many (Core.Call (Text.drop 7 rawModule) name)
 
 
-generateLet :: [Opt.Def] -> Opt.Expr -> Env.Gen Core.Expr
-generateLet defs expr =
+genLet :: [Opt.Def] -> Opt.Expr -> Env.Gen Core.Expr
+genLet defs expr =
   let
     toLocal name args _ =
       (name, Just (length args))
   in
-    Env.withLocals (map (generateDef toLocal) defs) $
+    Env.withLocals (map (genDef toLocal) defs) $
       do  context <-
-            generateExpr expr
+            genExpr expr
 
           functions <-
-            mapM (generateDef generateFunction) defs
+            mapM (genDef genFunction) defs
 
           return $ Core.LetRec functions context
 
 
-generateBinop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr
-generateBinop (Var.Canonical home name) =
+genBinop :: Var.Canonical -> [Core.Expr] -> Env.Gen Core.Expr
+genBinop (Var.Canonical home name) =
   Subst.many (Core.Apply (Core.LFunction qualified 2))
 
   where
@@ -272,8 +276,8 @@ generateBinop (Var.Canonical home name) =
         Var.BuiltIn -> error "Will go away when merged with upstream dev"
 
 
-generateLocals :: [Text] -> [(Text, Maybe Int)]
-generateLocals =
+genLocals :: [Text] -> [(Text, Maybe Int)]
+genLocals =
   map (\name -> (name, Nothing))
 
 
@@ -281,12 +285,12 @@ generateLocals =
 -- RECORDS
 
 
-generateRecord :: [(Text, Opt.Expr)] -> Env.Gen Core.Expr
-generateRecord fields =
+genRecord :: [(Text, Opt.Expr)] -> Env.Gen Core.Expr
+genRecord fields =
   do  let keys =
             map (Core.LTerm . Core.Atom . fst) fields
 
       values <-
-        mapM (generateExpr . snd) fields
+        mapM (genExpr . snd) fields
 
       Subst.many (Core.Map . zip keys) values

@@ -1,11 +1,17 @@
 resolver: lts-6.30
 
 packages:
-- '.'
-- profiling/
+- location: '.'
+- location: './cli'
+- location:
+    git: https://github.com/elm-lang/elm-package.git
+    commit: 1a364bccd08f2859f8572d63c2ad5029b6c70ffe
+  extra-dep: true
 
 extra-deps:
 - ghc-time-alloc-prof-0.1.0
+- Cabal-1.24.2.0
+- http-types-0.8.6
 
 flags: {}
 

@@ -10,6 +10,6 @@
 					<'false'> when 'true' ->
 						apply 'elm_lang@core@Main@any'/2 (_isOk, _rest)
 				end
-		<_2> when 'true' ->
+		<_1> when 'true' ->
 			'false'
 	end

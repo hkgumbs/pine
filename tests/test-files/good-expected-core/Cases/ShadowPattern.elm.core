@@ -1,0 +1,24 @@
+'elm_lang@core@Main@always'/2 = fun (_a, _b) ->
+	_a
+'elm_lang@core@Main@Just'/1 = fun (_v1) ->
+	{'Just', _v1}
+'elm_lang@core@Main@Nothing'/0 = fun () ->
+	{'Nothing'}
+'elm_lang@core@Main@stuff'/0 = fun () ->
+	let <_1> =
+		fun (__p0) ->
+			letrec
+				'maybe'/0 = fun () ->
+					apply 'elm_lang@core@Main@Nothing'/0 ()
+			in
+				let <_1> =
+					apply 'maybe'/0 ()
+				in
+					case _1 of
+						<{'Just', _maybe}> when 'true' ->
+							apply 'elm_lang@core@Main@Just'/1 (_maybe)
+						<_nothing> when 'true' ->
+							_nothing
+					end
+	in
+		apply 'elm_lang@core@Main@always'/2 ({'_Tuple0'}, _1)

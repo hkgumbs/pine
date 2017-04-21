@@ -13,6 +13,6 @@
 						apply 'shadow'/0 ()
 					in
 						call 'Runtime':'apply' (_1, _x)
-				<_2> when 'true' ->
+				<_1> when 'true' ->
 					apply 'elm_lang@core@Main@count'/2 (_n, _x)
 			end

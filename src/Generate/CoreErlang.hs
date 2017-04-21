@@ -99,22 +99,19 @@ genExpr opt =
     Opt.Case switch branches ->
       let
         toCore (pattern, expr) =
-          do  pattern' <-
-                Pattern.match pattern
+          Env.withLocals (genLocals (Pattern.names pattern)) $
+            do  pattern' <-
+                  Pattern.match pattern
 
-              expr' <-
-                genExpr expr
+                expr' <-
+                  genExpr expr
 
-              return (pattern', expr')
-
-        toLocals =
-          genLocals . concatMap (Pattern.names . fst)
+                return (pattern', expr')
       in
-        Env.withLocals (toLocals branches) $
-          do  branches' <-
-                mapM toCore branches
+        do  branches' <-
+              mapM toCore branches
 
-              Subst.one (flip Core.Case branches') =<< genExpr switch
+            Subst.one (\s -> Core.Case s branches') =<< genExpr switch
 
     Opt.Ctor name exprs ->
       Pattern.ctor name =<< mapM genExpr exprs

@@ -3,9 +3,10 @@ port module Main exposing (..)
 import Basics exposing (..)
 import Task exposing (..)
 import Test exposing (..)
+import Platform
 import Platform.Cmd exposing (Cmd)
+import Platform.Sub as Sub
 import Json.Decode exposing (Value)
-import Test.Runner.Node exposing (run, TestProgram)
 import Test.Array as Array
 import Test.Basics as Basics
 import Test.Bitwise as Bitwise
@@ -21,6 +22,8 @@ import Test.Set as Set
 import Test.String as String
 import Test.Regex as Regex
 import Test.Tuple as Tuple
+
+import Runner.Log
 
 
 tests : Test
@@ -44,9 +47,11 @@ tests =
         ]
 
 
-main : TestProgram
+main : Platform.Program Never () msg
 main =
-    run emit tests
-
-
-port emit : ( String, Value ) -> Cmd msg
+    Platform.program
+        { init = ((), Platform.Cmd.none)
+        , update = \_ _ -> ((), Platform.Cmd.none)
+        , subscriptions = \_ -> Sub.none
+        }
+        |> Runner.Log.run tests

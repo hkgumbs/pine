@@ -14,6 +14,7 @@ import qualified Data.Tree as Tree
 import Elm.Utils ((|>))
 import qualified Elm.Compiler.Module as Module
 import qualified Elm.Docs as Docs
+import qualified System.Process as Sys
 import System.IO ( IOMode(WriteMode) )
 import System.FilePath ((<.>))
 
@@ -64,7 +65,7 @@ generate
 generate _config _interfaces _dependencies _natives [] =
   return ()
 
-generate config _interfaces dependencies _natives rootModules =
+generate config _interfaces dependencies natives rootModules =
   do  let objectFiles =
             setupNodes (BM._artifactDirectory config) dependencies
               |> getReachableObjectFiles rootModules
@@ -72,12 +73,19 @@ generate config _interfaces dependencies _natives rootModules =
           outputFile =
             beamModuleName <.> compiledExtension
 
+          nativeFiles =
+            Map.toList natives
+              |> map (Path.toSource . snd)
+
       liftIO $
         File.withFileUtf8 outputFile WriteMode $ \handle ->
             do  BS.hPut handle (header (head rootModules))
                 forM_ objectFiles $ \coreFile ->
                     BS.hPut handle =<< BS.readFile coreFile
                 BS.hPut handle footer
+
+      liftIO $
+        Sys.callProcess "erlc" (outputFile : nativeFiles)
 
 
 setupNodes

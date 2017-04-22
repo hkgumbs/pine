@@ -9,12 +9,12 @@ import qualified TheMasterPlan as TMP
 
 toInterface :: FilePath -> TMP.CanonicalModule -> FilePath
 toInterface root (TMP.CanonicalModule package name) =
-    root </> inPackage package (Module.hyphenate name <.> "elmi")
+    root </> inPackage package (Module.hyphenate name <.> "elmbi")
 
 
 toObjectFile :: FilePath -> TMP.CanonicalModule -> FilePath
 toObjectFile root (TMP.CanonicalModule package name) =
-    root </> inPackage package (Module.hyphenate name <.> "elmo")
+    root </> inPackage package (Module.hyphenate name <.> "elmbo")
 
 
 toPackageCacheFile :: FilePath -> TMP.Package -> FilePath

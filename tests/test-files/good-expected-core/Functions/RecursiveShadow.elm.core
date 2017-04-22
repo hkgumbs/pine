@@ -1,7 +1,7 @@
 'elm_lang@core@Main@count'/2 = fun (_n, _x) ->
 	letrec
 		'recursive'/1 = fun (_shadow) ->
-			call 'Runtime':'apply' ('elm_lang@core@Main@count'/2, _shadow)
+			call 'Utils':'apply' ('elm_lang@core@Main@count'/2, _shadow)
 	in
 		letrec
 			'shadow'/0 = fun () ->
@@ -12,7 +12,7 @@
 					let <_1> =
 						apply 'shadow'/0 ()
 					in
-						call 'Runtime':'apply' (_1, _x)
+						call 'Utils':'apply' (_1, _x)
 				<_1> when 'true' ->
 					apply 'elm_lang@core@Main@count'/2 (_n, _x)
 			end

@@ -22,4 +22,4 @@
 		fun (_x, _y) ->
 			apply 'elm_lang@core@Main@-'/2 (_x, _y)
 	in
-		call 'Runtime':'apply' (_1, 3, 4)
+		call 'Utils':'apply' (_1, 3, 4)

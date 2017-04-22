@@ -2,8 +2,8 @@
 	let <_1> =
 		letrec
 			'g'/1 = fun (_x) ->
-				call 'Runtime':'apply' (_f, _x)
+				call 'Utils':'apply' (_f, _x)
 		in
 			'g'/1
 	in
-		call 'Runtime':'apply' (_1, __p0)
+		call 'Utils':'apply' (_1, __p0)

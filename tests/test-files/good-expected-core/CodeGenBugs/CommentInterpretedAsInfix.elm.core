@@ -1,9 +1,9 @@
 'elm_lang@core@Main@always'/2 = fun (_x, _s) ->
 	_x
 'elm_lang@core@Main@|>'/2 = fun (_a, _f) ->
-	call 'Runtime':'apply' (_f, _a)
+	call 'Utils':'apply' (_f, _a)
 'elm_lang@core@Main@value'/0 = fun () ->
 	let <_1> =
-		call 'Runtime':'apply' ('elm_lang@core@Main@always'/2, 2)
+		call 'Utils':'apply' ('elm_lang@core@Main@always'/2, 2)
 	in
 		apply 'elm_lang@core@Main@|>'/2 (1, _1)

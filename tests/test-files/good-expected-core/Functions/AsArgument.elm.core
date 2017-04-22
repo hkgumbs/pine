@@ -1,2 +1,2 @@
 'elm_lang@core@Main@f'/1 = fun (_g) ->
-	call 'Runtime':'apply' (_g, 1, 2)
+	call 'Utils':'apply' (_g, 1, 2)

@@ -35,4 +35,4 @@ effect moduleName =
 
 apply :: Core.Literal -> [Core.Literal] -> Core.Expr
 apply function args =
-  Core.Call "Runtime" "apply" (function : args)
+  Core.Call "Utils" "apply" (function : args)

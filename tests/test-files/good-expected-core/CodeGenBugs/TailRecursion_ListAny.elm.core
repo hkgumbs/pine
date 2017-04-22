@@ -2,7 +2,7 @@
 	case _list of
 		<[_first|_rest]> when 'true' ->
 			let <_1> =
-				call 'Runtime':'apply' (_isOk, _first)
+				call 'Utils':'apply' (_isOk, _first)
 			in
 				case _1 of
 					<'true'> when 'true' ->

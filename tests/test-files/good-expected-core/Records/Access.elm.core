@@ -1,5 +1,5 @@
 'elm_lang@core@Main@apply'/2 = fun (_f, _x) ->
-	call 'Runtime':'apply' (_f, _x)
+	call 'Utils':'apply' (_f, _x)
 'elm_lang@core@Main@point'/0 = fun () ->
 	~{'x' => 3, 'y' => 4}~
 'elm_lang@core@Main@x1'/0 = fun () ->
@@ -15,7 +15,7 @@
 		let <_2> =
 			apply 'elm_lang@core@Main@point'/0 ()
 		in
-			call 'Runtime':'apply' (_1, _2)
+			call 'Utils':'apply' (_1, _2)
 'elm_lang@core@Main@x3'/0 = fun () ->
 	let <_1> =
 		apply 'elm_lang@core@Main@point'/0 ()
@@ -29,7 +29,7 @@
 		let <_2> =
 			apply 'elm_lang@core@Main@point'/0 ()
 		in
-			call 'Runtime':'apply' (_1, _2)
+			call 'Utils':'apply' (_1, _2)
 'elm_lang@core@Main@x5'/0 = fun () ->
 	let <_2> =
 		fun (_r) ->

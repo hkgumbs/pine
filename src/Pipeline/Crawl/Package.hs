@@ -185,7 +185,7 @@ findHelp allowNatives locations moduleName (dir:srcDirs) =
           return (consIf elmExists (Elm elmPath) locs)
 
     addJsPath locs =
-      do  let jsPath = dir </> Module.nameToPath moduleName <.> "js"
+      do  let jsPath = dir </> Module.nameToPath moduleName <.> "erl"
           jsExists <-
               if Text.isPrefixOf "Native." moduleName then
                 liftIO (doesFileExist jsPath)

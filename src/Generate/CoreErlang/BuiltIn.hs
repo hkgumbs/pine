@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generate.CoreErlang.BuiltIn
-  ( get, update, element, effect, apply
-  ) where
+module Generate.CoreErlang.BuiltIn where
 
 import Data.Text as Text
 
@@ -36,3 +34,9 @@ effect moduleName =
 apply :: Core.Literal -> [Core.Literal] -> Core.Expr
 apply function args =
   Core.Call "Utils" "apply" (function : args)
+
+
+crash :: Text.Text -> Core.Expr
+crash var =
+  Core.Fun [var] $
+    Core.Call "erlang" "throw" [Core.LTerm (Core.Var var)]

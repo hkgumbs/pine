@@ -157,8 +157,7 @@ genExpr opt =
         "TODO: remove shaders from AST"
 
     Opt.Crash _moduleName _region _maybeExpr ->
-      error
-        "TODO: Opt.Crash to Core.Expr"
+      BuiltIn.crash <$> Env.freshName
 
 
 

@@ -1,32 +1,16 @@
 Name: elm-make
 Version: 0.18
 
-Synopsis:
-    A build tool for Elm projects
-Description:
-    A nice way to build projects that is aware of both elm-compile and
-    elm-package, so it can make the build process very smooth.
-
-Homepage:
-    http://elm-lang.org
-
 License: BSD3
-License-file: LICENSE
-
-Author:     Evan Czaplicki
-Maintainer: info@elm-lang.org
-Copyright:  Copyright (c) 2014 Evan Czaplicki
 
 Category: Build Tool
 
 Build-type: Simple
 Cabal-version: >=1.9
 
-Extra-source-files: README.md
-
 source-repository head
     type:     git
-    location: git://github.com/elm-lang/elm-make.git
+    location: git://github.com/hkgumbs/elm-beam.git
 
 Executable elm-beam
 
@@ -71,4 +55,5 @@ Executable elm-beam
         optparse-applicative >= 0.11 && < 0.14,
         raw-strings-qq,
         time,
-        text
+        text,
+        process

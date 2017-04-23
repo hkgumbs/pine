@@ -2,4 +2,4 @@
 	let <_1> =
 		~{'one' => 1, 'two' => 50}~
 	in
-		call 'maps':'merge' (_1, _r)
+		call 'maps':'merge' (_r, _1)

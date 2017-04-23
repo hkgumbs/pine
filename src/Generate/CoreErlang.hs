@@ -129,7 +129,7 @@ genExpr opt =
           new <-
             genRecord fields
 
-          Subst.many BuiltIn.update [new, old]
+          Subst.many BuiltIn.update [old, new]
 
     Opt.Record fields ->
       genRecord fields

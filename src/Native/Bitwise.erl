@@ -3,4 +3,9 @@
 -compile(export_all).
 
 
-shiftRightZfBy(_Offset, _A) -> 0.
+shiftRightZfBy(Offset, Val) -> Val bsr Offset.
+
+
+'or'(X, Y) -> X bor Y.
+'xor'(X, Y) -> X bxor Y.
+'and'(X, Y) -> X band Y.

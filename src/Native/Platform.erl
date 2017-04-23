@@ -8,8 +8,4 @@ batch(List) ->
 
 
 program(_Impl) ->
-	fun (_FlagDecoder) ->
-		fun (_Object, _ModuleName) ->
-                {}
-        end
-    end.
+    {}.

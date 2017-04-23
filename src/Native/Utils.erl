@@ -3,8 +3,9 @@
 -compile(export_all).
 
 
-toString(_) ->
-    <<"Utils.toString">>.
+toString(Val) ->
+    Str = io_lib:format("~p", [Val]),
+    erlang:iolist_to_binary(Str).
 
 
 append(X, Y) when is_list(X) -> X ++ Y;

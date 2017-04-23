@@ -65,16 +65,14 @@ logOutput summary arg =
     let
         output =
             summarize summary ++ "\n\nExit code"
-
-        _ =
-            if summary.failed > 0 then
-                output
-                    |> (flip Debug.log 1)
-                    |> (\_ -> Debug.crash "FAILED TEST RUN")
-                    |> (\_ -> ())
-            else
-                output
-                    |> (flip Debug.log 0)
-                    |> (\_ -> ())
     in
-        arg
+
+        if summary.failed > 0 then
+            output
+                |> (flip Debug.log 1)
+                |> (\_ -> Debug.crash "FAILED TEST RUN")
+                |> (\_ -> arg)
+        else
+            output
+                |> (flip Debug.log 0)
+                |> (\_ -> arg)

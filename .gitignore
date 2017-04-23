@@ -1,5 +1,6 @@
 *.beam
 *.core
+erl_crash.dump
 elm-stuff
 tests/test.js
 node_modules/

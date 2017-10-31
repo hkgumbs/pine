@@ -13,6 +13,7 @@
         "elm-community/elm-test": "4.0.0 <= v < 5.0.0",
         "elm-tools/parser-primitives": "1.0.0 <= v < 2.0.0",
         "folkertdev/elm-state": "3.0.0 <= v < 4.0.0",
+        "pwentz/elm-pretty-printer": "1.0.0 < v <= 2.0.0",
         "rluiten/stringdistance": "1.0.3 <= v < 2.0.0",
         "robertjlooby/elm-generic-dict": "1.0.2 <= v < 2.0.0"
     },

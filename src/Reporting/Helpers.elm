@@ -5,8 +5,6 @@ module Reporting.Helpers
         , args
         , capitalize
         , cat
-        , colon
-        , comma
         , commaSep
         , display
         , distance
@@ -15,7 +13,6 @@ module Reporting.Helpers
         , dullred
         , dullyellow
         , empty
-        , equals
         , fillSep
         , findPotentialTypos
         , findTypoPairs
@@ -27,8 +24,6 @@ module Reporting.Helpers
         , hsep
         , i2s
         , indent
-        , lbrace
-        , lparen
         , maybeYouWant
         , maybeYouWant_
         , moreArgs
@@ -36,9 +31,7 @@ module Reporting.Helpers
         , ordinalize
         , parens
         , plain
-        , rbrace
         , reflowParagraph
-        , rparen
         , sep
         , space
         , stack
@@ -52,7 +45,6 @@ module Reporting.Helpers
 import AST.Helpers as Help
 import Char
 import Dict
-import Doc exposing ((|+))
 import Elm.Compiler.Version as Compiler
 import Elm.Package as Pkg
 import Prelude exposing (init, last, maybe)
@@ -301,10 +293,13 @@ maybeYouWant_ maybeStarter suggestions =
 
 
 -- DOC
+-- Stand-in for Text-PrettyPrint-ANSI-Leijen
+-- https://hackage.haskell.org/package/ansi-wl-pprint-0.6.8.1/docs/Text-PrettyPrint-ANSI-Leijen.html
+-- — "This module is an extended implementation of the functional pretty printer given by Philip Wadler (1997)"
 
 
-type alias Doc =
-    Doc.Doc
+type Doc
+    = Doc String
 
 
 
@@ -312,8 +307,9 @@ type alias Doc =
 
 
 display : Float -> Int -> Doc -> String
-display fits width doc =
-    Doc.display (Doc.renderPretty fits width doc)
+display fits width (Doc str) =
+    -- TODO
+    str
 
 
 
@@ -322,57 +318,22 @@ display fits width doc =
 
 empty : Doc
 empty =
-    Doc.empty
+    Doc ""
 
 
 hardline : Doc
 hardline =
-    Doc.hardline
+    Doc "\n"
 
 
 space : Doc
 space =
-    Doc.space
+    Doc " "
 
 
 string : String -> Doc
 string =
-    Doc.string
-
-
-colon : Doc
-colon =
-    Doc.char ':'
-
-
-comma : Doc
-comma =
-    Doc.char ','
-
-
-equals : Doc
-equals =
-    Doc.char '='
-
-
-lbrace : Doc
-lbrace =
-    Doc.char '{'
-
-
-rbrace : Doc
-rbrace =
-    Doc.char '}'
-
-
-lparen : Doc
-lparen =
-    Doc.char '('
-
-
-rparen : Doc
-rparen =
-    Doc.char ')'
+    Doc
 
 
 
@@ -381,32 +342,37 @@ rparen =
 
 cat : List Doc -> Doc
 cat =
-    Doc.group << Doc.join Doc.linebreak
+    List.foldl (\(Doc next) (Doc acc) -> Doc (acc ++ next)) empty
 
 
 fillSep : List Doc -> Doc
 fillSep =
-    Doc.join Doc.softline
+    -- TODO
+    cat
 
 
 sep : List Doc -> Doc
 sep =
-    Doc.group << Doc.join Doc.line
+    -- TODO
+    cat
 
 
 hsep : List Doc -> Doc
 hsep =
-    Doc.join Doc.space
+    -- TODO
+    cat
 
 
 hcat : List Doc -> Doc
 hcat =
-    Doc.concat
+    -- TODO
+    cat
 
 
 vcat : List Doc -> Doc
 vcat =
-    Doc.join Doc.linebreak
+    -- TODO
+    cat
 
 
 
@@ -414,47 +380,53 @@ vcat =
 
 
 indent : Int -> Doc -> Doc
-indent =
-    Doc.indent
+indent n (Doc s) =
+    String.split "\n" s
+        |> String.join ("\n" ++ String.repeat n " ")
+        |> Doc
 
 
 hang : Int -> Doc -> Doc
 hang =
-    Doc.hang
+    -- TODO
+    indent
 
 
 parens : Doc -> Doc
-parens =
-    Doc.parens
+parens (Doc s) =
+    Doc ("(" ++ s ++ ")")
 
 
 dullred : Doc -> Doc
 dullred =
-    Doc.red
+    -- TODO
+    identity
 
 
 dullcyan : Doc -> Doc
 dullcyan =
-    Doc.cyan
+    -- TODO
+    identity
 
 
 dullyellow : Doc -> Doc
 dullyellow =
-    Doc.yellow
+    -- TODO
+    identity
 
 
 plain : Doc -> Doc
 plain =
-    Doc.plain
+    -- TODO
+    identity
 
 
 underline : Doc -> Doc
 underline =
-    Doc.underline
+    -- TODO
+    identity
 
 
 (<+>) : Doc -> Doc -> Doc
-(<+>) doc1 doc2 =
-    doc1
-        |+ Doc.space
-        |+ doc2
+(<+>) (Doc a) (Doc b) =
+    Doc (a ++ " " ++ b)

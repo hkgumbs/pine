@@ -9,6 +9,7 @@ import Reporting.Error.Syntax as E
 import Reporting.Region as R
 
 
+
 -- TYPE TERMS
 
 
@@ -51,7 +52,7 @@ expressionStart : R.Position -> SParser Type.Raw
 expressionStart start =
     oneOf
         [ app start
-        , succeed (,,)
+        , succeed (\a b c -> ( a, b, c ))
             |= term
             |= getPosition
             |= whitespace
@@ -96,7 +97,7 @@ app0 =
 
 app : R.Position -> SParser Type.Raw
 app start =
-    succeed (,)
+    succeed (\a b -> ( a, b ))
         |= qualifiedCapVar
         |= getPosition
         |> andThen (appHelp start)
@@ -119,7 +120,7 @@ appHelp start ( ctor, ctorEnd ) =
 
 unionConstructor : SParser ( String, List Type.Raw )
 unionConstructor =
-    succeed (,,)
+    succeed (\a b c -> ( a, b, c ))
         |= capVar
         |= getPosition
         |= whitespace
@@ -236,7 +237,7 @@ recordEnd start var =
                     |> A.at start end
 
             getRemainingFields firstField =
-                succeed (,)
+                succeed (\a b -> ( a, b ))
                     |= chompFields [ firstField ]
                     |= getPosition
                     |> map finish
@@ -252,7 +253,7 @@ recordEnd start var =
                     |> A.at start end
 
             getRemainingFields ( tipe, _, nextPos ) =
-                succeed (,)
+                succeed (\a b -> ( a, b ))
                     |. checkSpace nextPos
                     |= chompFields [ ( var, tipe ) ]
                     |= getPosition

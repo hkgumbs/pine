@@ -1,6 +1,7 @@
-module Reporting.Region exposing (..)
+module Reporting.Region exposing (Position(..), Region(..), encode, encodePosition, merge, toString)
 
 import Json.Encode as Json
+
 
 
 -- REGION
@@ -28,17 +29,17 @@ toString (Region (Position startLine startColumn) (Position endLine endColumn)) 
     case startLine == endLine of
         False ->
             "between lines "
-                ++ Basics.toString startLine
+                ++ String.fromInt startLine
                 ++ " and "
-                ++ Basics.toString endLine
+                ++ String.fromInt endLine
 
         True ->
             "on line "
-                ++ Basics.toString endLine
+                ++ String.fromInt endLine
                 ++ ", column "
-                ++ Basics.toString startColumn
+                ++ String.fromInt startColumn
                 ++ " to "
-                ++ Basics.toString endColumn
+                ++ String.fromInt endColumn
 
 
 

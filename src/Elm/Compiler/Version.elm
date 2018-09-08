@@ -1,6 +1,7 @@
 module Elm.Compiler.Version exposing (version)
 
-import Elm.Package exposing (Version(Version))
+import Elm.Package exposing (Version(..))
+
 
 
 -- VERSION

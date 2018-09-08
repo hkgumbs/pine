@@ -1,16 +1,15 @@
-module AST.Expression.Canonical
-    exposing
-        ( Def(..)
-        , Expr
-        , Expr_(..)
-        , Main(..)
-        , SortedDefs(..)
-        , collectApps
-        , collectFields
-        , collectLambdas
-        , localVar
-        , toSortedDefs
-        )
+module AST.Expression.Canonical exposing
+    ( Def(..)
+    , Expr
+    , Expr_(..)
+    , Main(..)
+    , SortedDefs(..)
+    , collectApps
+    , collectFields
+    , collectLambdas
+    , localVar
+    , toSortedDefs
+    )
 
 import AST.Effects as Effects
 import AST.Literal as Literal
@@ -20,6 +19,7 @@ import AST.Type as Type
 import AST.Variable as Var
 import Reporting.Annotation as A
 import Reporting.Region as R
+
 
 
 -- EXPRESSIONS

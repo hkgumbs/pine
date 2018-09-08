@@ -1,21 +1,21 @@
-module Docs.AST
-    exposing
-        ( Alias(..)
-        , Centralized
-        , Checked
-        , Docs(..)
-        , Entry(..)
-        , Good
-        , GoodValue
-        , Raw
-        , RawValue
-        , Union(..)
-        , Value(..)
-        )
+module Docs.AST exposing
+    ( Alias(..)
+    , Centralized
+    , Checked
+    , Docs(..)
+    , Entry(..)
+    , Good
+    , GoodValue
+    , Raw
+    , RawValue
+    , Union(..)
+    , Value(..)
+    )
 
 import AST.Declaration as Decl
 import Elm.Compiler.Type as Type
 import Reporting.Annotation as A
+
 
 
 -- DOCS

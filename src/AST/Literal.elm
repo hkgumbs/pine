@@ -1,16 +1,16 @@
-module AST.Literal
-    exposing
-        ( GLType(..)
-        , Literal(..)
-        , Shader(..)
-        , glTypeToVar
-        , toString
-        )
+module AST.Literal exposing
+    ( GLType(..)
+    , Literal(..)
+    , Shader(..)
+    , glTypeToVar
+    , toString
+    )
 
 import AST.Module.Name as ModuleName
 import AST.Variable as Var
 import Dict exposing (Dict)
 import Elm.Package as Pkg
+
 
 
 -- LITERALS
@@ -34,14 +34,15 @@ toString literal =
             "\"" ++ s ++ "\""
 
         IntNum n ->
-            Basics.toString n
+            String.fromInt n
 
         FloatNum n ->
-            Basics.toString n
+            String.fromFloat n
 
         Boolean bool ->
             if bool then
                 "True"
+
             else
                 "False"
 

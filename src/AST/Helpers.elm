@@ -1,15 +1,15 @@
-module AST.Helpers
-    exposing
-        ( desymbol
-        , isOp
-        , isSymbol
-        , isTuple
-        , makeTuple
-        , zeroTuple
-        )
+module AST.Helpers exposing
+    ( desymbol
+    , isOp
+    , isSymbol
+    , isTuple
+    , makeTuple
+    , zeroTuple
+    )
 
 import Char
 import Dict exposing (Dict)
+
 
 
 -- TUPLES
@@ -22,7 +22,7 @@ zeroTuple =
 
 makeTuple : Int -> String
 makeTuple size =
-    "#" ++ toString size
+    "#" ++ String.fromInt size
 
 
 isTuple : String -> Bool
@@ -48,7 +48,7 @@ isSymbol c =
 validSymbols : Dict Char Char
 validSymbols =
     Dict.fromList <|
-        List.map2 (,)
+        List.map2 (\a b -> ( a, b ))
             (String.toList "+-/*=.<>:&|^?%~!")
             (String.toList "abcdefghijklmnop")
 

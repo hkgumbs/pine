@@ -1,23 +1,23 @@
-module Reporting.Render.Type
-    exposing
-        ( Diff(..)
-        , Localizer
-        , Style(..)
-        , annotation
-        , decl
-        , diffToDocs
-        , sequenceDiff
-        , toDoc
-        )
+module Reporting.Render.Type exposing
+    ( Diff(..)
+    , Localizer
+    , Style(..)
+    , annotation
+    , decl
+    , diffToDocs
+    , sequenceDiff
+    , toDoc
+    )
 
 import AST.Helpers as Help
 import AST.Type as Type
 import AST.Variable as Var
 import Dict
-import GenericDict exposing (GenericDict)
+import Dict.Any as GenericDict
 import Prelude exposing (mapBoth, maybe, repeat)
-import Reporting.Helpers as Help exposing ((<+>), Doc, cat, dullyellow, hang, hsep, parens, sep, string, vcat)
+import Reporting.Helpers as Help exposing (Doc, cat, dullyellow, hang, hsep, parens, sep, string, vcat, withSpace)
 import Set
+
 
 
 -- PUBLIC API FOR CREATING DOCS
@@ -47,7 +47,7 @@ decl localizer name vars tags =
     hang 4 <|
         vcat <|
             hsep (string "type" :: List.map string (name :: vars))
-                :: List.map2 (<+>)
+                :: List.map2 withSpace
                     (string "=" :: repeat (string "|") tags)
                     (List.map docTag tags)
 
@@ -58,6 +58,7 @@ annotation localizer name tipe =
         docName =
             if Help.isOp name then
                 parens (string name)
+
             else
                 string name
     in
@@ -66,14 +67,14 @@ annotation localizer name tipe =
             hang 4 <|
                 sep <|
                     docName
-                        :: List.map2 (<+>)
+                        :: List.map2 withSpace
                             (string ":" :: repeat (string "->") parts)
                             (List.map (docType localizer Func) parts)
 
         _ ->
             hang 4 <|
                 sep <|
-                    [ docName <+> string ":"
+                    [ withSpace docName (string ":")
                     , docType localizer None tipe
                     ]
 
@@ -83,7 +84,7 @@ annotation localizer name tipe =
 
 
 type alias Localizer =
-    GenericDict Var.Canonical String
+    GenericDict.AnyDict (List String) Var.Canonical String
 
 
 varToDoc : Localizer -> Var.Canonical -> Doc
@@ -94,6 +95,7 @@ varToDoc localizer var =
     in
     if name == Help.zeroTuple then
         string "()"
+
     else
         string (maybe name identity (GenericDict.get var localizer))
 
@@ -107,8 +109,8 @@ type Diff a
     | Same a
 
 
-(<$>) : (a -> b) -> Diff a -> Diff b
-(<$>) func d =
+mapDiff : (a -> b) -> Diff a -> Diff b
+mapDiff func d =
     -- Instance Functor
     case d of
         Diff left right ->
@@ -143,7 +145,7 @@ liftDiff =
 sequenceDiff : List (Diff a) -> Diff (List a)
 sequenceDiff =
     List.foldr
-        (\diff acc -> liftDiff (::) |> applyDiff diff |> applyDiff acc)
+        (\nextDiff acc -> liftDiff (::) |> applyDiff nextDiff |> applyDiff acc)
         (liftDiff [])
 
 
@@ -184,8 +186,10 @@ diff localizer context leftType rightType =
     case ( leftType, rightType ) of
         ( Type.Aliased leftName leftArgs _, Type.Aliased rightName rightArgs _ ) ->
             if leftName == rightName then
-                docAppHelp localizer context leftName
-                    <$> sequenceDiff (List.map2 (go App) (List.map Tuple.second leftArgs) (List.map Tuple.second rightArgs))
+                mapDiff
+                    (docAppHelp localizer context leftName)
+                    (sequenceDiff (List.map2 (go App) (List.map Tuple.second leftArgs) (List.map Tuple.second rightArgs)))
+
             else
                 difference
                     (docType localizer context leftType)
@@ -200,6 +204,7 @@ diff localizer context leftType rightType =
         ( Type.Var x, Type.Var y ) ->
             if x == y then
                 liftDiff (string x)
+
             else
                 difference
                     (docType localizer context leftType)
@@ -210,16 +215,19 @@ diff localizer context leftType rightType =
                 difference
                     (docApp localizer context leftName leftArgs)
                     (docApp localizer context rightName rightArgs)
+
             else
                 let
                     subContext =
                         if Var.isTuple leftName then
                             None
+
                         else
                             App
                 in
-                docAppHelp localizer context leftName
-                    <$> sequenceDiff (List.map2 (go subContext) leftArgs rightArgs)
+                mapDiff
+                    (docAppHelp localizer context leftName)
+                    (sequenceDiff (List.map2 (go subContext) leftArgs rightArgs))
 
         ( Type.Record outerLeftFields outerLeftExt, Type.Record outerRightFields outerRightExt ) ->
             let
@@ -265,19 +273,21 @@ diffLambda localizer context leftType rightType =
             List.reverse <| extraToDoc <| List.drop (List.length leftArgs) rightArgs
 
         alignedArgDiff =
-            List.reverse <$> sequenceDiff (List.map2 (diff localizer Func) leftArgs rightArgs)
+            mapDiff List.reverse <|
+                sequenceDiff (List.map2 (diff localizer Func) leftArgs rightArgs)
     in
-    docLambda context
-        <$> (case ( extraLefts, extraRights, alignedArgDiff ) of
-                ( [], [], _ ) ->
-                    alignedArgDiff
+    mapDiff
+        (docLambda context)
+        (case ( extraLefts, extraRights, alignedArgDiff ) of
+            ( [], [], _ ) ->
+                alignedArgDiff
 
-                ( _, _, Same docs ) ->
-                    Diff (extraLefts ++ docs) (extraRights ++ docs)
+            ( _, _, Same docs ) ->
+                Diff (extraLefts ++ docs) (extraRights ++ docs)
 
-                ( _, _, Diff lefts rights ) ->
-                    Diff (extraLefts ++ lefts) (extraRights ++ rights)
-            )
+            ( _, _, Diff lefts rights ) ->
+                Diff (extraLefts ++ lefts) (extraRights ++ rights)
+        )
 
 
 
@@ -293,7 +303,7 @@ diffRecord localizer leftFields leftExt rightFields rightExt =
     if Dict.isEmpty leftOnly && Dict.isEmpty rightOnly then
         let
             fieldDiffs =
-                Dict.map (\_ -> uncurry (diff localizer None)) both
+                Dict.map (\_ -> \( a, b ) -> diff localizer None a b) both
         in
         case partitionDiffs fieldDiffs of
             ( [], sames ) ->
@@ -303,6 +313,7 @@ diffRecord localizer leftFields leftExt rightFields rightExt =
                 in
                 if leftExt == rightExt then
                     Same (mkRecord (Maybe.map string leftExt))
+
                 else
                     Diff
                         (mkRecord (Maybe.map (dullyellow << string) leftExt))
@@ -316,12 +327,14 @@ diffRecord localizer leftFields leftExt rightFields rightExt =
                     style =
                         if List.isEmpty sames then
                             Full
+
                         else
                             Elide
                 in
                 Diff
                     (docRecord style lefts (Maybe.map string leftExt))
                     (docRecord style rights (Maybe.map string rightExt))
+
     else
         let
             ( lefts, rights ) =
@@ -330,6 +343,7 @@ diffRecord localizer leftFields leftExt rightFields rightExt =
             style =
                 if Dict.isEmpty both then
                     Full
+
                 else
                     Elide
         in
@@ -342,7 +356,7 @@ unzipDiffs : List ( String, ( Doc, Doc ) ) -> ( List ( Doc, Doc ), List ( Doc, D
 unzipDiffs diffPairs =
     let
         unzipHelp ( name, ( left, right ) ) =
-            (,) ( string name, left ) ( string name, right )
+            ( ( string name, left ), ( string name, right ) )
     in
     List.unzip (List.map unzipHelp diffPairs)
 
@@ -364,6 +378,7 @@ analyzeFields leftOnly rightOnly =
             mkField
                 (if Set.member name counts then
                     dullyellow
+
                  else
                     identity
                 )
@@ -430,7 +445,7 @@ flattenRecordHelp fields ext =
             flattenRecordHelp fields (Just (Type.dealias args tipe))
 
         _ ->
-            Debug.crash "Trying to flatten ill-formed record."
+            Debug.todo "Trying to flatten ill-formed record."
 
 
 
@@ -466,17 +481,17 @@ docLambda : Context -> List Doc -> Doc
 docLambda context docs =
     case docs of
         [] ->
-            Debug.crash "cannot call docLambda with an empty list"
+            Debug.todo "cannot call docLambda with an empty list"
 
         arg :: rest ->
             case context of
                 None ->
-                    sep (arg :: List.map (\x -> string "->" <+> x) rest)
+                    sep (arg :: List.map (withSpace (string "->")) rest)
 
                 _ ->
                     cat
                         [ string "("
-                        , sep (arg :: List.map (\x -> string "->" <+> x) rest)
+                        , sep (arg :: List.map (withSpace (string "->")) rest)
                         , string ")"
                         ]
 
@@ -487,6 +502,7 @@ docApp localizer context name args =
         argContext =
             if Var.isTuple name then
                 None
+
             else
                 App
     in
@@ -499,6 +515,7 @@ docAppHelp localizer context name arguments =
         [] ->
             if Var.isTuple name then
                 string "()"
+
             else
                 varToDoc localizer name
 
@@ -506,12 +523,12 @@ docAppHelp localizer context name arguments =
             if Var.isTuple name then
                 sep
                     [ cat
-                        (string "("
-                            <+> arg
-                            :: List.map (\x -> string "," <+> x) args
+                        (withSpace (string "(") arg
+                            :: List.map (withSpace (string ",")) args
                         )
                     , string ")"
                     ]
+
             else
                 case context of
                     App ->
@@ -534,7 +551,7 @@ docRecord : Style -> List ( Doc, Doc ) -> Maybe Doc -> Doc
 docRecord style fields maybeExt =
     let
         docField ( name, tipe ) =
-            hang 4 (sep [ name <+> string ":", tipe ])
+            hang 4 (sep [ withSpace name (string ":"), tipe ])
 
         elision =
             case style of
@@ -553,7 +570,7 @@ docRecord style fields maybeExt =
 
         ( _, Nothing ) ->
             sep
-                [ cat (List.map2 (<+>) (string "{" :: repeat (string ",") fieldDocs) fieldDocs)
+                [ cat (List.map2 withSpace (string "{" :: repeat (string ",") fieldDocs) fieldDocs)
                 , string "}"
                 ]
 
@@ -561,8 +578,8 @@ docRecord style fields maybeExt =
             sep
                 [ hang 4 <|
                     sep <|
-                        [ string "{" <+> ext
-                        , cat (List.map2 (<+>) (string "|" :: repeat (string ",") fieldDocs) fieldDocs)
+                        [ withSpace (string "{") ext
+                        , cat (List.map2 withSpace (string "|" :: repeat (string ",") fieldDocs) fieldDocs)
                         ]
                 , string "}"
                 ]

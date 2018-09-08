@@ -5,13 +5,8 @@ import Reporting.Helpers as H exposing (Doc)
 import Reporting.Region as R
 
 
-(|>) : a -> (a -> b) -> b
-(|>) a f =
-    f a
-
-
-(<==>) : Doc -> Doc -> Doc
-(<==>) a b =
+withHardline : Doc -> Doc -> Doc
+withHardline a b =
     H.cat [ a, H.hardline, b ]
 
 
@@ -28,13 +23,13 @@ render maybeSubRegion ((R.Region start end) as region) source =
             (String.lines source ++ [ "" ])
                 |> List.take endLine
                 |> List.drop (startLine - 1)
-                |> List.map2 (,) (List.range startLine (endLine + 1))
+                |> List.map2 (\a b -> ( a, b )) (List.range startLine (endLine + 1))
 
         width =
             last relevantLines
                 |> Maybe.withDefault ( 0, "" )
                 |> Tuple.first
-                |> toString
+                |> String.fromInt
                 |> String.length
 
         smallerRegion =
@@ -52,6 +47,7 @@ makeUnderline : Int -> Int -> R.Region -> Maybe Doc
 makeUnderline width realEndLine (R.Region (R.Position start c1) (R.Position end c2)) =
     if start /= end || end < realEndLine then
         Nothing
+
     else
         let
             spaces =
@@ -72,7 +68,7 @@ drawLines addZigZag width (R.Region start end) sourceLines finalLine =
         (R.Position endLine _) =
             end
     in
-    List.foldr (<==>) finalLine <|
+    List.foldr withHardline finalLine <|
         List.map (drawLine addZigZag width startLine endLine) sourceLines
 
 
@@ -87,8 +83,9 @@ addLineNumber addZigZag width start end n line =
         number =
             if n < 0 then
                 " "
+
             else
-                toString n
+                String.fromInt n
 
         lineNumber =
             String.repeat (width - String.length number) " " ++ number ++ "|"
@@ -96,6 +93,7 @@ addLineNumber addZigZag width start end n line =
         spacer =
             if addZigZag && start <= n && n <= end then
                 H.dullred (H.string ">")
+
             else
                 H.string " "
     in

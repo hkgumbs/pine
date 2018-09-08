@@ -1,46 +1,45 @@
-module Reporting.Helpers
-    exposing
-        ( (<+>)
-        , Doc
-        , args
-        , capitalize
-        , cat
-        , commaSep
-        , display
-        , distance
-        , drawCycle
-        , dullcyan
-        , dullred
-        , dullyellow
-        , empty
-        , fillSep
-        , findPotentialTypos
-        , findTypoPairs
-        , functionName
-        , hang
-        , hardline
-        , hcat
-        , hintLink
-        , hsep
-        , i2s
-        , indent
-        , maybeYouWant
-        , maybeYouWant_
-        , moreArgs
-        , nearbyNames
-        , ordinalize
-        , parens
-        , plain
-        , reflowParagraph
-        , sep
-        , space
-        , stack
-        , string
-        , toHint
-        , underline
-        , vcat
-        , vetTypos
-        )
+module Reporting.Helpers exposing
+    ( Doc
+    , args
+    , capitalize
+    , cat
+    , commaSep
+    , display
+    , distance
+    , drawCycle
+    , dullcyan
+    , dullred
+    , dullyellow
+    , empty
+    , fillSep
+    , findPotentialTypos
+    , findTypoPairs
+    , functionName
+    , hang
+    , hardline
+    , hcat
+    , hintLink
+    , hsep
+    , i2s
+    , indent
+    , maybeYouWant
+    , maybeYouWant_
+    , moreArgs
+    , nearbyNames
+    , ordinalize
+    , parens
+    , plain
+    , reflowParagraph
+    , sep
+    , space
+    , stack
+    , string
+    , toHint
+    , underline
+    , vcat
+    , vetTypos
+    , withSpace
+    )
 
 import AST.Helpers as Help
 import Char
@@ -52,18 +51,20 @@ import Set
 import StringDistance as Dist
 
 
+
 -- DOC HELPERS
 
 
 i2s : Int -> String
 i2s =
-    toString
+    String.fromInt
 
 
 functionName : String -> String
 functionName opName =
     if Help.isOp opName then
         "(" ++ opName ++ ")"
+
     else
         "`" ++ opName ++ "`"
 
@@ -73,6 +74,7 @@ args n =
     i2s n
         ++ (if n == 1 then
                 " argument"
+
             else
                 " arguments"
            )
@@ -84,6 +86,7 @@ moreArgs n =
         ++ " more"
         ++ (if n == 1 then
                 " argument"
+
             else
                 " arguments"
            )
@@ -115,7 +118,7 @@ stack : List Doc -> Doc
 stack chunks =
     case chunks of
         [] ->
-            Debug.crash "function `stack` requires a non-empty list of docs"
+            Debug.todo "function `stack` requires a non-empty list of docs"
 
         doc :: docs ->
             List.foldl (\next acc -> cat [ acc, hardline, hardline, next ]) doc docs
@@ -156,20 +159,24 @@ ordinalize : Int -> String
 ordinalize number =
     let
         remainder10 =
-            number % 10
+            modBy 10 number
 
         remainder100 =
-            number % 100
+            modBy 100 number
 
         ending =
             if List.member remainder100 (List.range 11 13) then
                 "th"
+
             else if remainder10 == 1 then
                 "st"
+
             else if remainder10 == 2 then
                 "nd"
+
             else if remainder10 == 3 then
                 "rd"
+
             else
                 "th"
     in
@@ -210,7 +217,7 @@ findTypoPairs : List String -> List String -> List ( String, String )
 findTypoPairs leftOnly rightOnly =
     let
         veryNear leftName =
-            List.map ((,) leftName) (findPotentialTypos rightOnly leftName)
+            List.map (\b -> ( leftName, b )) (findPotentialTypos rightOnly leftName)
     in
     List.concatMap veryNear leftOnly
 
@@ -236,6 +243,7 @@ vetTypos potentialTypos =
     in
     if acceptable leftCounts && acceptable rightCounts then
         Just ( keysSet leftCounts, keysSet rightCounts )
+
     else
         Nothing
 
@@ -250,6 +258,7 @@ nearbyNames format name names =
         editDistance =
             if String.length (format name) < 3 then
                 1
+
             else
                 2
     in
@@ -427,6 +436,6 @@ underline =
     identity
 
 
-(<+>) : Doc -> Doc -> Doc
-(<+>) (Doc a) (Doc b) =
-    Doc (a ++ " " ++ b)
+withSpace : Doc -> Doc -> Doc
+withSpace (Doc left) (Doc right) =
+    Doc (left ++ " " ++ right)

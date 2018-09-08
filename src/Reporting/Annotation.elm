@@ -1,19 +1,19 @@
-module Reporting.Annotation
-    exposing
-        ( Annotated(..)
-        , Commented
-        , Located
-        , at
-        , drop
-        , listToDict
-        , map
-        , merge
-        , sameAs
-        )
+module Reporting.Annotation exposing
+    ( Annotated(..)
+    , Commented
+    , Located
+    , at
+    , drop
+    , listToDict
+    , map
+    , merge
+    , sameAs
+    )
 
 import Dict exposing (Dict)
 import Prelude exposing (maybe)
 import Reporting.Region as R
+
 
 
 -- ANNOTATION

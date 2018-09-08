@@ -1,11 +1,10 @@
-module Reporting.Report
-    exposing
-        ( Pair
-        , Report
-        , report
-        , toDoc
-        , toJson
-        )
+module Reporting.Report exposing
+    ( Pair
+    , Report
+    , report
+    , toDoc
+    , toJson
+    )
 
 import Json.Encode as Json
 import Reporting.Helpers as Help
@@ -20,6 +19,7 @@ import Reporting.Helpers as Help
         )
 import Reporting.Region as R
 import Reporting.Render.Code as Code
+
 
 
 -- BUILD REPORTS

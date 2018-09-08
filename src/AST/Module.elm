@@ -1,32 +1,31 @@
-module AST.Module
-    exposing
-        ( Aliases
-        , Canonical
-        , CanonicalUnion
-        , DefaultImport
-        , Header(..)
-        , HeaderDecl(..)
-        , ImportMethod(..)
-        , Info(..)
-        , Interface(..)
-        , Interfaces
-        , Module(..)
-        , Optimized
-        , Source
-        , SourceInfo(..)
-        , SourceSettings
-        , SourceTag(..)
-        , Types
-        , UnionInfo
-        , Unions
-        , UserImport
-        , Valid
-        , ValidInfo(..)
-        , defaultHeaderDecl
-        , emptySettings
-        , privatize
-        , toInterface
-        )
+module AST.Module exposing
+    ( Aliases
+    , Canonical
+    , CanonicalUnion
+    , DefaultImport
+    , Header(..)
+    , HeaderDecl(..)
+    , ImportMethod(..)
+    , Info(..)
+    , Interface(..)
+    , Interfaces
+    , Module(..)
+    , Optimized
+    , Source
+    , SourceInfo(..)
+    , SourceSettings
+    , SourceTag(..)
+    , Types
+    , UnionInfo
+    , Unions
+    , UserImport
+    , Valid
+    , ValidInfo(..)
+    , defaultHeaderDecl
+    , emptySettings
+    , privatize
+    , toInterface
+    )
 
 import AST.Declaration as Decl
 import AST.Effects as Effects
@@ -40,6 +39,7 @@ import Dict
 import Docs.AST as Docs
 import Reporting.Annotation as A
 import Reporting.Region as R
+
 
 
 -- HEADERS FOR PARSING
@@ -227,6 +227,7 @@ privatize : Interface -> Maybe Interface
 privatize (Interface _ _ _ myUnions myAliases _) =
     if Dict.null myUnions && Dict.null myAliases then
         Nothing
+
     else
         Just <|
             Interface

@@ -1,14 +1,13 @@
-module Reporting.Bag
-    exposing
-        ( Bag
-        , append
-        , cons
-        , empty
-        , fromList
-        , map
-        , singleton
-        , toList
-        )
+module Reporting.Bag exposing
+    ( Bag
+    , append
+    , cons
+    , empty
+    , fromList
+    , map
+    , singleton
+    , toList
+    )
 
 -- BAGS
 

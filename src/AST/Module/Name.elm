@@ -1,17 +1,17 @@
-module AST.Module.Name
-    exposing
-        ( Canonical(..)
-        , Raw
-        , canonicalIsKernel
-        , canonicalToString
-        , getKernel
-        , inCore
-        , inHtml
-        , inVirtualDom
-        , isKernel
-        )
+module AST.Module.Name exposing
+    ( Canonical(..)
+    , Raw
+    , canonicalIsKernel
+    , canonicalToString
+    , getKernel
+    , inCore
+    , inHtml
+    , inVirtualDom
+    , isKernel
+    )
 
 import Elm.Package as Package
+
 
 
 -- NAMES

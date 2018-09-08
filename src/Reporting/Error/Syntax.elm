@@ -1,17 +1,16 @@
-module Reporting.Error.Syntax
-    exposing
-        ( BadOp(..)
-        , Context(..)
-        , ContextStack
-        , Error(..)
-        , Next(..)
-        , ParseError(..)
-        , Problem(..)
-        , Theory(..)
-        , toReport
-        )
+module Reporting.Error.Syntax exposing
+    ( BadOp(..)
+    , Context(..)
+    , ContextStack
+    , Error(..)
+    , Next(..)
+    , ParseError(..)
+    , Problem(..)
+    , Theory(..)
+    , toReport
+    )
 
-import GenericSet
+import Dict.Any as GenericDict
 import Reporting.Helpers as Help
     exposing
         ( dullyellow
@@ -24,6 +23,7 @@ import Reporting.Helpers as Help
 import Reporting.Region as R
 import Reporting.Render.Type as RenderType
 import Reporting.Report as Report
+
 
 
 -- ALL SYNTAX ERRORS
@@ -628,6 +628,7 @@ problemToReport subRegion problem =
                                     , " aligned. Maybe this branch is indented too much?"
                                     ]
                             )
+
                     else
                         badOp subRegion
                             stack
@@ -663,7 +664,12 @@ problemToReport subRegion problem =
                         ++ "."
             in
             parseReport starter <|
-                case GenericSet.toList (GenericSet.fromList compareTheories allTheories) of
+                case
+                    List.map (\t -> ( t, () )) allTheories
+                        |> GenericDict.fromList compareTheories
+                        |> GenericDict.toList
+                        |> List.map Tuple.first
+                of
                     [] ->
                         Help.stack
                             [ reflowParagraph <|
@@ -689,10 +695,10 @@ problemToReport subRegion problem =
                                 ++ List.map (bullet << theoryToText stack) theories
 
 
-compareTheories : Theory -> Theory -> Order
-compareTheories left right =
+compareTheories : Theory -> String
+compareTheories =
     -- TODO
-    compare (toString left) (toString right)
+    Debug.toString
 
 
 bullet : String -> Help.Doc
@@ -704,6 +710,7 @@ addPeriod : String -> String
 addPeriod msg =
     if List.member (String.right 1 msg) [ "`", ")", ".", "!", "?" ] then
         msg
+
     else
         msg ++ "."
 
@@ -761,6 +768,7 @@ badEqualsHelp stack =
                     ]
                     ++ (if List.any ((==) ExprLet << Tuple.first) rest then
                             "All definitions in a `let` expression must be vertically aligned."
+
                         else
                             "Spaces are not allowed before top-level definitions."
                        )
@@ -1105,6 +1113,7 @@ badSpaceExprEnd stack =
                 ending =
                     if column <= 1 then
                         "to be indented?"
+
                     else
                         "more indentation? (Try " ++ i2s (column + 1) ++ "+ spaces.)"
             in

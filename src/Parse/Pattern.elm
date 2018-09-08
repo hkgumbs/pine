@@ -11,6 +11,7 @@ import Reporting.Error.Syntax as E
 import Reporting.Region as R
 
 
+
 -- PATTERN TERMS
 
 
@@ -26,7 +27,7 @@ termHelp start =
         [ record start
         , tuple start
         , list start
-        , succeed (,)
+        , succeed (\a b -> ( a, b ))
             |= oneOf
                 [ map (\_ -> P.Anything) underscore
                 , map P.Var lowVar
@@ -205,7 +206,7 @@ listEnd patterns =
 expression : Parser ( P.Raw, SPos )
 expression =
     hint E.Pattern <|
-        (succeed (,)
+        (succeed (\a b -> ( a, b ))
             |= getPosition
             |= consTerm
             |> andThen (\( start, cTerm ) -> exprHelp start [] cTerm)
@@ -215,7 +216,7 @@ expression =
 consTerm : SParser P.Raw
 consTerm =
     oneOf
-        [ succeed (,)
+        [ succeed (\a b -> ( a, b ))
             |= getPosition
             |= qualifiedCapVar
             |> andThen
@@ -230,7 +231,7 @@ consTerm =
                         _ ->
                             constructorStart start ctor []
                 )
-        , succeed (,,)
+        , succeed (\a b c -> ( a, b, c ))
             |= term
             |= getPosition
             |= whitespace
@@ -239,7 +240,7 @@ consTerm =
 
 boolEnd : R.Position -> Bool -> SParser P.Raw
 boolEnd start bool =
-    succeed (,)
+    succeed (\a b -> ( a, b ))
         |= getPosition
         |= whitespace
         |> map
@@ -256,7 +257,7 @@ exprHelp start patterns ( pattern, end, sPos ) =
             |. cons
             |. spaces
             |= andThen (exprHelp start (pattern :: patterns)) consTerm
-        , succeed (,,)
+        , succeed (\a b c -> ( a, b, c ))
             |. checkSpace sPos
             |. keyword "as"
             |. spaces
@@ -281,10 +282,10 @@ consHelp end tl ((A.A (R.Region start _) _) as hd) =
 
 constructorStart : R.Position -> String -> List P.Raw -> SParser P.Raw
 constructorStart start ctor args =
-    succeed (,)
+    succeed (\a b -> ( a, b ))
         |= getPosition
         |= whitespace
-        |> andThen (uncurry (constructorEnd start ctor args))
+        |> andThen (\( a, b ) -> constructorEnd start ctor args a b)
 
 
 constructorEnd : R.Position -> String -> List P.Raw -> R.Position -> SPos -> SParser P.Raw

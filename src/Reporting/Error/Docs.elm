@@ -1,4 +1,4 @@
-module Reporting.Error.Docs exposing (..)
+module Reporting.Error.Docs exposing (Error(..), toReport)
 
 import Reporting.Helpers as Help exposing (string)
 import Reporting.Report as Report

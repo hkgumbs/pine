@@ -1,17 +1,16 @@
-module Optimize.Environment
-    exposing
-        ( Env
-        , Optimizer
-        , freshName
-        , getHome
-        , getTailCall
-        , getVariantDict
-        , indirectly
-        , register
-        , registerEffects
-        , run
-        , setTailCall
-        )
+module Optimize.Environment exposing
+    ( Env
+    , Optimizer
+    , freshName
+    , getHome
+    , getTailCall
+    , getVariantDict
+    , indirectly
+    , register
+    , registerEffects
+    , run
+    , setTailCall
+    )
 
 import AST.Effects as Effects
 import AST.Expression.Optimized as Opt
@@ -20,6 +19,7 @@ import AST.Variable as Var
 import GenericSet exposing (GenericSet)
 import Optimize.DecisionTree as DT
 import State
+
 
 
 -- ENVIRONMENT
@@ -115,7 +115,7 @@ run variantDict home optimizer =
             )
 
         Indirect _ ->
-            Debug.crash "Problem with Optimize.Environment#run"
+            Debug.todo "Problem with Optimize.Environment#run"
 
 
 
@@ -192,7 +192,7 @@ indirectly optimizer =
                         |> State.map (\_ -> result)
 
                 Direct _ ->
-                    Debug.crash "Problem with Optimize.Environment#indirectly"
+                    Debug.todo "Problem with Optimize.Environment#indirectly"
     in
     State.get
         |> State.andThen

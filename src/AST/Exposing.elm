@@ -1,15 +1,15 @@
-module AST.Exposing
-    exposing
-        ( Canonical(..)
-        , Entry(..)
-        , Exposing(..)
-        , Raw
-        , closed
-        , getName
-        , nothing
-        )
+module AST.Exposing exposing
+    ( Canonical(..)
+    , Entry(..)
+    , Exposing(..)
+    , Raw
+    , closed
+    , getName
+    , nothing
+    )
 
 import Reporting.Annotation as A
+
 
 
 -- CANONICAL

@@ -1,28 +1,27 @@
-module Parse.Helpers
-    exposing
-        ( (|.)
-        , (|=)
-        , SParser
-        , addLocation
-        , checkSpace
-        , comma
-        , cons
-        , dot
-        , equals
-        , hasType
-        , leftCurly
-        , leftParen
-        , leftSquare
-        , pipe
-        , qualifiedCapVar
-        , qualifiedVar
-        , rightArrow
-        , rightCurly
-        , rightParen
-        , rightSquare
-        , skip
-        , spaces
-        )
+module Parse.Helpers exposing
+    ( (|.)
+    , (|=)
+    , SParser
+    , addLocation
+    , checkSpace
+    , comma
+    , cons
+    , dot
+    , equals
+    , hasType
+    , leftCurly
+    , leftParen
+    , leftSquare
+    , pipe
+    , qualifiedCapVar
+    , qualifiedVar
+    , rightArrow
+    , rightCurly
+    , rightParen
+    , rightSquare
+    , skip
+    , spaces
+    )
 
 import Parse.Primitives as P exposing (Parser)
 import Reporting.Annotation as A
@@ -34,6 +33,7 @@ import Reporting.Error.Syntax as E
         , Theory(..)
         )
 import Reporting.Region as R
+
 
 
 -- PARSER
@@ -174,6 +174,7 @@ checkSpace (P.SPos (R.Position _ col)) =
         check indent =
             if col > indent && col > 1 then
                 P.succeed ()
+
             else
                 P.deadend [ E.BadSpace ]
     in
@@ -186,7 +187,7 @@ checkSpace (P.SPos (R.Position _ col)) =
 
 addLocation : Parser a -> Parser (A.Located a)
 addLocation parser =
-    P.succeed (,,)
+    P.succeed (\a b c -> ( a, b, c ))
         |= P.getPosition
         |= parser
         |= P.getPosition

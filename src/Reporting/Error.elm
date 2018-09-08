@@ -1,4 +1,4 @@
-module Reporting.Error exposing (..)
+module Reporting.Error exposing (Error(..), toJson, toReport)
 
 -- TODO
 -- import Reporting.Error.Canonicalize as Canonicalize
@@ -13,6 +13,7 @@ import Reporting.Error.Syntax as Syntax
 import Reporting.Region as Region
 import Reporting.Render.Type as RenderType
 import Reporting.Report as Report
+
 
 
 -- ALL POSSIBLE ERRORS

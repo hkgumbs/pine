@@ -1,4 +1,4 @@
-module ParserTest exposing (..)
+module ParserTest exposing (character, docComment, numbers, p, string, testRun, whitespace)
 
 import AST.Literal exposing (Literal(..))
 import Expect exposing (Expectation)
@@ -12,32 +12,32 @@ numbers : Test
 numbers =
     describe "number parser" <|
         List.map (testRun P.number)
-            [ "0" => Ok (IntNum 0)
-            , "12345" => Ok (IntNum 12345)
-            , "6789 " => Ok (IntNum 6789)
-            , "4e9" => Ok (FloatNum 4.0e9)
-            , "3E7" => Ok (FloatNum 3.0e7)
-            , "2e-9" => Ok (FloatNum 2.0e-9)
-            , "1E+3" => Ok (FloatNum 1.0e3)
-            , "3.14" => Ok (FloatNum 3.14)
-            , "1.21  " => Ok (FloatNum 1.21)
-            , "0.67" => Ok (FloatNum 0.67)
-            , "6.022e26" => Ok (FloatNum 6.022e26)
-            , "0.23E4" => Ok (FloatNum 2.3e3)
-            , "0xFFFFFFFF" => Ok (IntNum 0xFFFFFFFF)
-            , "0x0040" => Ok (IntNum 0x40)
-            , "0xbeef" => Ok (IntNum 0xBEEF)
-            , "0xBEEF" => Ok (IntNum 0xBEEF)
-            , "0x0123789" => Ok (IntNum 0x00123789)
-            , ".1234" => Err (E.Theories [] [])
-            , "1." => Err E.BadNumberDot
-            , "1_" => Err E.BadNumberEnd
-            , "1.2_" => Err E.BadNumberEnd
-            , "1e" => Err E.BadNumberExp
-            , "1e." => Err E.BadNumberExp
-            , "0x" => Err E.BadNumberHex
-            , "0x7.5" => Err E.BadNumberHex
-            , "0123" => Err E.BadNumberZero
+            [ p "0" Ok (IntNum 0)
+            , p "12345" Ok (IntNum 12345)
+            , p "6789 " Ok (IntNum 6789)
+            , p "4e9" Ok (FloatNum 4.0e9)
+            , p "3E7" Ok (FloatNum 3.0e7)
+            , p "2e-9" Ok (FloatNum 2.0e-9)
+            , p "1E+3" Ok (FloatNum 1.0e3)
+            , p "3.14" Ok (FloatNum 3.14)
+            , p "1.21  " Ok (FloatNum 1.21)
+            , p "0.67" Ok (FloatNum 0.67)
+            , p "6.022e26" Ok (FloatNum 6.022e26)
+            , p "0.23E4" Ok (FloatNum 2.3e3)
+            , p "0xFFFFFFFF" Ok (IntNum 0xFFFFFFFF)
+            , p "0x0040" Ok (IntNum 0x40)
+            , p "0xbeef" Ok (IntNum 0xBEEF)
+            , p "0xBEEF" Ok (IntNum 0xBEEF)
+            , p "0x0123789" Ok (IntNum 0x00123789)
+            , p ".1234" Err (E.Theories [] [])
+            , p "1." Err E.BadNumberDot
+            , p "1_" Err E.BadNumberEnd
+            , p "1.2_" Err E.BadNumberEnd
+            , p "1e" Err E.BadNumberExp
+            , p "1e." Err E.BadNumberExp
+            , p "0x" Err E.BadNumberHex
+            , p "0x7.5" Err E.BadNumberHex
+            , p "0123" Err E.BadNumberZero
             ]
 
 
@@ -45,23 +45,23 @@ whitespace : Test
 whitespace =
     describe "whitespace parser" <|
         List.map (testRun P.whitespace)
-            [ "" => Ok (P.SPos (R.Position 1 1))
-            , "      " => Ok (P.SPos (R.Position 1 7))
-            , "  \n" => Ok (P.SPos (R.Position 2 1))
-            , "\n  " => Ok (P.SPos (R.Position 2 3))
-            , "{--}" => Ok (P.SPos (R.Position 1 5))
-            , "{--}\n" => Ok (P.SPos (R.Position 2 1))
-            , "{-{--}-}" => Ok (P.SPos (R.Position 1 9))
-            , "{-\n\n-}\n" => Ok (P.SPos (R.Position 4 1))
-            , "-- asdf\n" => Ok (P.SPos (R.Position 2 1))
-            , "--     \n  " => Ok (P.SPos (R.Position 2 3))
-            , "123" => Ok (P.SPos (R.Position 1 1))
-            , "{-|-}" => Ok (P.SPos (R.Position 1 1))
-            , "\t" => Err E.Tab
-            , " \t" => Err E.Tab
-            , "{-" => Err E.EndOfFile_Comment
-            , "{-\n\n" => Err E.EndOfFile_Comment
-            , "{-{--}" => Err E.EndOfFile_Comment
+            [ p "" Ok (P.SPos (R.Position 1 1))
+            , p "      " Ok (P.SPos (R.Position 1 7))
+            , p "  \n" Ok (P.SPos (R.Position 2 1))
+            , p "\n  " Ok (P.SPos (R.Position 2 3))
+            , p "{--}" Ok (P.SPos (R.Position 1 5))
+            , p "{--}\n" Ok (P.SPos (R.Position 2 1))
+            , p "{-{--}-}" Ok (P.SPos (R.Position 1 9))
+            , p "{-\n\n-}\n" Ok (P.SPos (R.Position 4 1))
+            , p "-- asdf\n" Ok (P.SPos (R.Position 2 1))
+            , p "--     \n  " Ok (P.SPos (R.Position 2 3))
+            , p "123" Ok (P.SPos (R.Position 1 1))
+            , p "{-|-}" Ok (P.SPos (R.Position 1 1))
+            , p "\t" Err E.Tab
+            , p " \t" Err E.Tab
+            , p "{-" Err E.EndOfFile_Comment
+            , p "{-\n\n" Err E.EndOfFile_Comment
+            , p "{-{--}" Err E.EndOfFile_Comment
             ]
 
 
@@ -69,9 +69,9 @@ docComment : Test
 docComment =
     describe "documentation comment parser" <|
         List.map (testRun P.docComment)
-            [ "{-|hello-}" => Ok "hello"
-            , "{-|yo-}   " => Ok "yo"
-            , "{-|{-|-}-}   " => Ok "{-|-}"
+            [ p "{-|hello-}" Ok "hello"
+            , p "{-|yo-}   " Ok "yo"
+            , p "{-|{-|-}-}   " Ok "{-|-}"
             ]
 
 
@@ -80,29 +80,29 @@ string =
     describe "string parser" <|
         List.map (testRun P.string)
             -- single
-            [ "\"hello world\"" => Ok "hello world"
-            , "\"bye\\nworld\"" => Ok "bye\nworld"
-            , "\"\"" => Ok ""
-            , "\"'\"" => Ok "'"
-            , "\"\\'\"" => Ok "'"
-            , "\"\\t\"" => Ok "\t"
-            , "\"" => Err E.EndOfFile_String
-            , "\"\\\"" => Err E.EndOfFile_String
-            , "\"\n\"" => Err E.NewLineInString
-            , "\"\\x\"" => Err E.BadEscape
+            [ p "\"hello world\"" Ok "hello world"
+            , p "\"bye\\nworld\"" Ok "bye\nworld"
+            , p "\"\"" Ok ""
+            , p "\"'\"" Ok "'"
+            , p "\"\\'\"" Ok "'"
+            , p "\"\\t\"" Ok "\t"
+            , p "\"" Err E.EndOfFile_String
+            , p "\"\\\"" Err E.EndOfFile_String
+            , p "\"\n\"" Err E.NewLineInString
+            , p "\"\\x\"" Err E.BadEscape
 
             -- multi
-            , "\"\"\"hello world\"\"\"" => Ok "hello world"
-            , "\"\"\"bye\nworld\"\"\"" => Ok "bye\nworld"
-            , "\"\"\"bye\\nworld\"\"\"" => Ok "bye\nworld"
-            , "\"\"\"\n\"\"\"" => Ok "\n"
-            , "\"\"\"\\t\"\"\"" => Ok "\t"
-            , "\"\"\"\"\"\"" => Ok ""
-            , "\"\"\"'\"\"\"" => Ok "'"
-            , "\"\"\"\\'\"\"\"" => Ok "'"
-            , "\"\"\"\"\"" => Err E.EndOfFile_String
-            , "\"\"\"\\\"\"\"" => Err E.EndOfFile_String
-            , "\"\"\"\\x\"\"\"" => Err E.BadEscape
+            , p "\"\"\"hello world\"\"\"" Ok "hello world"
+            , p "\"\"\"bye\nworld\"\"\"" Ok "bye\nworld"
+            , p "\"\"\"bye\\nworld\"\"\"" Ok "bye\nworld"
+            , p "\"\"\"\n\"\"\"" Ok "\n"
+            , p "\"\"\"\\t\"\"\"" Ok "\t"
+            , p "\"\"\"\"\"\"" Ok ""
+            , p "\"\"\"'\"\"\"" Ok "'"
+            , p "\"\"\"\\'\"\"\"" Ok "'"
+            , p "\"\"\"\"\"" Err E.EndOfFile_String
+            , p "\"\"\"\\\"\"\"" Err E.EndOfFile_String
+            , p "\"\"\"\\x\"\"\"" Err E.BadEscape
             ]
 
 
@@ -110,14 +110,14 @@ character : Test
 character =
     describe "character parser" <|
         List.map (testRun P.character)
-            [ "'a'" => Ok 'a'
-            , "'\\n'" => Ok '\n'
-            , "'\\''" => Ok '\''
-            , "'''" => Err E.BadChar
-            , "'  '" => Err E.BadChar
-            , "'\n'" => Err E.BadChar
-            , "'\\'" => Err E.BadChar
-            , "'\\x'" => Err E.BadEscape
+            [ p "'a'" Ok 'a'
+            , p "'\\n'" Ok '\n'
+            , p "'\\''" Ok '\''
+            , p "'''" Err E.BadChar
+            , p "'  '" Err E.BadChar
+            , p "'\n'" Err E.BadChar
+            , p "'\\'" Err E.BadChar
+            , p "'\\x'" Err E.BadEscape
             ]
 
 
@@ -134,6 +134,6 @@ testRun parser ( str, result ) =
                 |> Expect.equal result
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    (,)
+p : a -> (b -> c) -> b -> ( a, c )
+p a f b =
+    ( a, f b )

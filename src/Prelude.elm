@@ -1,4 +1,4 @@
-module Prelude exposing (..)
+module Prelude exposing (init, last, lookup, mapBoth, maybe, repeat)
 
 
 lookup : a -> List ( a, b ) -> Maybe b
@@ -10,13 +10,14 @@ lookup key list =
         ( a, b ) :: rest ->
             if key == a then
                 Just b
+
             else
                 lookup key rest
 
 
 maybe : b -> (a -> b) -> Maybe a -> b
-maybe default f maybe =
-    case maybe of
+maybe default f data =
+    case data of
         Just a ->
             f a
 

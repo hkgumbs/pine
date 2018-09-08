@@ -1,17 +1,16 @@
-module AST.Type
-    exposing
-        ( Aliased(..)
-        , Canonical(..)
-        , Raw
-        , Raw_(..)
-        , cmd
-        , collectLambdas
-        , dealias
-        , deepDealias
-        , iteratedDealias
-        , sub
-        , tuple
-        )
+module AST.Type exposing
+    ( Aliased(..)
+    , Canonical(..)
+    , Raw
+    , Raw_(..)
+    , cmd
+    , collectLambdas
+    , dealias
+    , deepDealias
+    , iteratedDealias
+    , sub
+    , tuple
+    )
 
 import AST.Helpers as Help
 import AST.Module.Name as ModuleName
@@ -19,6 +18,7 @@ import AST.Variable as Var
 import Dict exposing (Dict)
 import Reporting.Annotation as A
 import Reporting.Region as R
+
 
 
 -- DEFINITION

@@ -1,20 +1,20 @@
-module AST.Effects
-    exposing
-        ( Canonical
-        , Effects(..)
-        , Info(..)
-        , Kind(..)
-        , ManagerType(..)
-        , PortCanonical(..)
-        , PortRaw(..)
-        , Raw
-        , RawManagerType(..)
-        )
+module AST.Effects exposing
+    ( Canonical
+    , Effects(..)
+    , Info(..)
+    , Kind(..)
+    , ManagerType(..)
+    , PortCanonical(..)
+    , PortRaw(..)
+    , Raw
+    , RawManagerType(..)
+    )
 
 import AST.Type as Type
 import Elm.Package as Pkg
 import Reporting.Annotation as A
 import Reporting.Region as R
+
 
 
 -- EFFECTS

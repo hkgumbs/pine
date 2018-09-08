@@ -1,37 +1,37 @@
-module Elm.Package
-    exposing
-        ( Name(..)
-        , Package(..)
-        , Version(..)
-        , bumpMajor
-        , bumpMinor
-        , bumpPatch
-        , core
-        , decoder
-        , dummyName
-        , dummyVersion
-        , encode
-        , encodeVersion
-        , filterLatest
-        , fromString
-        , html
-        , initialVersion
-        , linearAlgebra
-        , majorAndMinor
-        , toFilePath
-        , toString
-        , toUrl
-        , versionDecoder
-        , versionToString
-        , virtualDom
-        , webgl
-        )
+module Elm.Package exposing
+    ( Name(..)
+    , Package(..)
+    , Version(..)
+    , bumpMajor
+    , bumpMinor
+    , bumpPatch
+    , core
+    , decoder
+    , dummyName
+    , dummyVersion
+    , encode
+    , encodeVersion
+    , filterLatest
+    , fromString
+    , html
+    , initialVersion
+    , linearAlgebra
+    , majorAndMinor
+    , toFilePath
+    , toString
+    , toUrl
+    , versionDecoder
+    , versionToString
+    , virtualDom
+    , webgl
+    )
 
 import Char
 import Dict exposing (Dict)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Prelude exposing (maybe)
+
 
 
 -- PACKGE NAMES
@@ -105,6 +105,7 @@ fromStringHelp : String -> String -> Result String Name
 fromStringHelp user project =
     if not (String.isEmpty user || String.isEmpty project) then
         Result.map (Name user) (validateProjectName project)
+
     else
         Err
             "A valid project name looks like `user/project`"
@@ -114,16 +115,22 @@ validateProjectName : String -> Result String String
 validateProjectName project =
     if String.contains "--" project then
         Err "There is a double dash -- in your package name. It must be a single dash."
+
     else if String.contains "_" project then
         Err "Underscores are not allowed in package names."
+
     else if String.contains "." project then
         Err "Dots are not allowed in package names."
+
     else if String.any Char.isUpper project then
         Err "Upper case characters are not allowed in package names."
+
     else if not (startsWithLetter project) then
         Err "Package names must start with a letter."
+
     else if String.endsWith "-" project then
         Err "Package names cannot end with a dash."
+
     else
         Ok project
 
@@ -206,9 +213,9 @@ majorAndMinor (Version major minor patch) =
 versionToString : Version -> String
 versionToString (Version major minor patch) =
     String.join "."
-        [ Basics.toString major
-        , Basics.toString minor
-        , Basics.toString patch
+        [ String.fromInt major
+        , String.fromInt minor
+        , String.fromInt patch
         ]
 
 
@@ -228,10 +235,10 @@ versionFromString string =
 toNumber : String -> Result String Int
 toNumber str =
     case String.toInt str of
-        Ok n ->
+        Just n ->
             Ok n
 
-        _ ->
+        Nothing ->
             Err "Must have format MAJOR.MINOR.PATCH (e.g. 1.0.2)"
 
 

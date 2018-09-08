@@ -1,4 +1,4 @@
-module Elm.Compiler exposing (..)
+module Elm.Compiler exposing (Tag(..), parseHeader, toHeaderSummary)
 
 import AST.Module as Module
 import Parse.Helpers as Parse
@@ -26,6 +26,7 @@ toHeaderSummary pkgName (Module.Header maybeHeaderDecl imports) =
         dependencies =
             if pkgName == Package.core then
                 map (A.drop . fst . A.drop) imports
+
             else
                 map (A.drop . fst . A.drop) imports ++ map fst Imports.defaults
     in

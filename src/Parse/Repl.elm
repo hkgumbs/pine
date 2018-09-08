@@ -1,8 +1,7 @@
-module Parse.Repl
-    exposing
-        ( Entry(..)
-        , parseEntry
-        )
+module Parse.Repl exposing
+    ( Entry(..)
+    , parseEntry
+    )
 
 import AST.Pattern as P
 import Parse.Helpers exposing (..)

@@ -1,10 +1,10 @@
-module AST.Kernel
-    exposing
-        ( Chunk(..)
-        , Info(..)
-        )
+module AST.Kernel exposing
+    ( Chunk(..)
+    , Info(..)
+    )
 
 import AST.Module.Name as ModuleName
+
 
 
 -- INFO

@@ -1,51 +1,51 @@
-module AST.Variable
-    exposing
-        ( Canonical(..)
-        , Global(..)
-        , Home(..)
-        , Raw(..)
-        , bool
-        , char
-        , cmd
-        , compareGlobals
-        , cons
-        , false
-        , float
-        , fromModule
-        , inCore
-        , inHtml
-        , int
-        , is
-        , isArray
-        , isCons
-        , isJson
-        , isKernel
-        , isList
-        , isLocal
-        , isLocalHome
-        , isMaybe
-        , isPrim
-        , isTask
-        , isTuple
-        , list
-        , local
-        , never
-        , nil
-        , rawToString
-        , router
-        , shader
-        , string
-        , sub
-        , task
-        , toString
-        , topLevel
-        , true
-        , tuple
-        )
+module AST.Variable exposing
+    ( Canonical(..)
+    , Global(..)
+    , Home(..)
+    , Raw(..)
+    , bool
+    , char
+    , cmd
+    , compareGlobals
+    , cons
+    , false
+    , float
+    , fromModule
+    , inCore
+    , inHtml
+    , int
+    , is
+    , isArray
+    , isCons
+    , isJson
+    , isKernel
+    , isList
+    , isLocal
+    , isLocalHome
+    , isMaybe
+    , isPrim
+    , isTask
+    , isTuple
+    , list
+    , local
+    , never
+    , nil
+    , rawToString
+    , router
+    , shader
+    , string
+    , sub
+    , task
+    , toString
+    , topLevel
+    , true
+    , tuple
+    )
 
 import AST.Helpers as Help
 import AST.Module.Name as ModuleName
 import Elm.Package as Pkg
+
 
 
 -- RAW NAMES
@@ -111,7 +111,7 @@ compareGlobals : Global -> Global -> Order
 compareGlobals a b =
     let
         compareGlobalsHelp (Global (ModuleName.Canonical (Pkg.Name pkg version) raw) name) =
-            ( pkg, version, raw, name )
+            ( pkg, version, ( raw, name ) )
     in
     compare (compareGlobalsHelp a) (compareGlobalsHelp b)
 

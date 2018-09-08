@@ -1,12 +1,11 @@
-module AST.Expression.Optimized
-    exposing
-        ( Choice(..)
-        , Decider(..)
-        , Decl(..)
-        , Def(..)
-        , Expr(..)
-        , Main(..)
-        )
+module AST.Expression.Optimized exposing
+    ( Choice(..)
+    , Decider(..)
+    , Decl(..)
+    , Def(..)
+    , Expr(..)
+    , Main(..)
+    )
 
 import AST.Effects as Effects
 import AST.Literal as Literal
@@ -15,6 +14,7 @@ import AST.Variable as Var
 import GenericSet exposing (GenericSet)
 import Optimize.DecisionTree as DT
 import Reporting.Region as R
+
 
 
 -- TOP LEVEL DECLARATIONS

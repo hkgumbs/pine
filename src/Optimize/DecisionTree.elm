@@ -1,4 +1,4 @@
-module Optimize.DecisionTree exposing (..)
+module Optimize.DecisionTree exposing (Branch(..), CPattern, DecisionTree(..), Path(..), Test(..), VariantDict, add, addWeights, bests, checkForMatch, compile, edgesFor, extract, flatten, flattenPatterns, gatherEdges, getArity, isChoicePath, isComplete, isIrrelevantTo, needsTests, pickPath, smallBranchingFactor, smallDefaults, subPositions, testAtPath, testsAtPath, toDecisionTree, toRelevantBranch)
 
 {- To learn more about how this works, definitely read through:
 
@@ -98,7 +98,7 @@ add path finalLink =
             finalLink
 
         Alias ->
-            Debug.crash "nothing should be added to an alias path"
+            Debug.todo "nothing should be added to an alias path"
 
         Position index subpath ->
             Position index (add subpath finalLink)
@@ -183,13 +183,14 @@ getArity variantDict (Var.Canonical home name) =
                         n
 
                     Err _ ->
-                        Debug.crash <|
+                        Debug.todo <|
                             "`"
                                 ++ name
                                 ++ "` is a tuple according to AST.Helpers"
                                 ++ " but not a according to Optimize.DecisionTree"
+
             else
-                Debug.crash <|
+                Debug.todo <|
                     "Since the Optimize phase happens after canonicalization and type"
                         ++ " inference, it is impossible that a pattern cannot be found."
 
@@ -225,6 +226,7 @@ flatten variantDict (( path, A.A ann pattern ) as pathPattern) =
         P.Ctor tag patterns ->
             if getArity variantDict tag == 1 then
                 List.concatMap (flatten variantDict) (subPositions path patterns)
+
             else
                 [ pathPattern ]
 
@@ -238,7 +240,7 @@ flatten variantDict (( path, A.A ann pattern ) as pathPattern) =
 
 {-| If the first branch has no more "decision points" we can finally take that
 path. If that is the case we give the resulting label and a mapping from free
-variables to "how to get their value". So a pattern like (Just (x,_)) will give
+variables to "how to get their value". So a pattern like (Just (x,\_)) will give
 us something like ("x" => value.0.0)
 -}
 checkForMatch : List Branch -> Maybe Int
@@ -247,6 +249,7 @@ checkForMatch branches =
         (Branch goal patterns) :: _ ->
             if List.all (not << needsTests << Tuple.second) patterns then
                 Just goal
+
             else
                 Nothing
 
@@ -270,6 +273,7 @@ gatherEdges variantDict branches path =
         fallbacks =
             if isComplete variantDict relevantTests then
                 []
+
             else
                 List.filter (isIrrelevantTo path) branches
     in
@@ -289,6 +293,7 @@ testsAtPath selectedPath branches =
         skipVisited test (( uniqueTests, visitedTests ) as curr) =
             if Maybe.withDefault False <| lookup test visitedTests then
                 curr
+
             else
                 ( test :: uniqueTests
                 , ( test, True ) :: visitedTests
@@ -315,7 +320,7 @@ testAtPath selectedPath (Branch _ pathPatterns) =
                     Nothing
 
                 P.Alias _ _ ->
-                    Debug.crash "aliases should never reach 'testAtPath' function"
+                    Debug.todo "aliases should never reach 'testAtPath' function"
 
                 P.Anything ->
                     Nothing
@@ -343,12 +348,14 @@ toRelevantBranch test path ((Branch goal pathPatterns) as branch) =
                 P.Ctor name patterns ->
                     if test == Constructor name then
                         Just (Branch goal (start ++ subPositions path patterns ++ end))
+
                     else
                         Nothing
 
                 P.Literal lit ->
                     if test == Literal lit then
                         Just (Branch goal (start ++ end))
+
                     else
                         Nothing
 
@@ -371,6 +378,7 @@ extract selectedPath pathPatterns =
         (( path, pattern ) as first) :: rest ->
             if path == selectedPath then
                 Just ( [], pattern, rest )
+
             else
                 case extract selectedPath rest of
                     Nothing ->
@@ -404,7 +412,7 @@ needsTests (A.A _ pattern) =
             False
 
         P.Alias _ _ ->
-            Debug.crash "aliases should never reach 'isIrrelevantTo' function"
+            Debug.todo "aliases should never reach 'isIrrelevantTo' function"
 
         P.Record _ ->
             False
@@ -433,7 +441,7 @@ pickPath variantDict branches =
         tiedPaths ->
             case bests (addWeights (smallBranchingFactor variantDict branches) tiedPaths) of
                 [] ->
-                    Debug.crash "Impossible -- there is no best path"
+                    Debug.todo "Impossible -- there is no best path"
 
                 first :: _ ->
                     first
@@ -443,6 +451,7 @@ isChoicePath : ( Path, CPattern ) -> Maybe Path
 isChoicePath ( path, pattern ) =
     if needsTests pattern then
         Just path
+
     else
         Nothing
 
@@ -456,15 +465,17 @@ bests : List ( Path, Int ) -> List Path
 bests allPaths =
     case allPaths of
         [] ->
-            Debug.crash "Cannot choose the best of zero paths. This should never happen."
+            Debug.todo "Cannot choose the best of zero paths. This should never happen."
 
         ( headPath, headWeight ) :: weightedPaths ->
             let
                 gatherMinimum ( path, weight ) (( minWeight, paths ) as acc) =
                     if weight == minWeight then
                         ( minWeight, path :: paths )
+
                     else if weight < minWeight then
                         ( weight, [ path ] )
+
                     else
                         acc
             in
@@ -489,6 +500,7 @@ smallBranchingFactor variantDict branches path =
     List.length edges
         + (if List.isEmpty fallback then
             0
+
            else
             1
           )

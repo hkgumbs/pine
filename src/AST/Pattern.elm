@@ -1,4 +1,4 @@
-module AST.Pattern exposing (..)
+module AST.Pattern exposing (Canonical, Pattern, Pattern_(..), Raw, Raw_, boundVarList, boundVarSet, boundVars, isVar, list, member, toString, toStringHelp, tuple, useParens)
 
 import AST.Helpers as Help
 import AST.Literal as L
@@ -126,6 +126,7 @@ toStringHelp withParens (A.A _ pattern) =
         Ctor name [] ->
             if Var.isTuple name then
                 "()"
+
             else
                 Var.toString name
 
@@ -133,6 +134,7 @@ toStringHelp withParens (A.A _ pattern) =
             if Var.isTuple name then
                 useParens <|
                     String.join ", " (List.map (toStringHelp identity) args)
+
             else
                 withParens <|
                     Var.toString name

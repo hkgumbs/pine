@@ -1,20 +1,19 @@
-module AST.Expression.Source
-    exposing
-        ( Expr
-        , Expr_(..)
-        , RawDef
-        , RawDef_(..)
-        , RawExpr
-        , RawExpr_
-        , ValidDef(..)
-        , ValidExpr
-        , ValidExpr_
-        , collectLambdas
-        , getPattern
-        , tuple
-        , var
-        , zero
-        )
+module AST.Expression.Source exposing
+    ( Expr
+    , Expr_(..)
+    , RawDef
+    , RawDef_(..)
+    , RawExpr
+    , RawExpr_
+    , ValidDef(..)
+    , ValidExpr
+    , ValidExpr_
+    , collectLambdas
+    , getPattern
+    , tuple
+    , var
+    , zero
+    )
 
 import AST.Helpers as Help
 import AST.Literal as Literal
@@ -23,6 +22,7 @@ import AST.Type as Type
 import AST.Variable as Var
 import Reporting.Annotation as A
 import Reporting.Region as R
+
 
 
 -- EXPRESSIONS

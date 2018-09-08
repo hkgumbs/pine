@@ -48,7 +48,7 @@ isSymbol c =
 validSymbols : Dict Char Char
 validSymbols =
     Dict.fromList <|
-        List.map2 (\a b -> ( a, b ))
+        List.map2 Tuple.pair
             (String.toList "+-/*=.<>:&|^?%~!")
             (String.toList "abcdefghijklmnop")
 

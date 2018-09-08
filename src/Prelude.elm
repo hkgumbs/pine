@@ -1,4 +1,4 @@
-module Prelude exposing (init, last, lookup, mapBoth, maybe, repeat)
+module Prelude exposing (..)
 
 
 lookup : a -> List ( a, b ) -> Maybe b
@@ -43,11 +43,6 @@ last list =
             last xs
 
 
-repeat : a -> List b -> List a
-repeat a list =
-    List.repeat (List.length list) a
-
-
-mapBoth : (a -> c) -> (b -> d) -> ( a, b ) -> ( c, d )
-mapBoth f g ( a, b ) =
-    ( f a, g b )
+tuple3 : a -> b -> c -> ( a, b, c )
+tuple3 a b c =
+    ( a, b, c )

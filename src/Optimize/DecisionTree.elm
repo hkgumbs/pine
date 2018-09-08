@@ -1,4 +1,4 @@
-module Optimize.DecisionTree exposing (Branch(..), CPattern, DecisionTree(..), Path(..), Test(..), VariantDict, add, addWeights, bests, checkForMatch, compile, edgesFor, extract, flatten, flattenPatterns, gatherEdges, getArity, isChoicePath, isComplete, isIrrelevantTo, needsTests, pickPath, smallBranchingFactor, smallDefaults, subPositions, testAtPath, testsAtPath, toDecisionTree, toRelevantBranch)
+module Optimize.DecisionTree exposing (..)
 
 {- To learn more about how this works, definitely read through:
 

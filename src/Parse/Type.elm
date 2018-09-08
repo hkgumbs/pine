@@ -4,6 +4,7 @@ import AST.Type as Type
 import AST.Variable as Var
 import Parse.Helpers exposing (..)
 import Parse.Primitives exposing (..)
+import Prelude exposing (tuple3)
 import Reporting.Annotation as A
 import Reporting.Error.Syntax as E
 import Reporting.Region as R
@@ -52,7 +53,7 @@ expressionStart : R.Position -> SParser Type.Raw
 expressionStart start =
     oneOf
         [ app start
-        , succeed (\a b c -> ( a, b, c ))
+        , succeed tuple3
             |= term
             |= getPosition
             |= whitespace
@@ -97,7 +98,7 @@ app0 =
 
 app : R.Position -> SParser Type.Raw
 app start =
-    succeed (\a b -> ( a, b ))
+    succeed Tuple.pair
         |= qualifiedCapVar
         |= getPosition
         |> andThen (appHelp start)
@@ -120,7 +121,7 @@ appHelp start ( ctor, ctorEnd ) =
 
 unionConstructor : SParser ( String, List Type.Raw )
 unionConstructor =
-    succeed (\a b c -> ( a, b, c ))
+    succeed tuple3
         |= capVar
         |= getPosition
         |= whitespace
@@ -237,7 +238,7 @@ recordEnd start var =
                     |> A.at start end
 
             getRemainingFields firstField =
-                succeed (\a b -> ( a, b ))
+                succeed Tuple.pair
                     |= chompFields [ firstField ]
                     |= getPosition
                     |> map finish
@@ -253,7 +254,7 @@ recordEnd start var =
                     |> A.at start end
 
             getRemainingFields ( tipe, _, nextPos ) =
-                succeed (\a b -> ( a, b ))
+                succeed Tuple.pair
                     |. checkSpace nextPos
                     |= chompFields [ ( var, tipe ) ]
                     |= getPosition

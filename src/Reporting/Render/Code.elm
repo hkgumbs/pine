@@ -23,7 +23,7 @@ render maybeSubRegion ((R.Region start end) as region) source =
             (String.lines source ++ [ "" ])
                 |> List.take endLine
                 |> List.drop (startLine - 1)
-                |> List.map2 (\a b -> ( a, b )) (List.range startLine (endLine + 1))
+                |> List.map2 Tuple.pair (List.range startLine (endLine + 1))
 
         width =
             last relevantLines

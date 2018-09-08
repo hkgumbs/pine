@@ -24,6 +24,7 @@ module Parse.Helpers exposing
     )
 
 import Parse.Primitives as P exposing (Parser)
+import Prelude exposing (tuple3)
 import Reporting.Annotation as A
 import Reporting.Error.Syntax as E
     exposing
@@ -187,8 +188,7 @@ checkSpace (P.SPos (R.Position _ col)) =
 
 addLocation : Parser a -> Parser (A.Located a)
 addLocation parser =
-    P.succeed (\a b c -> ( a, b, c ))
+    P.succeed (\start value end -> A.at start end value)
         |= P.getPosition
         |= parser
         |= P.getPosition
-        |> P.map (\( start, value, end ) -> A.at start end value)

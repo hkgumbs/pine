@@ -14,7 +14,7 @@ import AST.Type as Type
 import AST.Variable as Var
 import Dict
 import Dict.Any as GenericDict
-import Prelude exposing (mapBoth, maybe, repeat)
+import Prelude exposing (maybe)
 import Reporting.Helpers as Help exposing (Doc, cat, dullyellow, hang, hsep, parens, sep, string, vcat, withSpace)
 import Set
 
@@ -309,7 +309,7 @@ diffRecord localizer leftFields leftExt rightFields rightExt =
             ( [], sames ) ->
                 let
                     mkRecord =
-                        docRecord Full (List.map (mapBoth string identity) sames)
+                        docRecord Full (List.map (Tuple.mapBoth string identity) sames)
                 in
                 if leftExt == rightExt then
                     Same (mkRecord (Maybe.map string leftExt))
@@ -423,7 +423,7 @@ flattenRecord :
     -> Maybe Type.Canonical
     -> ( Fields, Maybe String )
 flattenRecord fields ext =
-    mapBoth Dict.fromList identity (flattenRecordHelp fields ext)
+    Tuple.mapBoth Dict.fromList identity (flattenRecordHelp fields ext)
 
 
 flattenRecordHelp :
@@ -470,7 +470,7 @@ docType localizer context tipe =
                     flattenRecordHelp outerFields outerExt
             in
             docRecord Full
-                (List.map (mapBoth string (docType localizer None)) fields)
+                (List.map (Tuple.mapBoth string (docType localizer None)) fields)
                 (Maybe.map string ext)
 
         Type.Aliased name args _ ->
@@ -583,3 +583,8 @@ docRecord style fields maybeExt =
                         ]
                 , string "}"
                 ]
+
+
+repeat : a -> List b -> List a
+repeat a list =
+    List.repeat (List.length list) a

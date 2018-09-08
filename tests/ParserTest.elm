@@ -1,4 +1,4 @@
-module ParserTest exposing (character, docComment, numbers, p, string, testRun, whitespace)
+module ParserTest exposing (..)
 
 import AST.Literal exposing (Literal(..))
 import Expect exposing (Expectation)

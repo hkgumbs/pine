@@ -1,4 +1,4 @@
-module AST.Declaration exposing (Alias, Assoc(..), Canonical, CommentOr(..), Decls(..), Infix(..), Raw(..), Source, Type(..), Union, Valid, addAlias, addDef, addInfix, addUnion, assocToString, defaultAssociativity, defaultPrecedence)
+module AST.Declaration exposing (..)
 
 import AST.Expression.Canonical as Canonical
 import AST.Expression.Source as Src

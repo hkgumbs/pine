@@ -1,4 +1,4 @@
-module AST.Pattern exposing (Canonical, Pattern, Pattern_(..), Raw, Raw_, boundVarList, boundVarSet, boundVars, isVar, list, member, toString, toStringHelp, tuple, useParens)
+module AST.Pattern exposing (..)
 
 import AST.Helpers as Help
 import AST.Literal as L

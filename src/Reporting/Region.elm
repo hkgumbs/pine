@@ -1,4 +1,4 @@
-module Reporting.Region exposing (Position(..), Region(..), encode, encodePosition, merge, toString)
+module Reporting.Region exposing (Position(..), Region(..), encode, merge, toString)
 
 import Json.Encode as Json
 

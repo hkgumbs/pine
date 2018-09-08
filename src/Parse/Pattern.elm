@@ -6,6 +6,7 @@ import AST.Variable as Var
 import Parse.Helpers exposing (..)
 import Parse.Literal as Literal
 import Parse.Primitives exposing (..)
+import Prelude exposing (tuple3)
 import Reporting.Annotation as A
 import Reporting.Error.Syntax as E
 import Reporting.Region as R
@@ -27,7 +28,7 @@ termHelp start =
         [ record start
         , tuple start
         , list start
-        , succeed (\a b -> ( a, b ))
+        , succeed Tuple.pair
             |= oneOf
                 [ map (\_ -> P.Anything) underscore
                 , map P.Var lowVar
@@ -206,7 +207,7 @@ listEnd patterns =
 expression : Parser ( P.Raw, SPos )
 expression =
     hint E.Pattern <|
-        (succeed (\a b -> ( a, b ))
+        (succeed Tuple.pair
             |= getPosition
             |= consTerm
             |> andThen (\( start, cTerm ) -> exprHelp start [] cTerm)
@@ -216,7 +217,7 @@ expression =
 consTerm : SParser P.Raw
 consTerm =
     oneOf
-        [ succeed (\a b -> ( a, b ))
+        [ succeed Tuple.pair
             |= getPosition
             |= qualifiedCapVar
             |> andThen
@@ -231,7 +232,7 @@ consTerm =
                         _ ->
                             constructorStart start ctor []
                 )
-        , succeed (\a b c -> ( a, b, c ))
+        , succeed tuple3
             |= term
             |= getPosition
             |= whitespace
@@ -240,7 +241,7 @@ consTerm =
 
 boolEnd : R.Position -> Bool -> SParser P.Raw
 boolEnd start bool =
-    succeed (\a b -> ( a, b ))
+    succeed Tuple.pair
         |= getPosition
         |= whitespace
         |> map
@@ -257,7 +258,7 @@ exprHelp start patterns ( pattern, end, sPos ) =
             |. cons
             |. spaces
             |= andThen (exprHelp start (pattern :: patterns)) consTerm
-        , succeed (\a b c -> ( a, b, c ))
+        , succeed tuple3
             |. checkSpace sPos
             |. keyword "as"
             |. spaces
@@ -282,7 +283,7 @@ consHelp end tl ((A.A (R.Region start _) _) as hd) =
 
 constructorStart : R.Position -> String -> List P.Raw -> SParser P.Raw
 constructorStart start ctor args =
-    succeed (\a b -> ( a, b ))
+    succeed Tuple.pair
         |= getPosition
         |= whitespace
         |> andThen (\( a, b ) -> constructorEnd start ctor args a b)

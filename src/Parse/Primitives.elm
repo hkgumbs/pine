@@ -270,17 +270,37 @@ string =
 character : Parser Char
 character =
     succeed identity
-        |. symbol "'"
-        |= P.getChompedString (P.chompUntil (P.Token "'" BadChar))
-        |> andThen
-            (\s ->
-                case String.toList s of
-                    [ c ] ->
-                        succeed c
+        |. P.chompIf ((==) '\'') BadChar
+        |= oneOf
+            [ succeed identity
+                |. P.chompIf ((==) '\\') BadChar
+                |= oneOf
+                    [ map (\_ -> '"') (P.chompIf ((==) '"') BadEscape)
+                    , map (\_ -> '\n') (P.chompIf ((==) 'n') BadEscape)
+                    , map (\_ -> '\t') (P.chompIf ((==) 't') BadEscape)
+                    , map (\_ -> '\'') (P.chompIf ((==) '\'') BadEscape)
+                    , map (\_ -> '\\') (P.chompIf ((==) '\\') BadEscape)
+                    , map (\_ -> '\u{000D}') (P.chompIf ((==) 'r') BadEscape)
+                    ]
+                |. P.chompIf ((==) '\'') BadChar
+            , P.getChompedString (P.chompIf (\_ -> True) (Theories [] []))
+                |. P.chompIf ((==) '\'') BadChar
+                |> andThen
+                    (\s ->
+                        case String.toList s of
+                            [ '\'' ] ->
+                                fail BadChar
 
-                    _ ->
-                        fail BadChar
-            )
+                            [ '\n' ] ->
+                                fail BadChar
+
+                            [ c ] ->
+                                succeed c
+
+                            _ ->
+                                fail BadChar
+                    )
+            ]
 
 
 

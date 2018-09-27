@@ -10,7 +10,7 @@ module Pine.Compiler
 
 import qualified Data.Aeson as Json
 import qualified Data.Map as Map
-import qualified Data.ByteString.Lazy as LazyBytes
+import qualified Data.Text.Lazy as LazyText
 import System.IO (Handle)
 
 import qualified AST.Module as Module
@@ -22,7 +22,7 @@ import qualified Elm.Compiler.Module as PublicModule
 import qualified Elm.Compiler.Version
 import qualified Elm.Docs as Docs
 import qualified Elm.Package as Package
-import qualified Generate.Beam
+import qualified Generate.Llvm
 import qualified Parse.Module as Parse
 import qualified Parse.Parse as Parse
 import qualified Reporting.Annotation as A
@@ -107,7 +107,7 @@ compile context source interfaces =
           docs <- Result.format Error.Docs (docsGen isExposed modul)
 
           let interface = Module.toInterface packageName modul
-          let beam = Generate.Beam.generate modul
+          let beam = Generate.Llvm.generate modul
 
           return (Result docs interface beam)
   in
@@ -127,7 +127,7 @@ data Context = Context
 data Result = Result
     { _docs :: Maybe Docs.Documentation
     , _interface :: PublicModule.Interface
-    , _beam :: LazyBytes.ByteString
+    , _llvm :: LazyText.ByteString
     }
 
 

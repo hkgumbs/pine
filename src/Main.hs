@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import qualified Data.ByteString.Lazy as LazyBytes
+import qualified Data.Text.Lazy as LazyText
 import qualified System.Environment as Env
 
 import qualified Elm.Package as Package
@@ -20,7 +20,7 @@ main =
 
      case result of
        Right (Compiler.Result _ _ output) ->
-         LazyBytes.writeFile "pine.beam" output
+         LazyText.writeFile "pine.ll" output
        Left errors ->
          error $ concatMap (Compiler.errorToString dealiaser path source) errors
 

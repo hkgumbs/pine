@@ -23,6 +23,7 @@ import qualified Elm.Compiler.Version
 import qualified Elm.Docs as Docs
 import qualified Elm.Package as Package
 import qualified Generate.Llvm
+import qualified Generate.JavaScript.Mode as Mode
 import qualified Parse.Module as Parse
 import qualified Parse.Parse as Parse
 import qualified Reporting.Annotation as A
@@ -107,9 +108,9 @@ compile context source interfaces =
           docs <- Result.format Error.Docs (docsGen isExposed modul)
 
           let interface = Module.toInterface packageName modul
-          let beam = Generate.Llvm.generate modul
+          let llvm = Generate.Llvm.generate Mode.Prod modul
 
-          return (Result docs interface beam)
+          return (Result docs interface llvm)
   in
     ( Result.oneToValue dummyLocalizer Localizer oneLocalizer
     , Bag.toList Warning warnings
